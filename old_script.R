@@ -115,7 +115,6 @@ maximum_pinned = function(Xh, wh, Xg, wg, Pg, y) {
 
 # Track active set for use in forward stepwise
 test_statistic = function(X, Y, groups, weights, active.set=0) {
-#if (active.set[1] == 0) { print ("--------") }
   inactive.groups = setdiff(1:length(groups), active.set)
   #Ynormalized = Y/sd(Y)
   grad = t(X) %*% Y
@@ -146,9 +145,7 @@ test_statistic = function(X, Y, groups, weights, active.set=0) {
   rank = sum(diag(P_gmax))
   return(list(T=T, lambda1=f_max, lambda2=M, gmax=gmax, imax=imax, weight=weight_gmax, rank=rank))
 }
-#compar33 = sim_forward(nlist=100, glist=100, klist=5, betalist=8, nsim=50, strength=c(7.5, 8.5))
-#compar44 = sim_forward(nlist=100, glist=20, klist=2, betalist=5, nsim=50, strength=c(2.5, 3.5))
-#compar22 = sim_forward(nlist=100, glist=20, klist=2, betalist=5, nsim=50, strength=c(0.5, 1.5))
+
 
 pvalue = function(X, Y, groups, weights) {
   V = test_statistic(X, Y, groups, weights)
@@ -172,17 +169,6 @@ chisq_ratio = function(U, k) {
   return(exp(numer.p - denom.p))
 }
 
-# q_0 = function(M, k, nsim=1000) {
-#   Z = abs(rnorm(nsim))
-#   exponent = log(Z + (k-1)*M) - M*Z - M^2/2
-#   C = max(exponent)
-#   return(list(exponential=mean(exp(exponent-C)), C=C))
-# }
-# Q_0 = function(M, k, t, nsim=1000) {
-#   q_01 = q_0(M+t,k,nsim)
-#   q_02 = q_0(M,k,nsim)
-#   return(exp(q_01$C - q_02$C) * q_01$exponential / q_02$exponential)
-# }
 
 # Based on Qform
 pval_fix = function(lambda1, lambda2, weight, rank) {
@@ -247,7 +233,6 @@ add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha
     betanew = lm(origY ~ origX[,inds] - 1)$coefficients
     V$betahat[inds] = betanew
     ##### Here's something to try changing ############
-    ###################################################
     ###### Regress out these groups?###################
     # V$Y = origY - origX[,inds] %*% betanew
   }
@@ -265,8 +250,6 @@ add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha
   return(V)
 }
 
-
-######################################
 
 
 #######################################
@@ -308,8 +291,6 @@ selection_results = function(n, g, beta, k, sim.included.all) {
   colnames(table.results) = c("n", "g", "k", "q", "Fdp", "seFdp", "Fpr", "seFpr", "Fnp", "seFnp", "Fnr", "seFnr")
   return(table.results)
 }
-
-
 
 
 
@@ -499,7 +480,7 @@ sim_forward = function(n=200, g=50, k=5, beta=5, strength=c(1.4, 1.1), maxsteps=
 # Simulations -------------------------------------------------------------
 
 
-# Plots for 6/20 meeting
+# Marginal plots (jittered)
 n=100
 g=100
 k=5
@@ -527,23 +508,9 @@ for (j in 1:(b+bb)) {
   pvals = pvm[,j]
   incls = incl[,j]
   cols = ifelse(incls <= b & incls > 0, "black", ifelse(incls <= b, ifelse(j <= b, "black", "blue"), "red"))
-  #ifelse(incls <= b & incls > 0, "black", "red")
   cexs = ifelse(incls <= b & j <= b, 0.4, 0.9)
-  #pchs = ifelse(incls <= b, ".", 1)
   pchs = sapply(incls, function(g) { if (((g > b) & (j <= b)) | ((g <= b) & (j > b))) return("*") else return(".") })
   pchs = sub("0", ".", as.character(pchs))
-#  if (j > b) {
-#    pchs = "."
-#  }
   points(j + 0.08*rnorm(nsims), pvals, pch=pchs, col=cols, cex=cexs)
 }
-
-
-
-
-
-
-
-
-
 

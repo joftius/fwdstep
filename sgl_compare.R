@@ -166,17 +166,19 @@ add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha
   V$origY = origY
   V$active.set = active.set
   imax = V$imax
+  ginds = groups[[imax]]
   pval = pval_from_lambdas(V$lambda1, V$lambda2, V$weight, V$rank)
   V$pval = pval
   if ((length(betahat) > 1) & (length(active.set) < length(betahat) -1))  {
     V$active.set = setdiff(union(active.set, imax), 0)
     inds = unlist(groups[V$active.set])
-    betanew = lm(origY ~ origX[,inds] - 1)$coefficients
+    lmnew = lm(origY ~ origX[,inds] - 1)
+    betanew = lmnew$coefficients
     V$betahat[inds] = betanew
+    V$Y = lmnew$residuals
   }
   if (residualize == TRUE) {
     Xnew = X
-    ginds = groups[[imax]]
     Xg = X[,ginds]
     Hg = diag(1,length(Y)) - Xg %*% t(Xg)
     for (g in setdiff(1:length(groups), imax)) {
@@ -428,7 +430,7 @@ p=g*k
 beta = 10
 q=beta*k
 strength=c(1.1, 1.05)
-nsim = 50
+nsim = 10
 
 #compare = sim_forward(n, g, k, beta, nsim=nsim, strength=strength, compare=TRUE, maxsteps=40)
 compare = sim_forward(n, g, k, beta, nsim=nsim, strength=strength, compare=FALSE, maxsteps=40)

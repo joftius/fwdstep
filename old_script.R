@@ -6,18 +6,7 @@
 
 ## (1) Fix estimation of beta (keep original X)
 ## (2) Compare to something natural
-## (3) Data analysis (HIV)
 ## (4) Categorical data?
-## (5) Mixture of data & differing group sizes?
-
-## Jonathan said something like:
-# Generate many smallish groups
-# Simulate forward (group) stepwise (using chi-square for steps)
-# At each step, residualize X_h mapsto (I-P_g)X_h and then orthogonalize ???????????
-# Take 2 steps, compute the test statistic we found and compare to Exp(1) = done, keep going down the path
-# Also compute lambda_1 and lambda_2 from glasso, compare                 = same
-
-# Simulations for stepwise lars(?)
 
 ### Simulation ideas
 ## Power/performance as function of SNR
@@ -30,11 +19,11 @@ library(SGL)       # for comparison
 
 ## Functions
 
-# To generate data
+####################
+# To generate data #
+####################
 
-# Data generation ---------------------------------------------------------
-
-
+# Fixed group sizes, gaussian design
 simulate_fixed = function(n, g, k, orthonormal=TRUE, beta=0) {
   p = g*k
   X = matrix(rnorm(n*p), nrow=n)
@@ -55,6 +44,7 @@ simulate_fixed = function(n, g, k, orthonormal=TRUE, beta=0) {
   return(list(X=X, Y=Y, groups=groups, weights=weights))
 }
 
+# Fixed group sizes, categorical design
 simulate_fixed_cat = function(n, g, k, orthonormal=TRUE, beta=0) {
   p = g*k
   X = matrix(nrow=n, ncol=p)
@@ -81,13 +71,10 @@ simulate_fixed_cat = function(n, g, k, orthonormal=TRUE, beta=0) {
   return(list(X=X, Y=Y, groups=groups, weights=weights))
 }
 
-######################################
 
-# P value functions -------------------------------------------------------
-
-
-
-# To apply our method 
+##########################################
+# Functions for computing test statistic #
+##########################################
 
 # Finds index of group containing var
 group_of = function(groups, var) {
@@ -98,8 +85,9 @@ group_of = function(groups, var) {
   }
 }
 
-maximum_pinned = function(Xh, wh, Xg, wg, Pg, y) {
-  # sigmasq = sd(y)
+
+# Compute the maximum of the residual process wrt one group
+max_resid_proc = function(Xh, wh, Xg, wg, Pg, y) {
   ug = t(Xg) %*% y
   ug = ug / sqrt(sum(ug^2))
   a = t(Xh) %*% (y - Pg %*% y) / wh
@@ -108,15 +96,14 @@ maximum_pinned = function(Xh, wh, Xg, wg, Pg, y) {
   ab = sum(a*b)
   norma2 = sum(a^2)
   normb2 = sum(b^2)
-  #return (norma^2 / (sqrt(norma^2 - norma^2 * normb^2 + ab^2) - ab))
   # Rationalized denominator:
   return ((ab + sqrt(norma2*(1-normb2) + ab^2))/(1-normb2))
 }
 
-# Track active set for use in forward stepwise
+
+# Compute the test statistic
 test_statistic = function(X, Y, groups, weights, active.set=0) {
   inactive.groups = setdiff(1:length(groups), active.set)
-  #Ynormalized = Y/sd(Y)
   grad = t(X) %*% Y
   Ts = rep(-1,length(groups))
   for (i in inactive.groups) {
@@ -131,7 +118,7 @@ test_statistic = function(X, Y, groups, weights, active.set=0) {
   Ms = c()
   for (i in inactive.groups) {
     if (i != imax) {
-      Ms = c(Ms,maximum_pinned(X[,groups[[i]]], weights[i], X_gmax, weight_gmax, P_gmax, Y))
+      Ms = c(Ms,max_resid_proc(X[,groups[[i]]], weights[i], X_gmax, weight_gmax, P_gmax, Y))
     }
   }
   M = max(Ms)
@@ -139,30 +126,13 @@ test_statistic = function(X, Y, groups, weights, active.set=0) {
   u_gmax = u_gmax / sqrt(sum(u_gmax^2))
   f_max = sum(u_gmax * grad[gmax]) / weight_gmax
   var_f_max = sum((X_gmax * u_gmax)^2) / weight_gmax^2
-#  print(imax)
-#  print(var_f_max)
   T = f_max * (f_max - M) / var_f_max
   rank = sum(diag(P_gmax))
   return(list(T=T, lambda1=f_max, lambda2=M, gmax=gmax, imax=imax, weight=weight_gmax, rank=rank))
 }
 
 
-pvalue = function(X, Y, groups, weights) {
-  V = test_statistic(X, Y, groups, weights)
-  pval = (1 - pchisq((V$weight * (V$lambda2 + V$T / V$lambda2))^2, V$rank)) / (1 - pchisq((V$weight * V$lambda2)^2, V$rank))
-  return (pval)
-}
-pvalue_better = function(X, Y, groups, weights) {
-  V = test_statistic(X, Y, groups, weights)
-  pval = (1 - pchisq((V$weight * (V$lambda2 + sqrt(V$lambda2**2+4*V$T))/2.)^2, V$rank)) / (1 - pchisq((V$weight * V$lambda2)^2, V$rank))
-  return (pval)
-}
-pvalue_better_Qform = function(X, Y, groups, weights) {
-  V = test_statistic(X, Y, groups, weights)
-  pval = (1 - pchisq((V$weight * V$lambda1)^2, V$rank)) / (1 - pchisq((V$weight * V$lambda2)^2, V$rank))
-  return (pval)
-}
-
+# Avoid numerical overflow
 chisq_ratio = function(U, k) {
   numer.p = pchisq(U[1], k, lower.tail=FALSE, log.p=TRUE)
   denom.p = pchisq(U[2], k, lower.tail=FALSE, log.p=TRUE)
@@ -170,8 +140,8 @@ chisq_ratio = function(U, k) {
 }
 
 
-# Based on Qform
-pval_fix = function(lambda1, lambda2, weight, rank) {
+# Compute p-value from test statistic
+pval_from_lambdas = function(lambda1, lambda2, weight, rank) {
     U = weight*c(lambda1, lambda2)
     pval = chisq_ratio(U^2, rank)
   if (is.nan(pval)) {
@@ -180,9 +150,10 @@ pval_fix = function(lambda1, lambda2, weight, rank) {
   return(pval)
 }
 
-######################################
 
-# Step functions ----------------------------------------------------------
+##################################
+# Functions for forward stepwise #
+##################################
 
 
 # Blockwise coordinate descent algorithm to estimate beta
@@ -205,13 +176,15 @@ bcd_solver = function(X, Y, groups, weights, active.set, lambda, beta, imax, tol
       continue = FALSE
     }
   }
-  # Noisy line, delete or comment out
-  if (iter > 50) {
-    cat(sprintf("Solver iterations: %d\n", iter)) 
-  }
+  ## Noisy, delete or comment out
+  #if (iter > 50) {
+  #  cat(sprintf("Solver iterations: %d\n", iter)) 
+  #}
   return(beta)
 }
 
+
+# Add the next group
 add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha=0.1, origX=X, origY=Y, betahat=0) {
   V = test_statistic(X, Y, groups, weights, active.set)
   V$X = X
@@ -221,11 +194,9 @@ add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha
   V$origY = origY
   V$active.set = active.set
   imax = V$imax
-  pval = pval_fix(V$lambda1, V$lambda2, V$weight, V$rank)
+  pval = pval_from_lambdas(V$lambda1, V$lambda2, V$weight, V$rank)
   V$pval = pval
-  #cat(sprintf("Group %d has p-val %f\n", imax, pval))
   if ((length(betahat) > 1) & (length(active.set) < length(betahat) -1))  {
-    #cat(sprintf("Adding %d\n", V$imax))
     V$active.set = setdiff(union(active.set, imax), 0)
     # Don't shrink, we already believe these are true!
     #betanew = bcd_solver(origX, origY, groups, weights, V$active.set, lambda=V$lambda2, beta=betahat, imax=imax)
@@ -252,12 +223,10 @@ add1_lar = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha
 
 
 
-#######################################
-############# Signal loop #############
-#######################################
+############################################
+# Functions to do a simulation with signal #
+############################################
 
-
-# Signal loop -------------------------------------------------------------
 
 # Calculate statistics like Fdp, etc
 selection_results = function(n, g, beta, k, sim.included.all) {
@@ -293,8 +262,7 @@ selection_results = function(n, g, beta, k, sim.included.all) {
 }
 
 
-
-
+# The big simulation function...
 sim_forward = function(n=200, g=50, k=5, beta=5, strength=c(1.4, 1.1), maxsteps=20, signaltype="stair",
                        datatype="Gaussian", nsim=100, alpha=0.2, seed=1, echo=TRUE, compare=FALSE) {
   set.seed(seed)
@@ -388,7 +356,7 @@ sim_forward = function(n=200, g=50, k=5, beta=5, strength=c(1.4, 1.1), maxsteps=
     }
     #############################
     # The big change, June 2013 #
-    #                           #
+    #############################
     
     temp.cand = which(sim.pvals[iter,] < alpha)
     if (length(temp.cand) == 0) {
@@ -397,8 +365,6 @@ sim_forward = function(n=200, g=50, k=5, beta=5, strength=c(1.4, 1.1), maxsteps=
       sim.included[[iter]] = 1:max(temp.cand)
     }
     
-    #                           #
-    #############################
     sim.inclmat[iter,1:length(active.set)] = active.set
     sim.betamat[iter,] = betahat
     sim.mses = c(sim.mses, mean((betatrue-betahat)^2))
@@ -476,9 +442,9 @@ sim_forward = function(n=200, g=50, k=5, beta=5, strength=c(1.4, 1.1), maxsteps=
   }
 }
 
-
-# Simulations -------------------------------------------------------------
-
+######################################
+# Do some simulations and make plots #
+######################################
 
 # Marginal plots (jittered)
 n=100

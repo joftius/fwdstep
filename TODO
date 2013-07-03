@@ -1,3 +1,9 @@
 1) Expand this TODO list
 2) Fix R code and/or write better python code
-3) Finish paper
+3) Prove M=lambda_2 for unequal weights
+4) Prove M=lambda_2 for non-orthogonal designs
+5) Prove stopping rule does something, or find a better one?
+6) Try simulations with unequal weights, non-ortho designs
+7) Edit better p-value section
+8) Spruce up the bibliography
+9) Try on a real data set

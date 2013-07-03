@@ -1,3 +1,5 @@
+-1) Fix active.set sorting
+0) Find a stopping rule
 1) Expand this TODO list
 2) Fix R code and/or write better python code
 3) Prove M=lambda_2 for unequal weights

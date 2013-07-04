@@ -1,4 +1,6 @@
 * Refactor code, I suspect there are major issues somewhere
+*** Start with forward_step, then sim_stopping_rule
+*** Write tests!
 * Rerun simulations with _correct_ code
 * Find a stopping rule
 * Prove something about stopping rule

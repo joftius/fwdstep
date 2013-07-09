@@ -7,7 +7,7 @@
 # * Check max_resid_proc, update for non-ortho / unequal weights
 # * Check test_statistic
 # * Is there numerical overflow? Why?
-
+# * Perhaps test_statistic should not be a private function, e.g. weights=default?
 
 # Function to compute maximum of residual process wrt one group
 max_resid_proc = function(Xh, wh, Xg, wg, Pg, y) {
@@ -39,10 +39,8 @@ test_statistic = function(X, Y, groups, weights, active.set=0) {
   P_gmax = X_gmax %*% t(X_gmax)         ### Use orthogonality for now ###
   weight_gmax = weights[imax]
   Ms = c()
-  for (i in inactive.groups) {
-    if (i != imax) {
-      Ms = c(Ms,max_resid_proc(X[,groups[[i]]], weights[i], X_gmax, weight_gmax, P_gmax, Y))
-    }
+  for (i in setdiff(inactive.groups, imax)) {
+    Ms = c(Ms,max_resid_proc(X[,groups[[i]]], weights[i], X_gmax, weight_gmax, P_gmax, Y))
   }
   M = max(Ms)
   u_gmax = grad[gmax]

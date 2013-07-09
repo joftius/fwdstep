@@ -4,21 +4,21 @@
 
 # TODO
 # * Add function to do forward stepwise
+# ** check FIX
 # *** Proceed until a fixed stopping point (don't interpolate)
 # *** Track order, pvals, gaps, etc, intelligently
 # *** Decide how to orthogonalize & residualize
 # * Check add1_group
 # * Triple check everything
 
+source("lambda_gap_stat.R")
 
 # Add the next group
-add1_group = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha=0.1, origX=X, origY=Y, betahat=0) {
+add1_group = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alpha=0.1, origX=X, origY=Y, betahat=0, ...) {
   V = test_statistic(X, Y, groups, weights, active.set)
   V$X = X
   V$Y = Y
   V$betahat = betahat
-  V$origX = origX
-  V$origY = origY
   V$active.set = active.set
   imax = V$imax
   ginds = groups[[imax]]
@@ -45,4 +45,27 @@ add1_group = function(X, Y, groups, weights, active.set=0, residualize=TRUE, alp
   return(V)
 }
 
+# Forward stepwise function
+## Input design matrix, response vector, groups as list of lists
+## weights as list or "default" which weights by sqrt of group size
+### alpha? or separate function using alpha?
+## 
+forward_group <- function(X, Y, groups, weights="default", max.steps="default", alpha=0.1, ...) {
+  # In progress
+  if (weights == "default") {
+    # Default weights are sqrt of group size
+    weights <- sapply(groups, function(group) sqrt(length(group)))
+  }
+  if (max.steps == "default") {
+    # Default max steps is min of half of all groups and one less group than saturation
+    ## FIX
+    length(Y)/cumsum(sapply(groups, function(group) length(group)))
+    max.steps <- min(round(length(groups)/2), 
+  }
+  # Proceed to fixed stopping position
+  step.output <- add1_group(X, Y, groups, weights, ...)
+  print(step.output)
+}  
 
+
+                           

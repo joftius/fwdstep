@@ -71,13 +71,13 @@ group_lasso_knot <- function(X, Y, groups, weights) {
   else {
     Xeta = Xmax / wmax * sign(U[which])
   }
-  conditional <- variance = sum(Xeta^2)
-  Xeta = Xeta / conditional <- variance
+  conditional_variance = sum(Xeta^2)
+  Xeta = Xeta / conditional_variance
   
-  C <- X = t(X) %*% Xeta
+  C_X = t(X) %*% Xeta
   
-  a = U - C <- X * L
-  b = C <- X
+  a = U - C_X * L
+  b = C_X
   
   Vplus = c()
   Vminus = c()
@@ -102,7 +102,7 @@ group_lasso_knot <- function(X, Y, groups, weights) {
     Mplus = 0
     Mminus = Inf
   }
-  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional <- variance, k=kmax))
+  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmax))
 }
 
 pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {

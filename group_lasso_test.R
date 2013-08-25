@@ -1,5 +1,5 @@
 
-require('group_lasso.R')
+source('group_lasso.R')
 
 
 pdf('group_lasso.pdf')
@@ -9,7 +9,7 @@ main = function() {
   p = 10
   sigma = 0.1
   
-  nsim = 10000
+  nsim = 500
   P = c()
   for (i in 1:nsim) {
     X = matrix(rnorm(n*p),n,p)
@@ -32,7 +32,7 @@ main_MC = function() {
   p = 10
   sigma = 0.1
 
-  nsim = 1000
+  nsim = 200
   P = c()
   for (i in 1:nsim) {
     X = matrix(rnorm(n*p),n,p)

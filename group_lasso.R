@@ -1,3 +1,4 @@
+# This file contains core functions for computing the test statistic
 
 trignometric_form = function(num, den, weight, tol=1.e-6) {
   
@@ -31,7 +32,7 @@ trignometric_form = function(num, den, weight, tol=1.e-6) {
   }
 }
 
-group_lasso_knot <- function(X, Y, groups, weights) {
+group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
 
   U = t(X) %*% Y
   g = length(weights)
@@ -44,11 +45,17 @@ group_lasso_knot <- function(X, Y, groups, weights) {
   }
   
   for (j in 1:g) {
-    terms[j] = sqrt(terms[j]) / weights[j]
+    if (is.element(j, active.set)) {
+      terms[j] = 0
+    } else {
+      terms[j] = sqrt(terms[j]) / weights[j]
+    }
   }
   
   imax = which.max(terms)
   L = terms[imax]
+  if (L <= 0) { stop("Lambda should not be zero") }
+    
   wmax = weights[imax]
   
   which = groups == imax
@@ -81,7 +88,7 @@ group_lasso_knot <- function(X, Y, groups, weights) {
   
   Vplus = c()
   Vminus = c()
-  for (label in 1:g) {
+  for (label in setdiff(c(1:g), active.set)) {
     if (label != imax) {
       group = groups == label
       weight = weights[label]
@@ -96,13 +103,11 @@ group_lasso_knot <- function(X, Y, groups, weights) {
     Vminus = Vminus[!is.nan(Vminus)]
     Mplus = max(Vplus)
     Mminus = min(Vminus)
-
-  }
-  else {
+  } else {
     Mplus = 0
     Mminus = Inf
   }
-  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmax))
+  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmax, i=imax))
 }
 
 pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {

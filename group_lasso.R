@@ -106,9 +106,19 @@ group_lasso_knot <- function(X, Y, groups, weights) {
 }
 
 pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
-  num = pchisq((Mminus/(sd*sigma))^2, k, lower.tail=FALSE) - pchisq((L/(sd*sigma))^2, k, lower.tail=FALSE)
-  den = pchisq((Mminus/(sd*sigma))^2, k, lower.tail=FALSE) - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=FALSE)
-  return(num/den)
+  first.term = pchisq((Mminus/(sd*sigma))^2, k, lower.tail=TRUE)
+  if (first.term == 1) {
+    num = pchisq((L/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
+    den = pchisq((Mplus/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
+    value = exp(num - den)
+  } else {
+    print("#### Something strange ####")
+    #print(c(Mminus, first.term, L/(sd*sigma)^2, Mplus/(sd*sigma)^2))
+    num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
+    den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
+    value = num/den
+  }
+  return(value)
 }
 
 

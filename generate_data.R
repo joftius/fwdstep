@@ -7,6 +7,36 @@
 # * Random group sizes
 # * Fix categorical data generation
 
+# Staircase signal
+
+beta_staircase = function(g, k, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE) {
+  # Generate a staircase-shaped signal vector
+  # g: number of groups
+  # k: group size
+  # num.nonzero: number of signal groups
+  # upper: largest magnitude for a group
+  # lower: lowest nonzero magnitude for a signal group
+  # rand.within: if TRUE, adds small noise to coefficients
+  # rand.sign: if TRUE, randomly changes the signs of each coefficient
+  q = k * num.nonzero
+  p = k * g
+  beta = sort(rep(seq(from=lower, to=upper, length=num.nonzero), k), decreasing=TRUE)
+
+  if (rand.sign) {
+    signs = sample(c(-1, 1), q, replace = TRUE)
+    beta = signs*beta
+  }
+
+  if (rand.within) {
+    mult = (upper - lower)/(num.nonzero - 1)
+    mult = sqrt(mult / 6) # make noise small
+    noise = rnorm(q) * mult
+    beta = beta + noise
+  }
+
+  beta = c(beta, rep(0, p-q))
+  return(beta)
+}
 
 # Fixed group sizes, gaussian design
 simulate_fixed = function(n, g, k, orthonormal=TRUE, beta=0) {

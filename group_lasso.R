@@ -54,7 +54,9 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   
   imax = which.max(terms)
   L = terms[imax]
-  if (L <= 0) { stop("Lambda should not be zero") }
+  if (L <= 0) {
+    stop("Lambda should not be zero")
+  }
     
   wmax = weights[imax]
   

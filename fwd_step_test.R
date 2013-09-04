@@ -54,7 +54,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps) {
 
 main = function() {
 
-  nsim = 400
+  nsim = 100
 
   # A small problem
   n = 50

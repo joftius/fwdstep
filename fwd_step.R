@@ -1,5 +1,6 @@
 # TODO: orthogonalize
 
+library(MASS) # for ginv
 source('group_lasso.R')
 
 update_active_set = function(active.set, group) {
@@ -14,13 +15,29 @@ update_active_set = function(active.set, group) {
 
 add_group = function(X, Y, groups, weights, sigma, active.set = 0) {
 
+  n = length(Y)
   results = group_lasso_knot(X, Y, groups, weights, active.set)
+  imax = results$i
+  gmax = groups == imax
+  
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
-  new.active.set = update_active_set(active.set, results$i)
+  new.active.set = update_active_set(active.set, imax)
 
-  Y.resid = lm(Y ~ X[, results$i])$residuals
+  Y.resid = lm(Y ~ X[, gmax])$residuals
 
-  return(list(test.output = results, p.value = p.value, active.set = new.active.set, Y.update = Y.resid))
+  X.project = X
+  gmax = groups == results$i
+  Xgmax = X[, gmax]
+  Pgmax = Xgmax %*% ginv(Xgmax)
+  
+  for (gind in 1:max(groups)) {
+    if (gind != imax) {
+      group = groups == gind
+      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group] 
+    }
+  }
+
+  return(list(test.output = results, p.value = p.value, active.set = new.active.set, Y.update = Y.resid, X.update = X.project))
 }
 
 
@@ -45,12 +62,14 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   Ls = c()
 
   Y.update = Y
+  X.update = X
 
   for (i in 1:max.steps) {
     
-    output = add_group(X, Y.update, groups, weights, sigma, active.set)
+    output = add_group(X.update, Y.update, groups, weights, sigma, active.set)
     active.set = output$active.set
     Y.update = output$Y.update
+    X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
     Ls = c(Ls, output$test.output[1])
     

@@ -36,9 +36,11 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps) {
     AS.mat.b[i, ] = results.b$active.set
   }
 
+  Pvals = colMeans(P.mat.b)
+    
   recover.mat = apply(AS.mat.b, 1:2, function(x) is.element(x, true.active.groups))
   MSRS = colMeans(recover.mat)
-  num.recovered.groups = rowSums(recover.mat)
+  num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
   MRR = mean(num.recovered.groups)
   print(MRR)
 
@@ -46,11 +48,13 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps) {
        main = paste("n, g, #nonzero, MRR =", toString(paste(c(n, g, num.nonzero, MRR), sep = ", "))),
        xlab = "Step", ylab = "MSRS")
 
+  points(1:max.steps, Pvals, col="red")
+
 }
 
 main = function() {
 
-  nsim = 100
+  nsim = 400
 
   # A small problem
   n = 50
@@ -59,7 +63,7 @@ main = function() {
   upper = 0.9
   lower = 0.6
   num.nonzero = 3
-  max.steps = 5  
+  max.steps = 6 
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
@@ -68,9 +72,9 @@ main = function() {
   sigma = 0.9
   groups = sort(c(rep(1:10, 2), rep(11:15, 5), rep(16:20, 10)))
   upper = 1
-  lower = 0.5
+  lower = 0.2
   num.nonzero = 8
-  max.steps = 12
+  max.steps = 14
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 

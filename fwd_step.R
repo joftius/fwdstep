@@ -1,3 +1,4 @@
+# TODO: orthogonalize
 
 source('group_lasso.R')
 

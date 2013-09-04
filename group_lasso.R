@@ -1,6 +1,6 @@
 # This file contains core functions for computing the test statistic
 
-trignometric_form = function(num, den, weight, tol=1.e-6) {
+trignometric_form = function(num, den, weight, tol=1.e-10) {
   
   a = num
   b = den
@@ -8,9 +8,13 @@ trignometric_form = function(num, den, weight, tol=1.e-6) {
   
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
+
+  if (normb == 0) stop("Something is wrong, normb can't be zero!")
+  
   if ((norma / normb) < tol) {
     return(c(0, Inf))
   }
+
   
   Ctheta = sum(a*b) / (norma*normb)
   Ctheta = min(max(Ctheta, -1), 1)

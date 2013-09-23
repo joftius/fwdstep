@@ -1,4 +1,3 @@
-# TODO: orthogonalize
 
 library(MASS) # for ginv
 source('group_lasso.R')
@@ -11,14 +10,20 @@ update_active_set = function(active.set, group) {
     new.active.set = c(active.set, group)
   }
   return(new.active.set)
+  
 }
 
-add_group = function(X, Y, groups, weights, sigma, active.set = 0) {
+add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
 
   n = length(Y)
   results = group_lasso_knot(X, Y, groups, weights, active.set)
   imax = results$i
   gmax = groups == imax
+  new.eff.p = eff.p + sum(gmax)
+
+  if (new.eff.p >= n) {
+    stop("Too many variables added")
+  }
   
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
   new.active.set = update_active_set(active.set, imax)
@@ -37,7 +42,7 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0) {
     }
   }
 
-  return(list(test.output = results, p.value = p.value, active.set = new.active.set, Y.update = Y.resid, X.update = X.project))
+  return(list(test.output = results, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
 
 
@@ -45,10 +50,14 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0) {
 
 forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
 
+  n = length(Y)
+  group.sizes = rle(groups)$lengths
+
   if ((length(weights) == 1) & (weights[1] == 0)) {
     weights = sqrt(rle(groups)$lengths)
   }
 
+  # Estimate sigma instead?
   if (sigma == 0) {
     stop("Sigma estimate needed here")
   }
@@ -58,6 +67,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   }
 
   active.set = 0
+  eff.p = 0
   p.vals = c()
   Ls = c()
 
@@ -66,12 +76,23 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
 
   for (i in 1:max.steps) {
     
-    output = add_group(X.update, Y.update, groups, weights, sigma, active.set)
+    output = add_group(X.update, Y.update, groups, weights, sigma, active.set, eff.p)
     active.set = output$active.set
+    eff.p = output$eff.p
     Y.update = output$Y.update
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
+    # tracking lambda_2
     Ls = c(Ls, output$test.output[1])
+
+    # Some overfitting considerations
+    if ((eff.p >= n - max(group.sizes)) & (i < max.steps)) {
+      if (eff.p > n - mean(group.sizes)) {
+        warning("Overfitting likely to occur in next step")
+      } else {
+        warning("Overfitting may occur in next step")
+      }
+    }
     
   }
 

@@ -10,7 +10,7 @@ active_groups = function(groups, beta) {
 }
 
 
-fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, rand.beta = FALSE) {
+fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, rand.beta = FALSE) {
 
   weights = sqrt(rle(groups)$lengths)
   p = length(groups)
@@ -38,10 +38,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, rand.be
     Y = rnorm(n)*sigma
     Y.beta = X %*% beta + Y
 
+    # Null case
     results = forward_group(X, Y, groups, weights, sigma, max.steps)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
+    # Signal case
     results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps)
     P.mat.b[i, ] = results.b$p.vals
     AS.mat.b[i, ] = results.b$active.set
@@ -49,7 +51,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, rand.be
                  is.element(x, true.active.groups))
   }
 
-  CI.probs <- c(.10, .90)
+  CI.probs <- c(.25, .75)
   null.Pvals <- colMeans(P.mat)
   null.Pvals.CI <- apply(P.mat, 2, function(col) quantile(col, probs = CI.probs))
 
@@ -83,7 +85,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, rand.be
 
 main = function() {
 
-  nsim = 500
+  nsim = 100
 
   # A small problem
   n = 50
@@ -92,7 +94,7 @@ main = function() {
   upper = 0.9
   lower = 0.6
   num.nonzero = 3
-  max.steps = 6 
+  max.steps = 5
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
@@ -103,12 +105,23 @@ main = function() {
   upper = 1
   lower = 0.2
   num.nonzero = 8
-  max.steps = 14
+  max.steps = 10
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
   # Randomized beta
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE)
+  
+  # An n << p problem
+  n = 100
+  sigma = 1.01
+  groups = sort(c(rep(1:50, 5), rep(51:75, 10), rep(76:80, 15), 81:100))
+  upper = 3.4
+  lower = 2.9
+  num.nonzero = 10
+  max.steps = 11
+  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
+  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
 }
 
@@ -117,3 +130,4 @@ pdf('test_fwd_step.pdf')
 main()
 
 dev.off()
+

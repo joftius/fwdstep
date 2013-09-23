@@ -1,0 +1,11 @@
+* Update first draft to reflect current knowledge
+** Reference isonormal paper
+
+* Focal points of paper
+** Summary of previous work
+** Extension to group lasso
+** (null) P-value fix
+** (signal) Forward stepwise with fixed # of steps
+** (signal) Stopping rules
+** Real data
+** Proofs: derive M, is M=lam_2?

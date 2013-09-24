@@ -57,7 +57,8 @@
 \begin{frontmatter}
 
 % "Title of the paper"
-\title{Significance testing and forward stepwise with the group lasso}
+\title{Significance testing with forward stepwise and grouped forward
+  stepwise model selection}
 
 %%%
 %%% \runtitle{} - I don't know what this is
@@ -123,16 +124,19 @@ appropriate null distribution that behaves well when a model has been
 selected using the lasso \citep{tibshirani:lasso}.
 \cite{tests:adaptive} modified and extended those results to the
 group lasso \citep{grouplasso} and other adaptive regression
-problems.  The present work
-explores the behavior of those test statistics for models selected by
-forward stepwise procedures and works out some of the details
-involved in applying these methods to models with grouped variables.
-We find that our test statistics can be used for valid significance
-testing, or for tempering the aggressive nature of forward stepwise
-model selection.  The resulting methods may be less computationally
-intensive than choosing a regularization parameter for the group lasso
-by cross-validation.  
+problems.  The present work explores the behavior of those test
+statistics for models selected by forward stepwise procedures and
+works out some of the detailsinvolved in applying these methods to
+models with grouped variables. We find that our test statistics can be
+used for valid significance testing, or for tempering the aggressive
+nature of forward stepwise model selection.  The resulting methods may
+be less computationally intensive than choosing a regularization
+parameter for the (group) lasso by cross-validation. 
 
+
+\todo Write about more differences/advantages of this paper- maybe not
+in this section, but: using non-asymptotic p-values, forward step is
+simple(r than lasso), more?
 
 
 To fix notation for the group lasso problem we consider an outcome $y
@@ -188,6 +192,8 @@ penalty term is the $L^1$-norm of $\beta$.
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\todo Fix references below
+
 The group lasso estimator is discussed in (ref that guy's thesis) and
 (ref Yuan and Lin).  An important extension is the sparse group lasso
 (ref ???) which enforces sparsity in groups as well as sparsity of the
@@ -212,7 +218,6 @@ stepwise procedure related to the group lasso that adds groups of
 variables (or factors) in each step. 
 
 
-
 (\todo Change this paragraph as the sections are completed)
 In Section 2 we briefly review the work of (ref LTTT) concerning
 significance testing for the lasso, and discuss how this result is
@@ -231,6 +236,8 @@ data).
 
 \section{Significance testing: from lasso to group lasso}
 \label{sec:testing}
+
+\todo Update this section to match/complement \citep{tests:adaptive}
 
 \subsection{Background}
 In the ordinary least squares setting, a significance test for a
@@ -331,16 +338,20 @@ path.
 to include the weights and use that version. The proof can go in an
 appendix. 
 
-\emph{(For this section I have a lot of stuff written that can just be pasted in once I'm done wrangling the KKT conditions for the unequal weight case)}
+\todo Modify write-up to match notation with \cite{tests:adaptive} and
+then paste it in here
 
 \subsection{Better p-values}
 
-
+Maybe just reference \cite{tests:adaptive}? It might be worthwhile to
+leave in the connection with \cite{significance:lasso} (getting our
+test statistic by not using the approximation)
 
 \begin{itemize}
 
 \item \todo Add the figures to this section
 \item \todo Convert to exposition instead of bulleted list
+\item \todo Update to reflect latest work
   \item As in LTTT, $T = \lambda_1 (\lambda_1 - M)$ and $M = \lambda_2$
   \item Convergence to the limiting Exp(1) distribution is too slow
     \[
@@ -362,20 +373,45 @@ appendix.
 \end{itemize}
 
 
-\subsection{Can we do $\lambda_k$? Don't know yet}
-
 \section{Forward stepwise procedures}
-\todo This is potentially the second largest thing not done yet. However, if it turns out we can't think of a better stopping rule, then this section is done and just needs to be written (and would not take long).
 
-\section{Simulations }
-(I've done many of these and have a lot of code, so I can produce a lot of output for this section)
-\todo Modify some of my previous simulations after deciding on a stopping rule, decide which simulations to put here.
+\todo Expand this section
+
+\begin{itemize}
+  \item Brief background, cite some original papers
+  \item Describe exactly how we do each step (projection, residuals, etc) 
+  \item Stopping rules, cite new paper on lasso, perhaps we have
+    a computation advantage
+\end{itemize}
+
+\section{Simulations}
+
+\todo Expand, include simulation results (copy latex for
+includegraphics etc), do the simulation comparing stopping rules
+
+\begin{itemize}
+  \item Show null and non-null p-value-by-step plots for several examples
+  \item Discuss one of these carefully (perhaps with a noise variable
+    entering before a signal variable), for several fixed stopping points
+  \item Compare a few stopping rules, e.g. naive one(s),
+    TailStop/HybridStop, AIC/BIC/Cp
+  \item (the stopping comparisons are not done yet, but I am guessing
+    they will be comparable, perhaps AIC/BIC/Cp will be better, and in
+    that case look for other advantages of ours to mention,
+    e.g. interpretability for being based on p-values rather than a
+    complexity penalty)
+
+\end{itemize}
 
 \section{Real data example}
-\todo This is definitely the single largest part I have not done yet.
+\todo Simulation with non-Gaussian design matrix (from AIDS data probably)
 
 
+\section{Discussion}
 
+\todo After finising everything else, move some points of discussion
+here, re-read and see if there's anything else interesting to comment
+on here. Mention ongoing work
 
 
 

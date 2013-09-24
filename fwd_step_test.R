@@ -96,7 +96,7 @@ main = function() {
   num.nonzero = 3
   max.steps = 5
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
-  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
+#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
   # A larger problem
   n = 200
@@ -107,20 +107,20 @@ main = function() {
   num.nonzero = 8
   max.steps = 10
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
-  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
+#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
   # Randomized beta
-  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE)
+#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE)
   
   # An n << p problem
   n = 100
   sigma = 1.01
-  groups = sort(c(rep(1:50, 5), rep(51:75, 10), rep(76:80, 15), 81:100))
+  groups = sort(c(rep(1:100, 5), rep(101:150, 10)))
   upper = 3.4
-  lower = 2.9
+  lower = 1.4
   num.nonzero = 10
-  max.steps = 11
-  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
+  max.steps = 12
+  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE)
   fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
 
 }

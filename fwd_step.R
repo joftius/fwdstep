@@ -22,7 +22,7 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   new.eff.p = eff.p + sum(gmax)
 
   if (new.eff.p >= n) {
-    stop("Too many variables added")
+    stop("Too many variables added. Try decreasing max.steps")
   }
   
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
@@ -44,7 +44,6 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
 
   return(list(test.output = results, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
-
 
 
 
@@ -88,9 +87,9 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     # Some overfitting considerations
     if ((eff.p >= n - max(group.sizes)) & (i < max.steps)) {
       if (eff.p > n - mean(group.sizes)) {
-        warning("Overfitting likely to occur in next step")
+        warning("Overfitting imminent!")
       } else {
-        warning("Overfitting may occur in next step")
+        warning("Overfitting may occur soon")
       }
     }
     

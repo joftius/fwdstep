@@ -10,7 +10,7 @@ active_groups = function(groups, beta) {
 }
 
 
-fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, rand.beta = FALSE) {
+fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, rand.beta = FALSE, plot = FALSE) {
 
   weights = sqrt(rle(groups)$lengths)
   p = length(groups)
@@ -64,22 +64,26 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
   MRR = mean(num.recovered.groups)
   print(MRR)
 
-  xax <- 1:max.steps
-  nxax <- xax + 0.2
-  plot.main <- paste("n, g, #nonzero, MRR =",
-                     toString(paste(c(n, g, num.nonzero, MRR), sep = ", ")))
-  if (rand.beta == TRUE) {
-    plot.main = paste(plot.main, "(randomized signal)")
-  }
-  plot(xax, MSRS, type = "b", main = plot.main, xlab = "Step", ylab = "MSRS")
+  if (plot == TRUE) {
+    xax <- 1:max.steps
+    nxax <- xax + 0.2
+    plot.main <- paste("n, g, #nonzero, MRR =",
+                       toString(paste(c(n, g, num.nonzero, MRR), sep = ", ")))
+    if (rand.beta == TRUE) {
+      plot.main = paste(plot.main, "(randomized signal)")
+    }
+    plot(xax, MSRS, type = "b", main = plot.main, xlab = "Step", ylab = "MSRS")
 
-  points(nxax, null.Pvals, col="red")
-  arrows(nxax, null.Pvals.CI[1, ], nxax, null.Pvals.CI[2, ],
-         code = 3, angle = 90, length = 0, col = "red")
+    points(nxax, null.Pvals, col="red")
+    arrows(nxax, null.Pvals.CI[1, ], nxax, null.Pvals.CI[2, ],
+           code = 3, angle = 90, length = 0, col = "red")
   
-  points(xax, Pvals, col="green")
-  arrows(xax, Pvals.CI[1, ], xax, Pvals.CI[2, ],
-         code = 3, angle = 90, length = 0, col = "green")
+    points(xax, Pvals, col="green")
+    arrows(xax, Pvals.CI[1, ], xax, Pvals.CI[2, ],
+           code = 3, angle = 90, length = 0, col = "green")
+  }
+  
+  return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.active = recover.mat))
 
 }
 
@@ -96,7 +100,7 @@ main = function() {
   num.nonzero = 3
   max.steps = 5
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
-#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
+#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
 
   # A larger problem
   n = 200
@@ -107,10 +111,10 @@ main = function() {
   num.nonzero = 8
   max.steps = 10
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
-#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
+#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
 
   # Randomized beta
-#  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE)
+#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
   
   # An n << p problem
   n = 100
@@ -121,13 +125,13 @@ main = function() {
   num.nonzero = 10
   max.steps = 12
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE)
-  fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps)
+  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
 
 }
 
-pdf('test_fwd_step.pdf')
-
-main()
-
-dev.off()
+if (interactive()) {
+  pdf('test_fwd_step.pdf')
+  main()
+  dev.off()
+}
 

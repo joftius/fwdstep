@@ -28,6 +28,7 @@
 \startlocaldefs
 
 \usepackage{graphics,amssymb,color}
+\usepackage{graphicx,subfigure}
 
 \newcommand{\argmax}{\mathop{\mathrm{argmax}}}
 \newcommand{\argmin}{\mathop{\mathrm{argmin}}}
@@ -402,6 +403,29 @@ includegraphics etc), do the simulation comparing stopping rules
     complexity penalty)
 
 \end{itemize}
+
+
+\begin{figure}
+\begin{center}
+\subfigure[Our test]{
+\label{fig:lassopvala}
+\includegraphics[width=0.5\textwidth]{../figs/small_sim_plot.pdf}}
+\hspace{-15pt}
+\subfigure[Covariance test]{
+\label{fig:lassopvalb}
+\includegraphics[width=0.5\textwidth]{../figs/small_sim_plot.pdf}}
+\caption{\small \it The left panel shows the empirical distribution
+  function of a sample of 20,000 p-values coming
+  from a variety of different lasso setups.  The agreement with
+  uniform here is excellent.  The right panel shows the empirical
+  distribution function of a sample of 10,000 covariance test
+  p-values, computed using an $\mathrm{Exp}(1)$ approximation,
+  using three different lasso setups.  The
+  $\mathrm{Exp}(1)$ approximation is generally conservative.}
+\end{center}
+\end{figure}
+
+
 
 \section{Real data example}
 \todo Simulation with non-Gaussian design matrix (from AIDS data probably)

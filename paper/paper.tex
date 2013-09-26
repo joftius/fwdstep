@@ -49,7 +49,9 @@
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{cor}[theorem]{Corollary}
 \newcommand{\XK}{K_X}
-\def\qed{\hfill $\Box$\newline}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\innerp}[2]{\langle #1 , #2 \rangle}
+%\newcommand{\qed}{\hfill $\Box$\newline}
 
 \endlocaldefs
 
@@ -1137,6 +1139,93 @@ on here. Mention ongoing work
 % 
 % As Bernoulli found himself with just a law of large  numbers, the field of statistics is roughly at this same stage in high-dimensional inference. We are hopeful that the geometry of least squares will eventually guide the field to weak convergence results in high-dimensional inference
 % for the canonical problem eqref{eq:canonical}.
+
+\appendix
+\section{Derivation of closed forms of statistic}
+
+Write $M^{\pm}_{\eta, h}$ and $M^0_{\eta, h}$ as the corresponding suprema and infima over the restricted parameter set $S_h$. Note that the characterization of the global maximizer (Lemma 1, general paper) implies $M^0_{\eta, h} \leq 0$ and $M^+_{\eta, h} \leq M^-_{\eta, h}$ for all $h \neq g$. This will be used below to eliminate some degenerate cases of the optimization sub-problem on each $S_h$.
+
+Now fix $h$, let $P_g = X_gX_g^T$ and define
+\begin{align*}
+a_h &= w_h^{-1} X_h^T (I-P_g) y \\
+b_h &= w_g w_h^{-1} X_h^T P_g y / \norm{X_g^T y} \\
+c_h &= a_h^T b_h / (\norm{a_h} \norm{b_h}) \\
+K_h   &= \{ x : \norm{x} = 1, b_h^Tx > w \}
+\end{align*}
+Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We will consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
+
+Now, if $a_h$ is in the polar cone of $K_h$ (and ruling out the probability zero case where $a_h^Tx = 0$ on the boundary of $K_h$), then the numerator $a_h^Tx < 0$ on $K_h$ so there is a finite positive infimum in the interior $K_h$. Similarly there is a finite positive supremum on the interior of $K_h^c$ (the numerator is negative near the boundary of $K_h$ by continuity).
+
+To attain the infimum on $K_h$ requires making $x$ close to $b_h$ and simultaneously making the numerator closer to zero, so $x$ should be on the side of $b_h$ that is closer to $a_h$. To attain the supremum on $K_h^c$ requires making $x$ simultaneously close to $a_h$ (so that $a_h^Tx > 0$) and $b_h$ (to make the denominator small). In summary, both the infimum and supremum are attained with $x$ between $a_h$ and $b_h$, when the angle $\theta$ between $a_h$ and $b_h$ is larger than both the angle $\psi$ between $a_h$ and $x$ and the angle $\phi$ between $x$ and $b_h$. This allows the simplification $\phi = \theta - \psi$. This is easier to verify for the case when $\norm{b_h} < w$.
+
+We have verified that solving both cases requires finding the maxima of the trigonometric form $\norm{a_h} \cos (\psi) / (w - \norm{b_h} \cos(\theta - \psi))$ of the linear fraction on the interiors of $K_h$ (if it is nonempty) and $K_h^c$. The derivative is proportional to
+\[
+\frac{\norm{b_h} \sin(\theta) - w \sin(\psi)}{w - \norm{b_h} \cos(\theta - \psi)}
+\]
+Since we have ruled out the boundary of $K_h$, we can ignore the denominator and focus on critical points corresponding to the angles $\psi^{\pm}$ (symmetric about $\pi/2$) where $\sin(\psi^{\pm}) = (\norm{b_h} / w) \sin (\theta)$. That is,
+\[
+\psi^{\pm} \in \arcsin \frac{\norm{b_h}}{w} \sqrt{1-c_h^2}
+\]
+Note that these critical points only exist if $\sin(\theta) < w/\norm{b_h}$, and since we have argued that the infimum and supremum are attained it follows that this condition is met in our case. Let $\psi^+$ denote the smaller of the two angles. If $K_h$ is nonempty, then $\psi^-$ gives the infimum in $K_h$ and $\psi^+$ the supremum on $K_h^c$. This is necessary since if $x$ is in $K_h$ then its angle from $a_h$ is larger than $\pi/2$ because $a_h$ is in the polar cone of $K_h$. If $K_h$ is empty, then the supremum is still attained at $\psi^+$ since the numerator is negative at $\psi^- > \pi/2$ and the denominator is always positive.
+
+Finally we calculate the values of the linear fraction at $\psi^{\pm}$. Let us first record some facts:
+\begin{align*}
+0 < \psi^+ < \pi/2, \quad \psi^- = \pi - \psi^+ \\
+\cos(\theta) = c_h, \quad \sin(\theta) = \sqrt{1-c_h^2} \\
+\sin(\psi^+) = \sin(\psi^-) = \frac{\norm{b_h}}{w} \sin(\theta) \\
+\cos(\psi^+) = -\cos(\psi^-) = \sqrt{1 - (\norm{b_h}/w)^2(1-c_h^2)}
+\end{align*}
+Using the angle difference formula,
+\begin{align*}
+\cos(\theta - \psi^+) & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+) \\
+& = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+)
+\end{align*}
+Hence
+\begin{align*}
+M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) - \norm{b_h} c_h \cos(\psi^+) } \\
+% & = 
+% & = \frac{ w \norm{a} a_h^Tb_h / \norm{b_h} }{ w^2 - \norm{a}\norm{b}^2 + (a^Tb)/\norm{a} - a^Tb \cos \psi^+ }
+\end{align*}
+And $M^-_{\eta, h}$ is $\infty$ when $\norm{b_h} < w$ and otherwise given by
+\begin{align*}
+M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \norm{b_h} c_h \cos(\psi^+) } \\
+\end{align*}
+
+I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
+
+\newpage
+We can rewrite this by rationalizing the denominator:
+\[
+M =
+\frac
+{ a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
+{ 1-b_h^Tb_h }
+\]
+Leaving $M$ in this form we now consider $\lambda_2$. The KKT conditions for the group lasso problem give (directly from Yuan and Lin)
+\begin{align*}
+\norm{ X_g^T(y - X \beta) } & \leq \lambda w_g \quad \forall \beta_g \neq 0 \\
+\beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{S_g} } \right)_+ S_g
+\end{align*}
+where $S_g = X_g^T(y - X \beta_{-g})$. These expressions simplify for $\lambda_2 \leq \lambda < \lambda_1$. Letting $g$ be the index of the first group to enter we now have $S_g = X_g^Ty$ 
+\begin{align*}
+\beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{X_g^Ty} } \right) X_g^Ty \\
+\lambda w_h & \geq \norm{ X_h^Ty - X_h^T P_g y (1-\lambda w_g / \norm{X_g^Ty})  } \quad \forall h \neq g
+\end{align*}
+Now let $\lambda = \lambda_2$, so the inequality above is strict for all other groups and equality is attained for the second group to enter. Hence $\lambda_2$ satisfies
+\begin{align*}
+\lambda_2 & = \max_{h \neq g} 
+\norm{ X_h^T(I - P_g) y - \lambda_2 ( w_g X_h^T P_g y / \norm{X_g^Ty} )  } / w_h\\
+& = \max_{h \neq g} \norm{ a_h - \lambda_2 b_h } 
+\end{align*}
+
+Write $\lambda_{2,h}$ as the positive root of the quadratic equation obtained by squaring the norm, so $\lambda_{2,h}^2 = \norm{ a_h - \lambda_2 b_h }^2$. Then $\lambda_2 = \max_{h \neq g} \lambda_{2,h}$. Solving this (note that $b_h^Tb_h < 1$), we find
+\[
+\lambda_{2,h} = \frac
+{ a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
+{ 1-b_h^Tb_h }
+\]
+Hence when $h$ is the index of the second group to enter, we have $\lambda_2 = \lambda_{2,h} = M$.
+
 
 \bibliographystyle{ims}
 %\bibliographystyle{acmtrans-ims}

@@ -52,50 +52,50 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 }
 
 # Fixed group sizes, gaussian design
-simulate_fixed = function(n, g, k, orthonormal=TRUE, beta=0) {
-  p = g*k
+gaussian_design = function(n, groups, ortho.within = FALSE) {
+  p = length(groups)
   X = matrix(rnorm(n*p), nrow=n)
-  groups = list()
-  for (group in 1:g) {
-    groups[[group]] = k*(group-1) + 1:k
-  }
-  if (length(beta) == 1) {
-    beta = matrix(0*1:p, ncol=1)
-  }
-  if (orthonormal == TRUE) {
-    for (group in groups) {
-      X[,group] = svd(X[,group])$u
+
+  if (ortho.within == TRUE) {
+    for (g in 1:max(groups)) {
+      group = groups == g
+      X[ , group] = svd(X[ , group])$u
     }
   }
-  Y = X %*% beta + rnorm(n)
-  weights = rep(1,g) * sqrt(k)
-  return(list(X=X, Y=Y, groups=groups, weights=weights))
+  
+  return(X)
 }
 
 
 # Fixed group sizes, categorical design
-simulate_fixed_cat = function(n, g, k, orthonormal=TRUE, beta=0) {
-  p = g*k
+# Important: binary requires two indices in groups, e.g. c(1,1,...)
+categorical_design = function(n, groups, ortho.within = FALSE) {
+
+  if (min(rle(groups)$lengths) <= 1) {
+    stop("Minimum number of levels must be at least 2")
+  }
+  p = length(groups)
   X = matrix(nrow=n, ncol=p)
-  groups = list()
-  for (group in 1:g) {
-    groups[[group]] = k*(group-1) + 1:k
-    cat.levels = 1
+
+  for (g in 1:max(groups)) {
+    group = groups == g
+    group.size = sum(group)
+    cat.levels = NULL
     # Resample until no levels are empty
-    while (length(unique(cat.levels)) < k) {
-      cat.levels = sample(1:k, n, replace=TRUE)
+    while (length(unique(cat.levels)) < group.size) {
+      cat.levels = sample(1:group.size, n, replace=TRUE)
     }
-    cat.binary = unname(model.matrix(~ factor(cat.levels) - 1)[1:n, 1:k])
-    if (orthonormal == TRUE) {
-      X[1:n, k*(group-1) + 1:k] = cat.binary %*% diag(1/sqrt(colSums(cat.binary)))
-    } else {
-      X[1:n, k*(group-1) + 1:k] = cat.binary
+    X[ , group] = unname(model.matrix(~ factor(cat.levels) - 1)[ , 1:group.size])
+    if (ortho.within == TRUE) {
+      X[ , group] = X[ , group] %*% diag(1/sqrt(colSums(X[ , group])))
     }
+
   }
-  if (length(beta) == 1) {
-    beta = matrix(0*1:p, ncol=1)
-  }
-  Y = X %*% beta + rnorm(n)
-  weights = rep(1,g) * sqrt(k)
-  return(list(X=X, Y=Y, groups=groups, weights=weights))
+
+  return(X)
 }
+
+n = 6
+groups = c(1,1,1,2,2,3,3,3,3)
+X = categorical_design(n, groups)
+

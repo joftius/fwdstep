@@ -10,7 +10,7 @@ active_groups = function(groups, beta) {
 }
 
 
-fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, rand.beta = FALSE, plot = FALSE) {
+fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, categorical = FALSE, rand.beta = FALSE, plot = FALSE) {
 
   weights = sqrt(rle(groups)$lengths)
   p = length(groups)
@@ -33,8 +33,13 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
         rand.sign = TRUE, permute = TRUE, perturb = TRUE)
       true.active.groups = active_groups(groups, beta)
     }
-    
-    X = matrix(rnorm(n*p),n,p)
+
+    if (categorical == TRUE) {
+      X = categorical_design(n, groups)
+    } else {
+      X = gaussian_design(n, groups)
+    }
+
     Y = rnorm(n)*sigma
     Y.beta = X %*% beta + Y
 
@@ -100,7 +105,7 @@ main = function() {
   num.nonzero = 3
   max.steps = 5
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
-#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
+  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
 
   # A larger problem
   n = 200
@@ -111,10 +116,10 @@ main = function() {
   num.nonzero = 8
   max.steps = 10
   beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
-#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
+  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
 
   # Randomized beta
-#  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
+  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
   
   # An n << p problem
   n = 100
@@ -130,8 +135,8 @@ main = function() {
 }
 
 if (interactive()) {
-  pdf('test_fwd_step.pdf')
-  main()
-  dev.off()
+#  pdf('test_fwd_step.pdf')
+#  main()
+#  dev.off()
 }
 

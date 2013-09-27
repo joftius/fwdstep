@@ -53,7 +53,8 @@
 \newcommand{\innerp}[2]{\langle #1 , #2 \rangle}
 %\newcommand{\qed}{\hfill $\Box$\newline}
 
-\endlocaldefs
+\newcommand{\V}{\mathcal{V}}\endlocaldefs
+\newcommand{\K}{\mathcal{K}}
 
 \begin{document}
 
@@ -1142,6 +1143,22 @@ on here. Mention ongoing work
 
 \appendix
 \section{Derivation of closed forms of statistic}
+
+For the sake of completeness this appendix provides full derivations
+of closed forms for the quantities required to compute our
+statistic. We require two facts from \cite{tests:adaptive}
+
+A point $\eta \in \K$ maximizes $f_\eta$ over a convex
+set $\K$ if and only if the following conditions hold: 
+\begin{equation}
+\label{eq:maxcond}
+\grad f_{|T_{\eta}\K} = 0, \quad
+\tf^{\eta}_{\eta} \geq \V^+_{\eta}, \quad
+\tf^{\eta}_{\eta} \leq \V^-_{\eta}, \quad \text{and} \quad
+\V^0_{\eta} \leq 0.
+\end{equation}
+The same equivalence holds true even when $\K$ is only locally
+convex. 
 
 Write $M^{\pm}_{\eta, h}$ and $M^0_{\eta, h}$ as the corresponding suprema and infima over the restricted parameter set $S_h$. Note that the characterization of the global maximizer (Lemma 1, general paper) implies $M^0_{\eta, h} \leq 0$ and $M^+_{\eta, h} \leq M^-_{\eta, h}$ for all $h \neq g$. This will be used below to eliminate some degenerate cases of the optimization sub-problem on each $S_h$.
 

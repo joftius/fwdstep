@@ -29,6 +29,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   V2 = norma * cos(phi2) / (w - normb * cos(theta-phi2))
   
   if (normb < w) {
+    # encode this infeasibility as Inf
     return(c(max(c(V1,V2)), Inf))
   }
   else {
@@ -42,8 +43,8 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   g = length(weights)
   p = length(groups)
   terms = matrix(0, g)
-                                        # first, compute the terms that go into
-                                        # computing the dual norm
+  # first, compute the terms that go into
+  # computing the dual norm
   for (i in 1:p) {
     terms[groups[i]] = terms[groups[i]] + U[i]^2
   }
@@ -65,8 +66,10 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   wmax = weights[imax]
   
   which = groups == imax
-  
-                                        # assuming rank == num of variables in group...
+
+  #
+  # assuming rank == num of variables in group...
+  #
   kmax = sum(which)
   
   Uwhich = U[which]
@@ -75,11 +78,12 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   Xmax = X[,which]
   
   if (kmax > 1) {
-    soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
+    #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
     Xeta = (Xmax %*% soln)[,1]
     Xmax = Xmax - outer(Xeta, soln, '*') / sum(soln^2)
     Wmax = Xmax[,1:(ncol(Xmax)-1)]
-    Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
+    #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
+    Xeta = lm(Xeta ~ Wmax - 1)$residuals
   }
   else {
     Xeta = Xmax / wmax * sign(U[which])

@@ -35,7 +35,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     }
 
     if (categorical == TRUE) {
-      X = categorical_design(n, groups)
+      X = categorical_design(n, groups, ortho.within = TRUE)
     } else {
       X = gaussian_design(n, groups)
     }

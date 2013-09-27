@@ -28,7 +28,7 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
   new.active.set = update_active_set(active.set, imax)
 
-  Y.resid = lm(Y ~ X[, gmax])$residuals
+  Y.resid = lm(Y ~ X[, gmax] - 1)$residuals
 
   X.project = X
   gmax = groups == results$i

@@ -415,7 +415,10 @@ includegraphics etc), do the simulation comparing stopping rules
 \subfigure[Gaussian design]{
 \label{fig:lassopvala}
 \includegraphics[width=0.5\textwidth]{../figs/small_sim_gaussian_design.pdf}}
-\hspace{-15pt}
+\subfigure[Large Gaussian design]{
+\label{fig:lassopvala}
+\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_design.pdf}}
+%\hspace{-15pt}
 \subfigure[Categorical design]{
 \label{fig:lassopvalb}
 \includegraphics[width=0.5\textwidth]{../figs/small_sim_categorical_design.pdf}}
@@ -432,10 +435,18 @@ so there are 10 categorical variables with a total of 32 levels.}
 
 
 
-
-\label{fig:smallselection}
-
 \input{../small_sim_results.tex}
+
+
+
+\input{../selection_sim_results.tex}
+
+The large simulation has 50 groups, 25 of size 1, 10 of size 5, 10 of
+size 10, and 5 of size 15. Signal vectors were supported on random
+choices of 10 of these groups (changing in each realization), with
+non-zero signal magnitude around $\sqrt{2\log p}$ where $p = 250$
+(roughly 3.3). The design matrix had 200 rows and the simulation
+performed 100 realizations.
 
 
 

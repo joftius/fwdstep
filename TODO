@@ -1,12 +1,4 @@
-* Refactor code, I suspect there are major issues somewhere
-*** Start with forward_step, then sim_stopping_rule
-*** Write tests!
-* Rerun simulations with _correct_ code
-* Find a stopping rule
-* Prove something about stopping rule
-* Prove M=lambda_2 for unequal weights
-* Prove M=lambda_2 for non-orthogonal designs
-* Try simulations with unequal weights, non-ortho designs
-* Edit better p-value section
-* Spruce up the bibliography
-* Try on a real data set
+* Finish stopping rules and rerun that simulation
+* Check p-value code, see if log.p option can be used
+* Debug categorical variables issue
+* Many TODO's listed in the paper

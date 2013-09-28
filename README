@@ -1,1 +1,14 @@
 These files contain code related to the significance testing and forward stepwise methods for group lasso discussed in the paper (insert citation)
+
+Files:
+* group_lasso.R: computing trigonometric form, first knot, pvalues
+* fwd_step.R: adding a (group of) variable(s), residualizing, continuing until max.steps
+* fwd_step_test.R: a simulation function that should be moved to another (non-test) file
+* model_selection.R: compute model selection statistics from simulation output
+* stop_rules.R: compute stopping index from lists of p-values
+* pval_by_step_plot.R: perform small simulation and plot results
+* selection_sim.R: perform larger simulation and plot/compute results
+* generate_data.R: produce random design matrices, signal vectors
+
+*.tex and figs/: output generated from simulations to include in paper
+* paper/: LaTeX files for paper

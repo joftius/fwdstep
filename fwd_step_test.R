@@ -2,6 +2,7 @@
 
 source('fwd_step.R')
 source('generate_data.R')
+source('model_selection.R')
 
 active_groups = function(groups, beta) {
   beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
@@ -20,7 +21,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
   upper = max(abs(beta))
   lower = min(abs(beta[beta != 0]))
   
-  P.mat = matrix(rep(NA, nsim*max.steps), nsim, max.steps)
+  P.mat = matrix(nrow=nsim, ncol=max.steps)
   AS.mat = P.mat
   P.mat.b = P.mat
   AS.mat.b = P.mat
@@ -88,7 +89,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
            code = 3, angle = 90, length = 0, col = "green")
   }
   
-  return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.active = recover.mat))
+  return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero))
 
 }
 

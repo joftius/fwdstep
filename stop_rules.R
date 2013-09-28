@@ -2,7 +2,7 @@
 # Input a list of p-values and alpha
 # Output largest index for model inclusion (0 if empty model)
 
-stop_first_large = function(p.list, alpha = .1) {
+stop_first = function(p.list, alpha = .1) {
 
   p.big = which(p.list > alpha)
 

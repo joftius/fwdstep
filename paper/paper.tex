@@ -53,8 +53,10 @@
 \newcommand{\innerp}[2]{\langle #1 , #2 \rangle}
 %\newcommand{\qed}{\hfill $\Box$\newline}
 
+\newcommand{\grad}{\nabla}
 \newcommand{\V}{\mathcal{V}}\endlocaldefs
 \newcommand{\K}{\mathcal{K}}
+\newcommand\tf{\widetilde{f}}
 
 \begin{document}
 
@@ -410,28 +412,36 @@ includegraphics etc), do the simulation comparing stopping rules
 
 \begin{figure}
 \begin{center}
-\subfigure[Our test]{
+\subfigure[Gaussian design]{
 \label{fig:lassopvala}
-\includegraphics[width=0.5\textwidth]{../figs/small_sim_plot.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/small_sim_gaussian_design.pdf}}
 \hspace{-15pt}
-\subfigure[Covariance test]{
+\subfigure[Categorical design]{
 \label{fig:lassopvalb}
-\includegraphics[width=0.5\textwidth]{../figs/small_sim_plot.pdf}}
-\caption{\small \it The left panel shows the empirical distribution
-  function of a sample of 20,000 p-values coming
-  from a variety of different lasso setups.  The agreement with
-  uniform here is excellent.  The right panel shows the empirical
-  distribution function of a sample of 10,000 covariance test
-  p-values, computed using an $\mathrm{Exp}(1)$ approximation,
-  using three different lasso setups.  The
-  $\mathrm{Exp}(1)$ approximation is generally conservative.}
+\includegraphics[width=0.5\textwidth]{../figs/small_sim_categorical_design.pdf}}
+\caption{\small \it The left panel shows results of a simulation with
+  an independent Gaussian design matrix and a signal vector having
+  three groups with non-zero coefficients of sizes one, two, and
+  three, and seven groups of noise variables with sizes varying from
+  one to ten, for a total of 30 variables. For the right panel we
+  repeated this setup, but group sizes corresponded to levels of
+  categorical variables. The groups of size one were increased to two,
+so there are 10 categorical variables with a total of 32 levels.}
 \end{center}
 \end{figure}
 
 
 
+
+\label{fig:smallselection}
+
+\input{../small_sim_results.tex}
+
+
+
 \section{Real data example}
 \todo Simulation with non-Gaussian design matrix (from AIDS data probably)
+
 
 
 \section{Discussion}
@@ -1210,7 +1220,8 @@ M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \nor
 
 I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
 
-\newpage
+\hrule
+\hrule
 We can rewrite this by rationalizing the denominator:
 \[
 M =

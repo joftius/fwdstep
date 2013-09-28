@@ -28,12 +28,17 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
   new.active.set = update_active_set(active.set, imax)
 
-  Y.resid = lm(Y ~ X[, gmax] - 1)$residuals
-
   X.project = X
-  gmax = groups == results$i
   Xgmax = X[, gmax]
+  Xgmax.regress = Xgmax
   Pgmax = Xgmax %*% ginv(Xgmax)
+  # If X[, gmax] is categorical, leave one column out
+  if (sum(gmax) > 1) {
+    if (length(unique(rowSums(Xgmax))) == 1) {
+      Xgmax.regress = Xgmax[ , -1]
+    }
+  }
+  Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
   
   for (gind in 1:max(groups)) {
     if (gind != imax) {

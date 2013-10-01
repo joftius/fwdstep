@@ -6,10 +6,12 @@
 # TODO
 # * Random group sizes
 # * Fix categorical data generation
+# *** beta coefs sum to 0 over categorical group!
+
 
 # Staircase signal
 
-beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE) {
+beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.vars = NULL) {
   # Generate a staircase-shaped signal vector
   # groups: vector of group indices in the form c(1,1,...,2,2,...)
   # num.nonzero: number of signal groups
@@ -42,10 +44,24 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   }
 
   beta = beta[groups]
+  nz.inds = beta != 0
 
   if (perturb) {
-    nz.inds = beta != 0
     beta = beta + rnorm(p) * sqrt(1/10) * nz.inds
+  }
+
+  # Ensure coefs for categorical variables sum to 0
+  if (length(cat.vars) > 0) {
+    for (g in cat.vars) {
+      gind = groups == g & nz.inds
+      if (sum(gind) > 0) {
+        gmod = max(abs(beta[gind]))
+        beta[gind] = beta[gind] - mean(beta[gind])
+        gnewmod = max(abs(beta[gind]))
+        if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
+        beta[gind] = beta[gind] * gmod / gnewmod
+      }
+    }
   }
 
   return(beta)

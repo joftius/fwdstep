@@ -1,5 +1,7 @@
 # This file contains core functions for computing the test statistic
 
+library(Matrix)
+
 trignometric_form = function(num, den, weight, tol=1.e-10) {
   
   a = num
@@ -9,7 +11,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
 
-  if (normb == 0) stop("Something is wrong, normb can't be zero!")
+  if (normb == 0) stop("Something is wrong, norm(b) can't be zero!")
   
   if ((norma / normb) < tol) {
     return(c(0, Inf))
@@ -22,7 +24,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   theta = acos(Ctheta)
   
   Sphi = sqrt(sum(b^2)) * Stheta / w
-          phi1 = asin(Sphi)
+  phi1 = asin(Sphi)
   phi2 = pi - phi1
   
   V1 = norma * cos(phi1) / (w - normb * cos(theta-phi1))
@@ -66,16 +68,17 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   wmax = weights[imax]
   
   which = groups == imax
-
+  Uwhich = U[which]
+  Xmax = X[,which]
   #
   # assuming rank == num of variables in group...
-  #
   kmax = sum(which)
+  if (length(dim(Xmax)) == 2) {
+    kmax = rankMatrix(Xmax)[1]
+  }
   
-  Uwhich = U[which]
+
   soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
-  
-  Xmax = X[,which]
   
   if (kmax > 1) {
     #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
@@ -85,7 +88,9 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
     #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
     Xeta = lm(Xeta ~ Wmax - 1)$residuals
   }
-  else {
+  else if (length(dim(Xmax)) == 2) {
+    Xeta = Xmax[,1] / wmax * sign(U[which])
+  } else {
     Xeta = Xmax / wmax * sign(U[which])
   }
   conditional_variance = sum(Xeta^2)

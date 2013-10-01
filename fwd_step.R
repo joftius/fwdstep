@@ -1,4 +1,6 @@
 
+# maybe need to orthogonalize?
+
 library(MASS) # for ginv
 source('group_lasso.R')
 

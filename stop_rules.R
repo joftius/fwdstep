@@ -1,3 +1,6 @@
+# TODO
+# Figure out how to use HybridStop without T_k
+# or convert to/calculate T_k from our p-values?
 
 # Input a list of p-values and alpha
 # Output largest index for model inclusion (0 if empty model)

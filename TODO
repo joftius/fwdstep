@@ -1,4 +1,5 @@
 * Finish stopping rules and rerun that simulation
+*** How to HybridStop? need T_k?
 * Check p-value code, see if log.p option can be used
 *** Debug categorical variables issue
 * Many TODO's listed in the paper

@@ -14,6 +14,19 @@ stop_first = function(p.list, alpha = .1) {
   }
 }
 
+# Renyi representation
+p_to_q = function(p.list) {
+  m = length(p.list)
+  y = -log(1-p.list)
+  denoms = m + 1 - 1:m
+  z = cumsum(y/denoms)
+#  Z = rep(0, m)
+#  for (i in 1:m) {
+#    Z[i] = sum(y[1:i]/(m-1:i+1))
+#  }
+  return(z)
+}
+
 
 stop_forward = function(p.list, alpha = .1) {
 
@@ -29,7 +42,7 @@ stop_forward = function(p.list, alpha = .1) {
     if (k >= length(p.list)) {
       continue = FALSE
     }
-    if (sum.log > -k*alpha) {
+    if (-sum.log/k > alpha) {
       continue = FALSE
       k = k - 1
     }
@@ -42,8 +55,14 @@ stop_forward = function(p.list, alpha = .1) {
   }
 }
 
+p_to_exp = function(p.list) {
+  
+}
 
-stop_hybrid = function(p.list, alpha = .1) {
+
+stop_hybrid = function(p.list, tau = 5, alpha = .1) {
+  q = p_to_q(p.list)
+  
   return(2)
 }
 

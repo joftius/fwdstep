@@ -39,7 +39,8 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
 }
 
-group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
+# fix Sigma
+group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) {
 
   U = t(X) %*% Y
   g = length(weights)
@@ -76,10 +77,16 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
   if (length(dim(Xmax)) == 2) {
     kmax = rankMatrix(Xmax)[1]
   }
-  
 
-  soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
+  #
+  #
+  #
+  #
+  # fix this Sigma
+  Sigma = diag(rep(1, kmax))
+  # Uwhich = X_{g^star}^T y
   
+  soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
   if (kmax > 1) {
     #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
     Xeta = (Xmax %*% soln)[,1]
@@ -87,13 +94,23 @@ group_lasso_knot <- function(X, Y, groups, weights, active.set=0) {
     Wmax = Xmax[,1:(ncol(Xmax)-1)]
     #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
     Xeta = lm(Xeta ~ Wmax - 1)$residuals
-  }
-  else if (length(dim(Xmax)) == 2) {
+    conditional_variance = sum(Xeta^2)
+  } else if (length(dim(Xmax)) == 2) {
+    # case where Xmax is a matrix but has rank 1
     Xeta = Xmax[,1] / wmax * sign(U[which])
+    if (dim(Xmax)[2] == 1) {
+      conditional_variance = t(Xmax[,1]) %*% Sigma %*% Xmax[,1]
+    } else {
+      conditional_variance = sum(Xeta^2)
+    }
   } else {
+    # case where Xmax is a vector (list)
     Xeta = Xmax / wmax * sign(U[which])
+    conditional_variance = sum(Xmax * Sigma %*% Xmax)
   }
-  conditional_variance = sum(Xeta^2)
+  #
+  # use formula above display (42) in tests:adaptive
+  #
   Xeta = Xeta / conditional_variance
   
   C_X = t(X) %*% Xeta
@@ -137,6 +154,7 @@ pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
     num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
     den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
     value = num/den
+    print(c(Mminus, first.term, value))
   }
   return(value)
 }

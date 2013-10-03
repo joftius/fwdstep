@@ -3,3 +3,4 @@
 * Check p-value code, see if log.p option can be used
 *** Debug categorical variables issue
 * Many TODO's listed in the paper
+* Simulation: track estimation/prediction as well?

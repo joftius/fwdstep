@@ -18,7 +18,7 @@ update_active_set = function(active.set, group) {
 add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
 
   n = length(Y)
-  results = group_lasso_knot(X, Y, groups, weights, active.set)
+  results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
   imax = results$i
   gmax = groups == imax
   new.eff.p = eff.p + sum(gmax)

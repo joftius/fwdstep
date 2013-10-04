@@ -47,21 +47,27 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   nz.inds = beta != 0
 
   if (perturb) {
-    beta = beta + rnorm(p) * sqrt(1/10) * nz.inds
+    beta[nz.inds] = beta[nz.inds] + rnorm(sum(nz.inds)) * sqrt(1/10)
+    maxmod = max(abs(beta))
+    beta[nz.inds] = beta[nz.inds] * upper / maxmod
   }
 
   # Ensure coefs for categorical variables sum to 0
   if (length(cat.vars) > 0) {
+    print("Oh, make a cat var")
     for (g in cat.vars) {
       gind = groups == g & nz.inds
       if (sum(gind) > 0) {
         gmod = max(abs(beta[gind]))
+        print(paste("Old modulus", gmod))
         beta[gind] = beta[gind] - mean(beta[gind])
         gnewmod = max(abs(beta[gind]))
+        print(paste("New modulus", gnewmod))
         if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
         beta[gind] = beta[gind] * gmod / gnewmod
       }
     }
+    print(paste("New upper", max(abs(beta))))
   }
 
   return(beta)
@@ -111,7 +117,7 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
   return(X)
 }
 
-n = 6
-groups = c(1,1,1,2,2,3,3,3,3)
-X = categorical_design(n, groups)
+#n = 6
+#groups = c(1,1,1,2,2,3,3,3,3)
+#X = categorical_design(n, groups)
 

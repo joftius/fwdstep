@@ -36,7 +36,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     }
 
     if (categorical == TRUE) {
-      X = categorical_design(n, groups, ortho.within = TRUE)
+      X = categorical_design(n, groups, ortho.within = FALSE)
     } else {
       X = gaussian_design(n, groups)
     }
@@ -57,12 +57,15 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
                  is.element(x, true.active.groups))
   }
 
-  CI.probs <- c(.25, .75)
+  bar.quantiles <- c(.25, .75)
+  point.quantiles <- c(.05, .95)
   null.Pvals <- colMeans(P.mat)
-  null.Pvals.CI <- apply(P.mat, 2, function(col) quantile(col, probs = CI.probs))
+  null.Pvals.bar <- apply(P.mat, 2, function(col) quantile(col, probs = bar.quantiles))
+  null.Pvals.point <- apply(P.mat, 2, function(col) quantile(col, probs = point.quantiles))
 
   Pvals = colMeans(P.mat.b)
-  Pvals.CI <- apply(P.mat.b, 2, function(col) quantile(col, probs = CI.probs))
+  Pvals.bar <- apply(P.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
+  Pvals.point <- apply(P.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
   
   #recover.mat = apply(AS.mat.b, 1:2, function(x) is.element(x, true.active.groups))
   MSRS = colMeans(recover.mat)
@@ -78,15 +81,19 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     if (rand.beta == TRUE) {
       plot.main = paste(plot.main, "(randomized signal)")
     }
-    plot(xax, MSRS, type = "b", main = plot.main, xlab = "Step", ylab = "MSRS", ylim = c(0,1))
+    plot(xax, MSRS, type = "b", main = plot.main, xlab = "Step", ylab = "MSRS", ylim = c(-.1,1.1))
 
     points(nxax, null.Pvals, col="red")
-    arrows(nxax, null.Pvals.CI[1, ], nxax, null.Pvals.CI[2, ],
+    arrows(nxax, null.Pvals.bar[1, ], nxax, null.Pvals.bar[2, ],
            code = 3, angle = 90, length = 0, col = "red")
+    points(nxax, null.Pvals.point[1, ], col = "red", pch = 24, cex = .5)
+    points(nxax, null.Pvals.point[2, ], col = "red", pch = 25, cex = .5)
   
     points(xax, Pvals, col="green")
-    arrows(xax, Pvals.CI[1, ], xax, Pvals.CI[2, ],
+    arrows(xax, Pvals.bar[1, ], xax, Pvals.bar[2, ],
            code = 3, angle = 90, length = 0, col = "green")
+    points(xax, Pvals.point[1, ], col = "green", pch = 24, cex = .5)
+    points(xax, Pvals.point[2, ], col = "green", pch = 25, cex = .5)
   }
   
   return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero))

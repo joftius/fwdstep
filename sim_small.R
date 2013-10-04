@@ -1,17 +1,16 @@
 
-library(xtable)
-
 source('fwd_step.R')
 source('generate_data.R')
 source('fwd_step_test.R')
+source('tex_table.R')
 
-nsim = 500
+nsim = 1000
 n = 50
 sigma = 1
 groups = c(1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 9, 9, rep(10, 10))
 p = length(groups)
-upper = (1+.1)*sqrt(2*log(p))
-lower = (1-.1)*sqrt(2*log(p))
+upper = 1 #sqrt(2*log(p))
+lower = .9
 num.nonzero = 3
 max.steps = 8
 beta = beta_staircase(groups, num.nonzero, upper, lower)
@@ -25,8 +24,8 @@ warnings()
 
 groups = sort(c(groups, 2, 8))
 p = length(groups)
-upper = (1+.1)*sqrt(2*log(p))
-lower = (1-.1)*sqrt(2*log(p))
+upper = 1 #(1+.1)*sqrt(2*log(p))
+lower = .9 #(1-.1)*sqrt(2*log(p))
 beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, perturb = TRUE, cat.vars = 1:max(groups))
 warnings()
 
@@ -36,13 +35,13 @@ dev.off()
 warnings()
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."
-selection.results = with(output.g, xtable(sim_select_stats(signal.p, active.set, true.step, m1), caption = caption))
-file = file("small_sim_results.tex")
-writeLines(print(selection.results), file)
-close(file)
+results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1))
+results.c = with(output.c, sim_select_stats(signal.p, active.set, true.step, m1))
+rownames(results.g) = paste("(1)", rownames(results.g))
+rownames(results.c) = paste("(2)", rownames(results.c))
+file = "small_sim_results.tex"
+tex_table(file, rbind(results.g, results.c), caption = caption)
 
-
-with(output.c, print(sim_select_stats(signal.p, active.set, true.step, m1)))
 
 print(c(max(abs(beta)), max(abs(beta_old)), upper, lower))
 

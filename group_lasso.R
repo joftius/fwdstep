@@ -11,7 +11,10 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
 
-  if (normb == 0) stop("Something is wrong, norm(b) can't be zero!")
+  if (normb == 0) {
+    stop("Something is wrong, norm(b) can't be zero!")
+#    return(c(0, Inf))
+  }
   
   if ((norma / normb) < tol) {
     return(c(0, Inf))
@@ -67,7 +70,6 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   }
     
   wmax = weights[imax]
-  
   which = groups == imax
   Uwhich = U[which]
   Xmax = X[,which]
@@ -75,11 +77,13 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   # assuming rank == num of variables in group...
   kmax = sum(which)
   if (length(dim(Xmax)) == 2) {
-    kmax = rankMatrix(Xmax)[1]
+    kmaxrank = rankMatrix(Xmax)[1]
+    if (kmaxrank != kmax) {
+#      print(paste("Expected rank, computed rank =", kmax, kmaxrank))
+      kmax = kmaxrank
+    }
   }
 
-  #
-  #
   #
   #
   # fix this Sigma
@@ -111,6 +115,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   #
   # use formula above display (42) in tests:adaptive
   #
+  conditional_variance = sum(Xeta^2)
   Xeta = Xeta / conditional_variance
   
   C_X = t(X) %*% Xeta
@@ -120,15 +125,22 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   
   Vplus = c()
   Vminus = c()
-  for (label in setdiff(c(1:g), active.set)) {
+#  print(paste("Maximizer, rank = ", imax, kmax))
+  nm.a = c()
+  nm.b = c()
+  nm.labels = setdiff(c(1:g), c(active.set, imax))
+  for (label in nm.labels) {
     if (label != imax) {
       group = groups == label
       weight = weights[label]
+      nm.a = c(nm.a, sqrt(sum(a[group]^2)))
+      nm.b = c(nm.b, sqrt(sum(b[group]^2)))
       tf = trignometric_form(a[group], b[group], weight)
       Vplus = c(Vplus, tf[1])
       Vminus = c(Vminus, tf[2])
     }
   }
+#  print(rbind(nm.labels, nm.a, nm.b))
   
   if (length(Vplus) >= 1) {
     Vplus = Vplus[!is.nan(Vplus)]
@@ -149,12 +161,11 @@ pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
     den = pchisq((Mplus/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
     value = exp(num - den)
   } else {
-    print("#### Something strange ####")
     #print(c(Mminus, first.term, L/(sd*sigma)^2, Mplus/(sd*sigma)^2))
     num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
     den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
     value = num/den
-    print(c(Mminus, first.term, value))
+    print(paste("Mminus, first.term, value:", Mminus, first.term, value))
   }
   return(value)
 }

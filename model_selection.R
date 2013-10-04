@@ -56,3 +56,5 @@ sim_select_stats = function(p.lists, active.sets, true.steps, m1, alpha = .1) {
   colnames(results) = c("Fdp", "R", "S", "V", "Power")
   return(results)
 }
+
+

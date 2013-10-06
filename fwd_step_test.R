@@ -26,6 +26,13 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
   P.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
+  mses.train = c()
+  mses.test = c()
+  mse.beta = c()
+  if (rand.beta == FALSE) {
+    # track fitted values
+    beta.mat = matrix(0, nrow=nsim, ncol=p)
+  }
   
   for (i in 1:nsim) {
 
@@ -37,12 +44,17 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
 
     if (categorical == TRUE) {
       X = categorical_design(n, groups, ortho.within = FALSE)
+      X.test = categorical_design(n, groups, ortho.within = FALSE)
     } else {
       X = gaussian_design(n, groups)
+      X.test = gaussian_design(n, groups)
     }
 
     Y = rnorm(n)*sigma
-    Y.beta = X %*% beta + Y
+    Y.noiseless = X %*% beta
+    Y.noiseless.test = X.test %*% beta
+    Y.beta = Y.noiseless + Y
+    Y.test = Y.noiseless.test + rnorm(n)*sigma
 
     # Null case
     results = forward_group(X, Y, groups, weights, sigma, max.steps)
@@ -55,6 +67,22 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     AS.mat.b[i, ] = results.b$active.set
     recover.mat[i, ] = sapply(results.b$active.set, function(x)
                  is.element(x, true.active.groups))
+
+    # Tracking prediction error and other things
+    #
+    #
+    # this is broken, need to use stopping rules!
+    #
+    #
+    groups.active = sapply(groups, function(x) is.element(x, results.b$active.set))
+    fitted.model = lm(Y.beta ~ X[ , groups.active] - 1)
+    fitted.beta = fitted.model$coefficients
+    mses.train = c(mses.train, mean((fitted.model$fitted.values - Y.beta)^2))
+    mses.test = c(mses.test, mean((predict(fitted.model, newdata = data.frame(X.test)) - Y.test)^2))
+    mse.beta = c(mse.beta, sum((beta[groups.active] - fitted.beta)^2) + sum((beta[setdiff(1:p, which(groups.active))])^2))
+    if (rand.beta == FALSE) {
+      beta.mat[i, groups.active] = fitted.beta
+    }
   }
 
   bar.quantiles <- c(.25, .75)
@@ -96,9 +124,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     points(xax, Pvals.point[1, ], col = "green", pch = 24, cex = .5)
     points(xax, Pvals.point[2, ], col = "green", pch = 25, cex = .5)
   }
-  
-  return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero))
 
+  if (rand.beta == FALSE) {
+    return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, mse.train = mses.train, mse.test = mses.test, mse.beta = mse.beta, beta.mat = beta.mat))
+  } else {
+    return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, mse.train = mses.train, mse.test = mses.test, mse.beta = mse.beta))
+  }
 }
 
 main = function() {

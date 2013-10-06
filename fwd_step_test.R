@@ -81,8 +81,9 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     if (rand.beta == TRUE) {
       plot.main = paste(plot.main, "(randomized signal)")
     }
-    plot(xax, MSRS, type = "b", main = plot.main, xlab = "Step", ylab = "MSRS", ylim = c(-.1,1.1))
-
+    plot(xax, MSRS, type = "l", main = plot.main, xlab = "Step", ylab = "MSRS", ylim = c(-.1,1.1))
+    abline(v = num.nonzero, lty = "dotted")
+    
     points(nxax, null.Pvals, col="red")
     arrows(nxax, null.Pvals.bar[1, ], nxax, null.Pvals.bar[2, ],
            code = 3, angle = 90, length = 0, col = "red")

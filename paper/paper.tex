@@ -29,6 +29,7 @@
 
 \usepackage{graphics,amssymb,color}
 \usepackage{graphicx,subfigure}
+\usepackage[boxed]{algorithm2e}
 
 \newcommand{\argmax}{\mathop{\mathrm{argmax}}}
 \newcommand{\argmin}{\mathop{\mathrm{argmin}}}
@@ -63,8 +64,7 @@
 \begin{frontmatter}
 
 % "Title of the paper"
-\title{Significance testing with forward stepwise and grouped forward
-  stepwise model selection}
+\title{A significance test for forward stepwise model selection}
 
 %%%
 %%% \runtitle{} - I don't know what this is
@@ -88,14 +88,17 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
 
 \begin{abstract}
 % perhaps de-emphasize group lasso and emphasize forward stepwise?
-  We extend the work of \cite{significance:lasso} on significance
-  testing for the lasso to the group lasso.  We derive the corresponding
-  test statistic and its exact distribution, and show that these can be
-  used with (non-penalized) forward stepwise regression and model
-  selection.  For group lasso the forward stepwise procedure adds a
-  group of variables in each step.  These procedures are shown to
-  perform well in simulations and in a real data example.
-
+  We apply the methods of \cite{tests:adaptive} and
+  \cite{significance:lasso} on significance tests for penalized
+  regression to forward stepwise model selection. For the $k$th
+  variable to enter the model, previous work relied on an asymptotic
+  null distribution that breaks down when grouped variables are
+  entering the model and is difficult to derive. We iteratively apply
+  an exact null distribution for the first (potentially grouped)
+  variable on the residual from previous steps. The resulting method
+  has the strengths of stepwise selection, for example parallel
+  computation, but also remedies the problem of inflated test
+  statistics and over-fitting.
 \end{abstract}
 
 %%%
@@ -118,8 +121,8 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
 \end{frontmatter}
 
 
-\section{Introduction}\label{sec:intro}
-
+\section{Introduction}
+\label{sec:intro}
 
 Forward stepwise regression is a stochastic model selection procedure
 that begins with an empty model and adds the best predictor variable
@@ -132,29 +135,51 @@ selected using the lasso \citep{tibshirani:lasso}.
 group lasso \citep{grouplasso} and other adaptive regression
 problems.  The present work explores the behavior of those test
 statistics for models selected by forward stepwise procedures and
-works out some of the detailsinvolved in applying these methods to
-models with grouped variables. We find that our test statistics can be
-used for valid significance testing, or for tempering the aggressive
-nature of forward stepwise model selection.  The resulting methods may
-be less computationally intensive than choosing a regularization
-parameter for the (group) lasso by cross-validation. 
+works out some of the details involved in applying these methods to
+models with grouped variables.  Our test statistic can be
+used for valid significance testing when computed from the same
+data as the model selection.  The resulting method can
+be more statistically efficient than validation on held-out data, and
+also more computationally efficient than penalized methods with
+regularization parameters chosen by cross-validation.
 
+(\todo Change this paragraph as the sections are completed)
+In Section \ref{sec:stepwise} we establish notation and describe our
+forward stepwise procedure. Section \ref{sec:testing} briefly reviews
+the parts of \cite{significance:lasso} and \cite{tests:adaptive}
+relevant to our significance test, and describes the group lasso which
+we require for applying the test with grouped
+variables. Simulation results in Section \ref{sec:simulations} using
+various stopping rules for the forward stepwise procedure--including
+some from \cite{sequential:fdr}--appear promising.
 
-\todo Write about more differences/advantages of this paper- maybe not
-in this section, but: using non-asymptotic p-values, forward step is
-simple(r than lasso), more?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Forward stepwise model selection}
+\label{sec:stepwise}
 
-To fix notation for the group lasso problem we consider an outcome $y
-\in \real^n$.  Let an integer $G \geq 1$ be the number of groups (or
-factors).  Lowercase $g$ will be used as an index for groups.  For
-each $1 \leq g \leq G$ the design matrix encoding the $g$th group is
-the $n \times p_g$ matrix denoted $X_g$.  Throughout most of this
-paper we assume orthogonality within groups, that is $X_g^T X_g =
-I_{p_g \times p_g}$ for all $g$. ( \todo Take this out if we don't
-actually need it).  Let $p = \sum_{g=1}^G p_g$ be the total number of
-individual variables, and let $X$ be the matrix constructed by
-column-binding the $X_g$, that is  
+We allow forward stepwise selection to add groups of variables in each
+step, not only in the case of binary encoding for categorical
+variables but also for any grouping purpose. For example, groups of
+variables may be pre-designated factors such as expression
+measurements for all genes in a single regulatory pathway. An entire
+group is included or excluded together from the final model. For
+consistency we will use $g, h$ as indices rather than the usual $i, j$
+throughout. Since single variables can be considered groups of size 1,
+our general exposition includes non-grouped situations as a special case. 
+
+Label the outcome variable of $n$ i.i.d. measurements $y \in \real^n$. Let an integer $G \geq 1$ 
+be the number of groups. For each $1 \leq g \leq G$ the design matrix encoding the
+$g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
+the number of individual variables in group $g$. Define $p = \sum_{g=1}^G
+p_g$ be the total number of individual variables, so $p = G$ in the
+case where all groups have size 1. Let $X$ be the matrix constructed
+by column-binding the $X_g$, that is  
+%Throughout most of this paper we assume orthogonality within groups, that is
+%$X_g^T X_g = I_{p_g \times p_g}$ for all $g$. ( \todo Take this out if
+%we don't actually need it).  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation*}
 X = \begin{pmatrix} X_1 & X_2 & \cdots & X_G  \end{pmatrix}
@@ -163,7 +188,7 @@ X = \begin{pmatrix} X_1 & X_2 & \cdots & X_G  \end{pmatrix}
 With each group we associate the $p_g \times 1$ coefficient vector
 $\beta_g$, and write $\beta$ for the $p \times 1$ vector constructed
 by stacking all of the $\beta_g$ in order.  Finally, our model for the
-data is
+response is
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
 \begin{aligned}
@@ -173,40 +198,56 @@ y & = X \beta + \sigma \epsilon \\
 \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where $\epsilon$ is noise.  Unless otherwise specified we will assume
-i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ throughout.
-So far we have only introduced some new notation to the usual linear
-regression setup, but now we define the \emph{group lasso estimator}
-as the following solution to a convex problem 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{equation}
-\begin{aligned}
-\label{eq:gsoln}
-\displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
-   \lambda \sum_{g=1}^G w_g \| \beta_g \|_2
-\end{aligned}
-\end{equation}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The parameter $\lambda \geq 0$ enforces sparsity in groups: for large
-$\lambda$ most of the $\beta_g$ will be zero vectors. The weights
-$w_g$ are usually taken to be $\sqrt p_g$ to normalize the penalty
-across groups.  Note that this includes the usual lasso estimator as a
-special case when all of the groups are of size 1, since then the
-penalty term is the $L^1$-norm of $\beta$. 
+where $\epsilon$ is noise. Unless otherwise specified we assume
+i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ and that
+$\sigma$ is known.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Before we describe the forward stepwise procedure we require one last
+ingredient. To each group of variables we assign a weight $w_g$. These
+weights act like penalties or costs, so increasing $w_g$ makes it
+\textit{more difficult} for the group $X_g$ to enter the model. The
+modeler can choose weights arbitrarily, but we will only use one
+particular choice, based on $p_g$, that we discuss later. With this we
+are ready to describe the forward stepwise procedure Algorithm \ref{algo:fs}.
 
-\todo Fix references below
+\begin{algorithm}
+\DontPrintSemicolon
+\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ grouped variables}
+\KwResult{Active set $A$ of variable groups included in the model}
+\SetKwFunction{lsfitResidual}{lsfitResidual}
+\caption{Forward stepwise procedure}
+\BlankLine
+$A \gets \emptyset$\;
+$A^c \gets \{ 1, \ldots, G \}$\;
+$r_0 \gets y$\;
+\For{$counter \leftarrow 1$ \KwTo $\min (n, G)$}{
+  $g^* \gets \argmax_{g \in A^c} \norm{X_g^T r_{g-1}}_2 / w_g$\;
+  $A \gets A \cup \{ g^* \}$\;
+  $A^c \gets A^c \backslash \{ g^* \}$\;
+  $r_g \gets $\lsfitResidual{$r_{g-1}, X_{g^*}$}\;
+}
+\KwRet{$A$}
+\label{algo:fs}
+\end{algorithm}
 
-The group lasso estimator is discussed in (ref that guy's thesis) and
-(ref Yuan and Lin).  An important extension is the sparse group lasso
-(ref ???) which enforces sparsity in groups as well as sparsity of the
-coefficients within the groups.  For a survey on group lasso and
-related factor models see (ref???). \todo review some more literature
-and add a few more references here if they seem worthwhile. 
+\todo Expand this section
 
+\begin{itemize}
+  \item Brief background, cite some original papers
+  \item Stopping rules, cite new paper on lasso?
+\end{itemize}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Significance testing: from lasso to group lasso}
+\label{sec:testing}
+
+\todo Update this section to match/complement \citep{tests:adaptive}
 
 In a recent work \cite{significance:lasso} defined a \emph{covariance
   test statistic} for testing the significance of a variable entering
@@ -222,28 +263,6 @@ distribution for the test statistic (ref TLTT?).  We also show that
 the techniques used to get these results can be used to do a forward
 stepwise procedure related to the group lasso that adds groups of
 variables (or factors) in each step. 
-
-
-(\todo Change this paragraph as the sections are completed)
-In Section 2 we briefly review the work of (ref LTTT) concerning
-significance testing for the lasso, and discuss how this result is
-extended to group lasso. Section 2 also introduces more of the
-terminology we use to describe the present problem. Section 3
-describes a framework for forward stepwise procedures using the test
-statistic derived in Section 2. In this framework groups of variables
-are added in each step until some stopping criterion involving the
-test statistic is satisfied. In Section 4 we show the results of some
-simulations for several forward stepwise procedures, and in Section 5
-we apply our method to a real data set (\todo brief description of
-data). 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Significance testing: from lasso to group lasso}
-\label{sec:testing}
-
-\todo Update this section to match/complement \citep{tests:adaptive}
 
 \subsection{Background}
 In the ordinary least squares setting, a significance test for a
@@ -297,6 +316,39 @@ piecewise linear components. To overcome this difficulty we will
 restrict our attention to the first group of variables to enter the
 active set since the analysis then follows almost exactly as for the
 lasso. (\todo Change this if I can find $\lambda_k$). 
+
+The \emph{group lasso estimator} is the following solution to a convex
+problem
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{equation}
+\begin{aligned}
+\label{eq:gsoln}
+\displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
+   \lambda \sum_{g=1}^G w_g \| \beta_g \|_2
+\end{aligned}
+\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The parameter $\lambda \geq 0$ enforces sparsity in groups: for large
+$\lambda$ most of the $\beta_g$ will be zero vectors. The weights
+$w_g$ are usually taken to be $\sqrt p_g$ to normalize the penalty
+across groups.  Note that this includes the usual lasso estimator as a
+special case when all of the groups are of size 1, since then the
+penalty term is the $L^1$-norm of $\beta$. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\todo Fix references below
+
+The group lasso estimator is discussed in (ref that guy's thesis) and
+(ref Yuan and Lin).  An important extension is the sparse group lasso
+(ref ???) which enforces sparsity in groups as well as sparsity of the
+coefficients within the groups.  For a survey on group lasso and
+related factor models see (ref???). \todo review some more literature
+and add a few more references here if they seem worthwhile. 
+
+
 
 Before considering the group lasso, we review some ingredients of the
 proof for the lasso. Let $J = \{ 1, 2, \ldots, p \}$ index variables
@@ -379,18 +431,9 @@ test statistic by not using the approximation)
 \end{itemize}
 
 
-\section{Forward stepwise procedures}
-
-\todo Expand this section
-
-\begin{itemize}
-  \item Brief background, cite some original papers
-  \item Describe exactly how we do each step (projection, residuals, etc) 
-  \item Stopping rules, cite new paper on lasso, perhaps we have
-    a computation advantage
-\end{itemize}
 
 \section{Simulations}
+\label{sec:simulations}
 
 \todo Expand, include simulation results (copy latex for
 includegraphics etc), do the simulation comparing stopping rules
@@ -413,14 +456,11 @@ includegraphics etc), do the simulation comparing stopping rules
 \begin{figure}
 \begin{center}
 \subfigure[Gaussian design]{
-\label{fig:lassopvala}
+\label{fig:smallgauss}
 \includegraphics[width=0.5\textwidth]{../figs/small_sim_gaussian_design.pdf}}
-\subfigure[Large Gaussian design]{
-\label{fig:lassopvala}
-\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_design.pdf}}
-%\hspace{-15pt}
+\hspace{-15pt}
 \subfigure[Categorical design]{
-\label{fig:lassopvalb}
+\label{fig:smallcat}
 \includegraphics[width=0.5\textwidth]{../figs/small_sim_categorical_design.pdf}}
 \caption{\small \it The left panel shows results of a simulation with
   an independent Gaussian design matrix and a signal vector having
@@ -437,9 +477,27 @@ so there are 10 categorical variables with a total of 32 levels.}
 
 \input{../small_sim_results.tex}
 
+\begin{figure}
+\begin{center}
+\subfigure[Large Gaussian lasso]{
+\label{fig:largelasso}
+\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_lasso.pdf}}
+\hspace{-15pt}
+\subfigure[Large Gaussian group lasso]{
+\label{fig:largegrplasso}
+\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_design.pdf}}
+\caption{\small \it The left panel shows results of a simulation with
+  an independent Gaussian design matrix and a signal vector having
+  three groups with non-zero coefficients of sizes one, two, and
+  three, and seven groups of noise variables with sizes varying from
+  one to ten, for a total of 30 variables. For the right panel we
+  repeated this setup, but group sizes corresponded to levels of
+  categorical variables. The groups of size one were increased to two,
+so there are 10 categorical variables with a total of 32 levels.}
+\end{center}
+\end{figure}
 
-
-\input{../selection_sim_results.tex}
+\input{../large_sim_results.tex}
 
 The large simulation has 50 groups, 25 of size 1, 10 of size 5, 10 of
 size 10, and 5 of size 15. Signal vectors were supported on random
@@ -456,6 +514,7 @@ performed 100 realizations.
 
 
 \section{Discussion}
+\label{sec:discuss}
 
 \todo After finising everything else, move some points of discussion
 here, re-read and see if there's anything else interesting to comment

@@ -74,12 +74,9 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     # this is broken, need to use stopping rules!
     #
     #
-    groups.active = sapply(groups, function(x) is.element(x, results.b$active.set))
-    fitted.model = lm(Y.beta ~ X[ , groups.active] - 1)
-    fitted.beta = fitted.model$coefficients
-    mses.train = c(mses.train, mean((fitted.model$fitted.values - Y.beta)^2))
-    mses.test = c(mses.test, mean((predict(fitted.model, newdata = data.frame(X.test)) - Y.test)^2))
-    mse.beta = c(mse.beta, sum((beta[groups.active] - fitted.beta)^2) + sum((beta[setdiff(1:p, which(groups.active))])^2))
+    
+    
+    
     if (rand.beta == FALSE) {
       beta.mat[i, groups.active] = fitted.beta
     }

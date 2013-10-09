@@ -39,13 +39,13 @@ results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1)
 results.c = with(output.c, sim_select_stats(signal.p, active.set, true.step, m1))
 rownames(results.g) = paste("(1)", rownames(results.g))
 rownames(results.c) = paste("(2)", rownames(results.c))
-file = "small_sim_results.tex"
+file = "small_sim_selection.tex"
 tex_table(file, rbind(results.g, results.c), caption = caption)
 
 
 caption = "Prediction and estimation errors for a small simulation"
 p.results.g = output.g$pred.err
-file = "small_sim_pred_err.tex"
+file = "small_sim_estimation.tex"
 tex_table(file, p.results.g, caption = caption)
 
 

@@ -56,5 +56,5 @@ results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1)
 rownames(results.l) = paste("(1)", rownames(results.l))
 rownames(results.g) = paste("(2)", rownames(results.g))
 #rownames(results.c) = paste("(3)", rownames(results.c))
-file = "large_sim_results.tex"
+file = "large_sim_selection.tex"
 tex_table(file, rbind(results.l, results.g), caption = caption)

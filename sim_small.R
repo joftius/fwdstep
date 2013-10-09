@@ -4,13 +4,13 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 50
+nsim = 200
 n = 50
 sigma = 1
 groups = c(1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 9, 9, rep(10, 10))
 p = length(groups)
-upper = 2 #sqrt(2*log(p))
-lower = 1.9
+upper = 1 #sqrt(2*log(p))
+lower = .9
 num.nonzero = 3
 max.steps = 8
 beta = beta_staircase(groups, num.nonzero, upper, lower)

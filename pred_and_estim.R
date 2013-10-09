@@ -48,7 +48,7 @@ sim_pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.
   for (stop.rule in stop.rules) {
     rule.err = pred_est_stats(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha)
     output = rbind(output, rule.err)
-    print(rule.err)
+    #print(rule.err)
   }
   output = output[-1, ]
   rownames(output) = stop.rules

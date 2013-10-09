@@ -165,7 +165,7 @@ pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
     num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
     den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
     value = num/den
-    print(paste("Mminus, first.term, value:", Mminus, first.term, value))
+    #print(paste("Mminus, first.term, value:", Mminus, first.term, value))
   }
   return(value)
 }

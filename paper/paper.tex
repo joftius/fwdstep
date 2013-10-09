@@ -58,6 +58,7 @@
 \newcommand{\V}{\mathcal{V}}\endlocaldefs
 \newcommand{\K}{\mathcal{K}}
 \newcommand\tf{\widetilde{f}}
+\newcommand{\pen}{\mathcal{P}}
 
 \begin{document}
 
@@ -242,13 +243,6 @@ $r_0 \gets y$\;
 \end{algorithm}
 
 
-\todo Expand this section
-
-\begin{itemize}
-  \item Brief background, cite some original papers
-  \item Stopping rules, cite new paper on lasso?
-\end{itemize}
-
 Subset selection refers to the problem of choosing a subset of the $p$
 potential variables to include in a model. Since there are $2^p$ such
 choices, exhaustive search is computationally infeasible when $p$ is
@@ -267,12 +261,12 @@ criteria and stop at the step minimizing
 \begin{equation}
 \begin{aligned}
 \label{eq:subsetregress}
-\frac{1}{2} \| y - X \beta_s \|_2^2 + \lambda P(\beta_s)
+\frac{1}{2} \| y - X \beta_s \|_2^2 + \lambda \pen(\beta_s)
 \end{aligned}
 \end{equation}
 where we have written $\{ \beta_s : s = 1, \ldots, max.steps \}$ as
 the sequence of models outputted by forward stepwise. The function
-$P(\beta)$ is a penalty on model complexity usually taken to be the
+$\pen(\beta)$ is a penalty on model complexity usually taken to be the
 number of nonzero entries of $\beta$. Proposals for $\lambda$ include
 2 ($C_p$, AIC \todo{cite}), $\log(n)$ (BIC of \cite{BIC}), and
 $2\log(p)$ (RIC of \cite{RIC}). In the current paper we provide
@@ -293,34 +287,32 @@ proportion of noise variables among variables declared significant
 
 \todo Update this section to match/complement \citep{tests:adaptive}
 
-In a recent work \cite{significance:lasso} defined a \emph{covariance
-  test statistic} for testing the significance of a variable entering
-the model along the lasso solution path.  They derived a simple
-asymptotic null distribution, proved a type of convergence under broad
-``minimum growth'' conditions, and demonstrated in simulations that
-the test statistic closely matches its asymptotic distribution even in
-finite samples.  That work marked an important advance in the problem
-of combining inference with model selection.  The current paper
-extends some of their results to the group lasso (ref Yuan and Lin?).
-In the process we had to derive an exact finite sample null
-distribution for the test statistic (ref TLTT?).  We also show that
-the techniques used to get these results can be used to do a forward
-stepwise procedure related to the group lasso that adds groups of
-variables (or factors) in each step. 
 
-\subsection{Background}
+
 In the ordinary least squares setting, a significance test for a
 single variable can be conducted by comparing the drop in residual
 sums of squares (RSS) to a $\chi^2_1$ distribution. Similarly, when
 adding a group of $k$ variables we can compare the drop in RSS to a
 $\chi^2_k$ random variable. This generally does not work when the
 variable to be added has been chosen by a method that uses the data,
-and in particular it fails for forward stepwise procedures which add
+and in particular it fails for forward stepwise procedures adding
 the ``best'' (e.g. most highly correlated) predictor in each step. In
 that case, the test statistic (drop in RSS) does not match the
 theoretical null distribution even when the null hypothesis is
-true. Lockhart et al. (ref LTTT) introduced a new test statistic based
-on the knots in the lasso solution path. Writing $\hat
+true. \cite{significance:lasso} introduced a new test statistic based
+on the knots in the lasso solution path. They derived a simple
+asymptotic null distribution, proved a type of convergence under broad
+``minimum growth'' conditions, and demonstrated in simulations that
+the test statistic closely matches its asymptotic distribution even in
+finite samples.  That work marked an important advance in the problem
+of combining inference with model selection.  The current paper
+extends some of their results to the group lasso \citep{grouplasso}.
+In the process we had to derive an exact finite sample null
+distribution for the test statistic, this appears in
+\cite{tests:adaptive}. 
+
+
+Writing $\hat
 \beta(\lambda)$, the solution for a fixed value of $\lambda$, we need
 the following facts (ref Tibs2012) 
 

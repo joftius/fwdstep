@@ -12,6 +12,7 @@ source('stop_rules.R')
 # output: prediction error, MSE of beta hat, etc
 
 pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha = .1) {
+
   p = length(groups)
   rule_name = paste("stop_", stop.rule, sep = "")
   if (exists(rule_name, mode = "function")) {
@@ -20,6 +21,7 @@ pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test
   } else {
     stop(paste("Misspecified stopping rule:", stop.rule))
   }
+
   if (stop.ind == 0) {
     stoppped.set = c()
     mse.train = sum(Y^2)
@@ -34,18 +36,22 @@ pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test
     mse.test = mean((predict(fitted.model, newdata = data.frame(X.test[ , groups.active])) - Y.test)^2)
     mse.beta = sum((beta[groups.active] - fitted.beta)^2) + sum(beta[setdiff(1:p, which(groups.active))]^2)
   }
-  return(list(mse.train = mse.train, mse.test = mse.test, mse.beta = mse.beta))
+  
+  return(c(mse.train, mse.test, mse.beta))
 }
 
 
 # apply above function with all stopping rules
 sim_pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, alpha) {
   stop.rules = c("first", "forward", "hybrid")
-  output = matrix(Inf, nrow = 3, ncol = 1)
+  output = matrix(Inf, nrow = 1, ncol = 3)
   for (stop.rule in stop.rules) {
-    output = cbind(output, pred_est_stats(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha))
+    rule.err = pred_est_stats(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha)
+    output = rbind(output, rule.err)
+    print(rule.err)
   }
-  output = output[ , 1 + 1:length(stop.rules)]
-  colnames(output) = stop.rules
+  output = output[-1, ]
+  rownames(output) = stop.rules
+  colnames(output) = c("RSS", "Test Error", "MSE(beta)")
   return(output)
 }

@@ -4,20 +4,20 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 500
+nsim = 50
 n = 50
 sigma = 1
 groups = c(1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 9, 9, rep(10, 10))
 p = length(groups)
-upper = 1 #sqrt(2*log(p))
-lower = .9
+upper = 2 #sqrt(2*log(p))
+lower = 1.9
 num.nonzero = 3
 max.steps = 8
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 beta_old = beta
 
 pdf('figs/small_sim_gaussian_design.pdf')
-output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
+output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, predictions = TRUE, plot = TRUE)
 dev.off()
 warnings()
 
@@ -43,7 +43,12 @@ file = "small_sim_results.tex"
 tex_table(file, rbind(results.g, results.c), caption = caption)
 
 
-print(c(max(abs(beta)), max(abs(beta_old)), upper, lower))
+caption = "Prediction and estimation errors for a small simulation"
+p.results.g = output.g$pred.err
+file = "small_sim_pred_err.tex"
+tex_table(file, p.results.g, caption = caption)
 
-print(beta_old)
-print(beta)
+
+#print(c(max(abs(beta)), max(abs(beta_old)), upper, lower))
+#print(beta_old)
+#print(beta)

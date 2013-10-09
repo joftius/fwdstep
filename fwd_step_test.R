@@ -2,7 +2,8 @@
 
 source('fwd_step.R')
 source('generate_data.R')
-source('model_selection.R')
+source('selection.R')
+source('pred_and_estim.R')
 
 active_groups = function(groups, beta) {
   beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
@@ -11,7 +12,7 @@ active_groups = function(groups, beta) {
 }
 
 
-fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, categorical = FALSE, rand.beta = FALSE, plot = FALSE) {
+fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha = .1, categorical = FALSE, predictions = FALSE, rand.beta = FALSE, plot = FALSE) {
 
   weights = sqrt(rle(groups)$lengths)
   p = length(groups)
@@ -26,9 +27,9 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
   P.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
-  mses.train = c()
-  mses.test = c()
-  mse.beta = c()
+
+  pred.errs = matrix(0, nrow=3, ncol=3)
+  
   if (rand.beta == FALSE) {
     # track fitted values
     beta.mat = matrix(0, nrow=nsim, ncol=p)
@@ -69,19 +70,24 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
                  is.element(x, true.active.groups))
 
     # Tracking prediction error and other things
-    #
-    #
-    # this is broken, need to use stopping rules!
-    #
-    #
-    
-    
-    
+    # stop.rules must agree with those in sim_pred_est_stats
+    if (predictions) {
+      if (categorical) {
+        stop("Tracking prediction error for categorical design is unsupported")
+      }
+      
+      stop.rules = c("first", "forward", "hybrid")
+      pred.errs = pred.errs + sim_pred_est_stats(results.b$p.vals,
+        results.b$active.set, X, Y.beta, groups, beta, X.test, Y.test, alpha)
+    }
+
     if (rand.beta == FALSE) {
-      beta.mat[i, groups.active] = fitted.beta
+      #beta.mat[i, groups.active] = fitted.beta
     }
   }
 
+  pred.errs = pred.errs / nsim
+  
   bar.quantiles <- c(.25, .75)
   point.quantiles <- c(.05, .95)
   null.Pvals <- colMeans(P.mat)
@@ -122,12 +128,17 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim, max.steps, alpha =
     points(xax, Pvals.point[2, ], col = "green", pch = 25, cex = .5)
   }
 
-  if (rand.beta == FALSE) {
-    return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, mse.train = mses.train, mse.test = mses.test, mse.beta = mse.beta, beta.mat = beta.mat))
-  } else {
-    return(list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, mse.train = mses.train, mse.test = mses.test, mse.beta = mse.beta))
+  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero)
+
+  if (predictions) {
+    outlist[["pred.errs"]] = pred.errs
   }
+
+  return(outlist)
 }
+
+print(warnings())
+
 
 main = function() {
 

@@ -66,6 +66,6 @@ p_to_exp = function(p.list) {
 stop_hybrid = function(p.list, tau = 5, alpha = .1) {
   q = p_to_q(p.list)
   
-  return(2)
+  return(5)
 }
 

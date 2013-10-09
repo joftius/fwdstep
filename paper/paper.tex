@@ -143,6 +143,8 @@ be more statistically efficient than validation on held-out data, and
 also more computationally efficient than penalized methods with
 regularization parameters chosen by cross-validation.
 
+
+
 (\todo Change this paragraph as the sections are completed)
 In Section \ref{sec:stepwise} we establish notation and describe our
 forward stepwise procedure. Section \ref{sec:testing} briefly reviews
@@ -202,25 +204,34 @@ where $\epsilon$ is noise. Unless otherwise specified we assume
 i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ and that
 $\sigma$ is known.
 
+We allow for the possibility $p > n$ in which case \ref{eq:gmodel} is
+generically underdetermined. In such cases it still may be possible to
+estimate $\beta$ well if it is sparse--that is, if it has few nonzero
+entries \citep{donoho:pursuit}. In the rest of this paper we refer to
+variable groups $X_g$ as noise variables if $\beta_g$ is a zero vector
+and as true predictor variables if $\beta_g$ has nonzero entries.
+
 Before we describe the forward stepwise procedure we require one last
 ingredient. To each group of variables we assign a weight $w_g$. These
 weights act like penalties or costs, so increasing $w_g$ makes it
-\textit{more difficult} for the group $X_g$ to enter the model. The
+more difficult for the group $X_g$ to enter the model. The
 modeler can choose weights arbitrarily, but we will only use one
 particular choice, based on $p_g$, that we discuss later. With this we
-are ready to describe the forward stepwise procedure Algorithm \ref{algo:fs}.
+are ready to describe the forward stepwise procedure, given in Algorithm
+\ref{algo:fs}. Note that to prevent saturation, and to enable our p-value
+computations, \textit{max.steps} should be at most $\min (n, G) - 1$. 
 
 \begin{algorithm}
 \DontPrintSemicolon
 \KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ grouped variables}
 \KwResult{Active set $A$ of variable groups included in the model}
 \SetKwFunction{lsfitResidual}{lsfitResidual}
-\caption{Forward stepwise procedure}
+\caption{Forward stepwise procedure with groups and weights}
 \BlankLine
 $A \gets \emptyset$\;
 $A^c \gets \{ 1, \ldots, G \}$\;
 $r_0 \gets y$\;
-\For{$counter \leftarrow 1$ \KwTo $\min (n, G)$}{
+\For{$step \leftarrow 1$ \KwTo $max.steps$}{
   $g^* \gets \argmax_{g \in A^c} \norm{X_g^T r_{g-1}}_2 / w_g$\;
   $A \gets A \cup \{ g^* \}$\;
   $A^c \gets A^c \backslash \{ g^* \}$\;
@@ -230,6 +241,7 @@ $r_0 \gets y$\;
 \label{algo:fs}
 \end{algorithm}
 
+
 \todo Expand this section
 
 \begin{itemize}
@@ -237,8 +249,40 @@ $r_0 \gets y$\;
   \item Stopping rules, cite new paper on lasso?
 \end{itemize}
 
+Subset selection refers to the problem of choosing a subset of the $p$
+potential variables to include in a model. Since there are $2^p$ such
+choices, exhaustive search is computationally infeasible when $p$ is
+large. If exhaustive search were possible, performing a large
+search runs the risk of over-fitting unless model complexity is
+appropriately penalized. Algorithm \ref{algo:fs} produces a much
+smaller set of potential models, at most \textit{max.steps}. However,
+it is a greedy algorithm so the set of models it produces may not
+contain the best possible model. This is an inherent shortcoming which
+we do not address in this paper.
 
-
+So far we have left open the question of choosing among the models in
+the forward stepwise sequence, i.e. when to stop stepping
+forward. Some classical approaches can be posed as optimization
+criteria and stop at the step minimizing
+\begin{equation}
+\begin{aligned}
+\label{eq:subsetregress}
+\frac{1}{2} \| y - X \beta_s \|_2^2 + \lambda P(\beta_s)
+\end{aligned}
+\end{equation}
+where we have written $\{ \beta_s : s = 1, \ldots, max.steps \}$ as
+the sequence of models outputted by forward stepwise. The function
+$P(\beta)$ is a penalty on model complexity usually taken to be the
+number of nonzero entries of $\beta$. Proposals for $\lambda$ include
+2 ($C_p$, AIC \todo{cite}), $\log(n)$ (BIC of \cite{BIC}), and
+$2\log(p)$ (RIC of \cite{RIC}). In the current paper we provide
+accurate p-values when adding the first noise variable group in the forward
+stepwise sequence, and it is natural to consider using these p-values
+to choose a model. \cite{sequential:fdr} examined some stopping rules
+using the asymptotic p-values of \cite{significance:lasso} and showed
+their stopping rules control false discovery rate--the expected
+proportion of noise variables among variables declared significant
+\citep{fdr}. We explore this further in Section \ref{sec:simulations}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%

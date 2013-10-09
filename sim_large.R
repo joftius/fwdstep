@@ -5,7 +5,7 @@ source('fwd_step_test.R')
 source('tex_table.R')
 
 nsim = 200
-n = 150
+n = 100
 sigma = 1
 
 groups = 1:500
@@ -27,8 +27,8 @@ p = length(groups)
 mult = sqrt(2*log(p))
 upper = 1.1*mult
 lower = 0.9*mult
-num.nonzero = 8
-max.steps = 12
+num.nonzero = 6
+max.steps = 9
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 
 pdf('figs/large_sim_gaussian_design.pdf')

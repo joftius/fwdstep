@@ -15,7 +15,11 @@ update_active_set = function(active.set, group) {
   
 }
 
-add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
+active_groups = function(active.set, groups) {
+  return(sapply(groups, function(x) is.element(x, active.set)))
+}
+
+add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
 
   n = length(Y)
   results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
@@ -40,15 +44,32 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
       Xgmax.regress = Xgmax[ , -1]
     }
   }
-  Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
-
-####### is this necessary for p-value? ########  
-#  for (gind in 1:max(groups)) {
-#    if (gind != imax) {
-#      group = groups == gind
-#      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group] 
-#    }
-#  }
+  #Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
+  # try this instead, whole model residual:
+  X.regress = matrix(0, nrow = n, ncol = 1)
+  for (var in active.set) {
+    inds = which(groups == var)
+    cols = X.orig[ , inds]
+    if (length(inds) > 1) {
+      if (length(unique(rowSums(cols))) == 1) {
+        X.regress = cbind(X.regress, cols[-1])
+      } else {
+        X.regress = cbind(X.regress, cols)
+      }
+    } else {
+      X.regress = cbind(X.regress, cols)
+    }
+  }
+  X.regress = X.regress[ , -1]
+  Y.resid = lm(Y ~ X.regress - 1)$residual
+      
+####### This is necessary for pvalue? ########  
+  for (gind in 1:max(groups)) {
+    if (gind != imax) {
+      group = groups == gind
+      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group] 
+    }
+  }
 
   return(list(test.output = results, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
@@ -80,10 +101,11 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
 
   Y.update = Y
   X.update = X
+  X.orig = X
 
   for (i in 1:max.steps) {
     
-    output = add_group(X.update, Y.update, groups, weights, sigma, active.set, eff.p)
+    output = add_group(X.orig, X.update, Y.update, groups, weights, sigma, active.set, eff.p)
     active.set = output$active.set
     eff.p = output$eff.p
     Y.update = output$Y.update

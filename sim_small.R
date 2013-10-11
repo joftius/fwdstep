@@ -9,8 +9,9 @@ n = 50
 sigma = 1
 groups = c(1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 9, 9, rep(10, 10))
 p = length(groups)
-upper = 1 #sqrt(2*log(p))
-lower = .9
+mult = sqrt(2*log(p))
+upper = 1.1*mult
+lower = 0.9*mult
 num.nonzero = 3
 max.steps = 8
 beta = beta_staircase(groups, num.nonzero, upper, lower)
@@ -24,8 +25,9 @@ warnings()
 
 groups = sort(c(groups, 2, 8))
 p = length(groups)
-upper = 1 #(1+.1)*sqrt(2*log(p))
-lower = .9 #(1-.1)*sqrt(2*log(p))
+mult = sqrt(2*log(p))
+upper = 1.1*mult
+lower = 0.9*mult
 beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, perturb = TRUE, cat.vars = 1:max(groups))
 warnings()
 

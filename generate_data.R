@@ -85,7 +85,7 @@ gaussian_design = function(n, groups, ortho.within = FALSE) {
     }
   }
 
-  X = X %*% diag(1/colSums(X))
+  X = X %*% diag(1/sqrt(colSums(X^2)))
   
   return(X)
 }

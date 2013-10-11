@@ -47,12 +47,12 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   #Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
   # try this instead, whole model residual:
   X.regress = matrix(0, nrow = n, ncol = 1)
-  for (var in active.set) {
+  for (var in new.active.set) {
     inds = which(groups == var)
     cols = X.orig[ , inds]
     if (length(inds) > 1) {
       if (length(unique(rowSums(cols))) == 1) {
-        X.regress = cbind(X.regress, cols[-1])
+        X.regress = cbind(X.regress, cols[ , -ncol(cols)])
       } else {
         X.regress = cbind(X.regress, cols)
       }

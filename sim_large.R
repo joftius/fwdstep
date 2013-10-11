@@ -4,17 +4,17 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 200
+nsim = 20
 n = 100
 sigma = 1
 
-groups = 1:500
+groups = 1:1000
 p = length(groups)
 mult = sqrt(2*log(p))
 upper = 1.1*mult
 lower = 0.9*mult
-num.nonzero = 20
-max.steps = 30
+num.nonzero = 8
+max.steps = 12
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 
 pdf('figs/large_sim_gaussian_lasso.pdf')
@@ -25,10 +25,10 @@ dev.off()
 groups = sort(c(rep(1:50, 5), rep(51:75, 10)))
 p = length(groups)
 mult = sqrt(2*log(p))
-upper = 1.1*mult
-lower = 0.9*mult
-num.nonzero = 6
-max.steps = 9
+upper = 3.1*mult
+lower = 2.5*mult
+num.nonzero = 2
+max.steps = 4
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 
 pdf('figs/large_sim_gaussian_design.pdf')

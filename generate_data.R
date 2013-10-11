@@ -84,6 +84,8 @@ gaussian_design = function(n, groups, ortho.within = FALSE) {
       X[ , group] = svd(X[ , group])$u
     }
   }
+
+  X = X %*% diag(1/colSums(X))
   
   return(X)
 }
@@ -114,6 +116,8 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
 
   }
 
+  X = X %*% diag(1/colSums(X))
+  
   return(X)
 }
 

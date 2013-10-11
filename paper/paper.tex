@@ -65,7 +65,7 @@
 \begin{frontmatter}
 
 % "Title of the paper"
-\title{A significance test for forward stepwise model selection}
+\title{A significance test in forward stepwise model selection}
 
 %%%
 %%% \runtitle{} - I don't know what this is
@@ -268,7 +268,7 @@ where we have written $\{ \beta_s : s = 1, \ldots, max.steps \}$ as
 the sequence of models outputted by forward stepwise. The function
 $\pen(\beta)$ is a penalty on model complexity usually taken to be the
 number of nonzero entries of $\beta$. Proposals for $\lambda$ include
-2 ($C_p$, AIC \todo{cite}), $\log(n)$ (BIC of \cite{BIC}), and
+2 ($C_p$ of \cite{CP}, AIC of \cite{AIC}), $\log(n)$ (BIC of \cite{BIC}), and
 $2\log(p)$ (RIC of \cite{RIC}). In the current paper we provide
 accurate p-values when adding the first noise variable group in the forward
 stepwise sequence, and it is natural to consider using these p-values
@@ -312,9 +312,8 @@ distribution for the test statistic, this appears in
 \cite{tests:adaptive}. 
 
 
-Writing $\hat
-\beta(\lambda)$, the solution for a fixed value of $\lambda$, we need
-the following facts (ref Tibs2012) 
+Writing $\hat \beta(\lambda)$ for the lasso solution for a fixed value of $\lambda$, we need
+the following facts summarized in \cite{significance:lasso} (ref Tibs2012?).
 
 \begin{itemize}
 
@@ -330,7 +329,7 @@ the following facts (ref Tibs2012)
     for which the corresponding coordinates of $\hat \beta(\lambda_k)$
     are potentially nonzero. Any variable with index not in $A_k$ has
     a zero coefficient in $\hat \beta(\lambda_k)$, but the converse is
-    not true. 
+    not true. \todo{is this equicorrelation set?}
   
   \item Path algorithms for computing lasso solutions proceed by
     fitting models at a grid of $\lambda$ values. The active set
@@ -342,7 +341,7 @@ the following facts (ref Tibs2012)
 
 \end{itemize}
 
-Lockhart et al. prove that, under the null hypothesis that $A_k$
+\cite{significance:lasso} prove that under the null hypothesis that $A_k$
 contains all the strong predictor variables, the distribution of a
 test statistic $T_k \propto \lambda_k(\lambda_k - \lambda_{k+1})$ is
 asymptotically Exp(1). In the lasso case we know a lot about the knots
@@ -383,7 +382,6 @@ The group lasso estimator is discussed in (ref that guy's thesis) and
 coefficients within the groups.  For a survey on group lasso and
 related factor models see (ref???). \todo review some more literature
 and add a few more references here if they seem worthwhile. 
-
 
 
 Before considering the group lasso, we review some ingredients of the

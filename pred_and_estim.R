@@ -43,7 +43,7 @@ pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test
 
 # apply above function with all stopping rules
 sim_pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, alpha) {
-  stop.rules = c("first", "forward", "hybrid")
+  stop.rules = c("first", "forward", "last")
   output = matrix(Inf, nrow = 1, ncol = 3)
   for (stop.rule in stop.rules) {
     rule.err = pred_est_stats(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha)

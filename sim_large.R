@@ -4,15 +4,15 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 20
+nsim = 500
 n = 100
 sigma = 1
 
-groups = 1:1000
+groups = 1:200
 p = length(groups)
 mult = sqrt(2*log(p))
-upper = 1.1*mult
-lower = 0.9*mult
+upper = 2.1*mult
+lower = 1.9*mult
 num.nonzero = 8
 max.steps = 12
 beta = beta_staircase(groups, num.nonzero, upper, lower)
@@ -22,13 +22,13 @@ output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.b
 dev.off()
 
 
-groups = sort(c(rep(1:50, 5), rep(51:75, 10)))
+groups = sort(c(rep(1:20, 5), rep(21:30, 10)))
 p = length(groups)
 mult = sqrt(2*log(p))
-upper = 3.1*mult
-lower = 2.5*mult
-num.nonzero = 2
-max.steps = 4
+upper = 2.1*mult
+lower = 1.9*mult
+num.nonzero = 8
+max.steps = 12
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 
 pdf('figs/large_sim_gaussian_design.pdf')

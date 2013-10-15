@@ -44,24 +44,24 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
       Xgmax.regress = Xgmax[ , -1]
     }
   }
-  #Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
+  Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
   # try this instead, whole model residual:
-  X.regress = matrix(0, nrow = n, ncol = 1)
-  for (var in new.active.set) {
-    inds = which(groups == var)
-    cols = X.orig[ , inds]
-    if (length(inds) > 1) {
-      if (length(unique(rowSums(cols))) == 1) {
-        X.regress = cbind(X.regress, cols[ , -ncol(cols)])
-      } else {
-        X.regress = cbind(X.regress, cols)
-      }
-    } else {
-      X.regress = cbind(X.regress, cols)
-    }
-  }
-  X.regress = X.regress[ , -1]
-  Y.resid = lm(Y ~ X.regress - 1)$residual
+#  X.regress = matrix(0, nrow = n, ncol = 1)
+#  for (var in new.active.set) {
+#    inds = which(groups == var)
+#    cols = X.orig[ , inds]
+##     if (length(inds) > 1) {
+##       if (length(unique(rowSums(cols))) == 1) {
+##         X.regress = cbind(X.regress, cols[ , -ncol(cols)])
+##       } else {
+##         X.regress = cbind(X.regress, cols)
+##       }
+##     } else {
+##       X.regress = cbind(X.regress, cols)
+##     }
+##   }
+##   X.regress = X.regress[ , -1]
+##   Y.resid = lm(Y ~ X.regress - 1)$residual
       
 ####### This is necessary for pvalue? ########  
   for (gind in 1:max(groups)) {

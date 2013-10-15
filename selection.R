@@ -2,7 +2,7 @@
 source('stop_rules.R')
 
 # Input incl.list, p.list, true.active.set
-# Use stopping rules stop_first_large, stop_forward, stop_hybrid
+# Use stopping rules stop_first_large, stop_forward, stop_last
 # (those input p.list and alpha, output index of last inclusion)
 
 # from fwd_step_test.R results
@@ -23,8 +23,8 @@ selection_stats = function(p.list, active.set, true.step, m1, stop.rule, alpha =
 #    stop.ind = stop_first(p.list, alpha)
 #  } else if (stop.rule == "forward") {
 #    stop.ind = stop_forward(p.list, alpha)
-#  } else if (stop.rule == "hybrid") {
-#    stop.ind = stop_hybrid(p.list, alpha)
+#  } else if (stop.rule == "last") {
+#    stop.ind = stop_last(p.list, alpha)
   if (stop.ind == 0) {
     stopped.set = c()
     S = 0
@@ -43,16 +43,16 @@ selection_stats = function(p.list, active.set, true.step, m1, stop.rule, alpha =
 sim_select_stats = function(p.lists, active.sets, true.steps, m1, alpha = .1) {
   first.mat = matrix(0, nrow = nrow(p.lists), ncol = 5)
   forward.mat = first.mat
-  hybrid.mat = first.mat
+  last.mat = first.mat
   for (i in 1:nrow(p.lists)) {
     first.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "first", alpha)
     forward.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "forward", alpha)
-    hybrid.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "hybrid", alpha)
+    last.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "last", alpha)
   }
   first = colMeans(first.mat)
   forward = colMeans(forward.mat)
-  hybrid = colMeans(hybrid.mat)
-  results = rbind(first, forward, hybrid)
+  last = colMeans(last.mat)
+  results = rbind(first, forward, last)
   colnames(results) = c("Fdp", "R", "S", "V", "Power")
   return(results)
 }

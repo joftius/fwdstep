@@ -11,11 +11,20 @@ stop_first = function(p.list, alpha = .1) {
 
   if (length(p.big) == 0) {
     return(length(p.list))
-  } else {
-    k = min(p.big) - 1
-    return(k)
-  }
+  } 
+  k = min(p.big) - 1
+  return(k)
 }
+
+stop_last = function(p.list, alpha = .1) {
+  
+  p.small = which(p.list < alpha)
+  if (length(p.small) == 0) {
+    return(0)
+  }
+  k = max(p.small)
+  return(k)
+}                               
 
 # Renyi representation
 p_to_q = function(p.list) {

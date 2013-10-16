@@ -110,13 +110,13 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
       cat.levels = sample(1:group.size, n, replace=TRUE)
     }
     X[ , group] = unname(model.matrix(~ factor(cat.levels) - 1)[ , 1:group.size])
-    if (ortho.within == TRUE) {
-      X[ , group] = X[ , group] %*% diag(1/sqrt(colSums(X[ , group])))
-    }
+#    if (ortho.within == TRUE) {
+#      X[ , group] = X[ , group] %*% diag(1/sqrt(colSums(X[ , group])))
+#    }
 
   }
 
-  X = X %*% diag(1/colSums(X))
+  X = X %*% diag(1/sqrt(colSums(X^2)))
   
   return(X)
 }

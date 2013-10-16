@@ -44,7 +44,7 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
       Xgmax.regress = Xgmax[ , -1]
     }
   }
-  Y.resid = lm(Y ~ Xgmax.regress - 1)$residuals
+  Y.resid = (diag(rep(1,n)) - Pgmax) %*% Y
   # try this instead, whole model residual:
 #  X.regress = matrix(0, nrow = n, ncol = 1)
 #  for (var in new.active.set) {
@@ -67,10 +67,10 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   for (gind in 1:max(groups)) {
     if (gind != imax) {
       group = groups == gind
-      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group] 
+      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
+#      X.project[, group] = X.project[, group] %*% diag(1/sqrt(colSums(X.project[, group]^2)))
     }
   }
-  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
 
   return(list(test.output = results, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }

@@ -4,15 +4,15 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 500
+nsim = 50
 n = 100
 sigma = 1
 
 groups = 1:200
 p = length(groups)
 mult = sqrt(2*log(p))
-upper = 2.1*mult
-lower = 1.9*mult
+upper = 1.5*mult
+lower = 1.1*mult
 num.nonzero = 8
 max.steps = 12
 beta = beta_staircase(groups, num.nonzero, upper, lower)
@@ -25,8 +25,8 @@ dev.off()
 groups = sort(c(rep(1:20, 5), rep(21:30, 10)))
 p = length(groups)
 mult = sqrt(2*log(p))
-upper = 2.1*mult
-lower = 1.9*mult
+upper = 1.5*mult
+lower = 1.1*mult
 num.nonzero = 8
 max.steps = 12
 beta = beta_staircase(groups, num.nonzero, upper, lower)

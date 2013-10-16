@@ -1,39 +1,48 @@
 
-# maybe need to orthogonalize?
-
 library(MASS) # for ginv
 source('group_lasso.R')
 
+# Add a group to the active set
 update_active_set = function(active.set, group) {
-
   if (active.set[1] == 0) {
     new.active.set = group
   } else {
     new.active.set = c(active.set, group)
   }
   return(new.active.set)
-  
 }
 
+# Indicator of which groups are in the active set
 active_groups = function(active.set, groups) {
   return(sapply(groups, function(x) is.element(x, active.set)))
 }
 
-add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
+# Indicator (or list?) of groups with at least one nonzero coefficient in beta
+true_active_groups = function(groups, beta) {
+  beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
+  active.groups = beta.ind$Group.1[which(beta.ind$x == TRUE)]
+  return(active.groups)
+}
 
+# Compute which group to add to the active set and associated pvalue
+add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   n = length(Y)
+  # From group_lasso.R
   results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
   imax = results$i
   gmax = groups == imax
+  # Effective number of parameters
   new.eff.p = eff.p + sum(gmax)
 
   if (new.eff.p >= n) {
     stop("Too many variables added. Try decreasing max.steps")
   }
-  
+
+  # Also using group_lasso.R
   p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
   new.active.set = update_active_set(active.set, imax)
 
+  # Form new residual
   X.project = X
   Xgmax = X[, gmax]
   Xgmax.regress = Xgmax
@@ -63,11 +72,12 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
 ##   X.regress = X.regress[ , -1]
 ##   Y.resid = lm(Y ~ X.regress - 1)$residual
       
-####### This is necessary for pvalue? ########  
+####### This is necessary for pvalue? ########
+  # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
       group = groups == gind
-      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
+#      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
     }
   }
   X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
@@ -76,9 +86,8 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
 }
 
 
-
+# Iterate add_group for max.steps
 forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
-
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
@@ -125,6 +134,6 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     }
     
   }
-
   return(list(active.set = active.set, p.vals = p.vals, Ls = Ls))
 }
+

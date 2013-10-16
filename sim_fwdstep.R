@@ -4,7 +4,7 @@ source('generate_data.R')
 source('fwd_step_test.R')
 source('tex_table.R')
 
-nsim = 100
+nsim = 20
 n = 100
 sigma = 1
 

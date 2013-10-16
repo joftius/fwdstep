@@ -1,16 +1,9 @@
 
-
 source('fwd_step.R')
 source('generate_data.R')
 source('selection.R')
 source('pred_and_estim.R')
 source('suff_conds.R')
-
-active_groups = function(groups, beta) {
-  beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
-  active.groups = beta.ind$Group.1[which(beta.ind$x == TRUE)]
-  return(active.groups)
-}
 
 
 fwd_group_simulation = function(n, sigma, groups, beta, nsim,
@@ -21,7 +14,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
   weights = sqrt(rle(groups)$lengths)
   p = length(groups)
   g = length(unique(groups))
-  true.active.groups = active_groups(groups, beta)
+  true.active.groups = true_active_groups(groups, beta)
   num.nonzero = length(true.active.groups)
   upper = max(abs(beta))
   lower = min(abs(beta[beta != 0]))
@@ -56,7 +49,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     if (rand.beta == TRUE) {
       beta = beta_staircase(groups, num.nonzero, upper, lower,
         rand.sign = TRUE, permute = TRUE, perturb = TRUE)
-      true.active.groups = active_groups(groups, beta)
+      true.active.groups = true_active_groups(groups, beta)
     }
 
     # Construct design matrix
@@ -167,53 +160,4 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
 }
 
 print(warnings())
-
-
-main = function() {
-
-  nsim = 100
-
-  # A small problem
-  n = 50
-  sigma = 1.01
-  groups = c(1,1,2,2,3,4,4,4,5,5,6,7)
-  upper = 0.9
-  lower = 0.6
-  num.nonzero = 3
-  max.steps = 5
-  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign=TRUE)
-  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
-
-  # A larger problem
-  n = 200
-  sigma = 1.01
-  groups = sort(c(rep(1:10, 2), rep(11:15, 5), rep(16:20, 10)))
-  upper = 1
-  lower = 0.2
-  num.nonzero = 8
-  max.steps = 10
-  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, permute = TRUE)
-  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
-
-  # Randomized beta
-  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
-  
-  # An n << p problem
-  n = 100
-  sigma = 1.01
-  groups = sort(c(rep(1:100, 5), rep(101:150, 10)))
-  upper = 3.4
-  lower = 1.4
-  num.nonzero = 10
-  max.steps = 12
-  beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE)
-  garbage = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, plot = TRUE)
-
-}
-
-if (interactive()) {
-#  pdf('test_fwd_step.pdf')
-#  main()
-#  dev.off()
-}
 

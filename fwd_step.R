@@ -72,12 +72,12 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
 ##   X.regress = X.regress[ , -1]
 ##   Y.resid = lm(Y ~ X.regress - 1)$residual
       
-####### This is necessary for pvalue? ########
+####### This is necessary? ########
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
       group = groups == gind
-#      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
+      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
     }
   }
   X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))

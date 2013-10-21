@@ -26,7 +26,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
   pred.errs = matrix(0, nrow=3, ncol=3)
   mu.list = c()
   start.time = as.numeric(Sys.time())
-  
+
 ## track signal reconstruction?  
 ## don't do this for now
 #  if (rand.beta == FALSE) {
@@ -41,8 +41,8 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     if (i %% 10 == 0) {
       elapsed.time = as.numeric(Sys.time()) - start.time
       time.per.iter = elapsed.time/(i-1)
-      remaining.time = (nsim-i)*time.per.iter/60
-      cat(paste("Iteration", i, "of", nsim, "--- time remaining about:", remaining.time, "\n"))
+      remaining.time = round((nsim-i)*time.per.iter/60, 3)
+      cat(paste("Iteration", i, "of", nsim, "--- time remaining about:", remaining.time, "min\n"))
     }
 
     # Randomized signal
@@ -69,12 +69,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     Y.test = Y.noiseless.test + rnorm(n)*sigma
 
     # Null results
-    results = forward_group(X, Y, groups, weights, sigma, max.steps)
+    results = forward_group(X, Y, groups, weights, sigma, max.steps = max.steps)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps)
+    results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps = max.steps)
     P.mat.b[i, ] = results.b$p.vals
     AS.mat.b[i, ] = results.b$active.set
     recover.mat[i, ] = sapply(results.b$active.set, function(x)
@@ -104,10 +104,10 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
 #    }
   }
 
-  MSRS = colMeans(recover.mat)
+  TrueStep = colMeans(recover.mat)
   num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
-  MRR = mean(num.recovered.groups)
-  print(MRR)
+  fwd.power = mean(num.recovered.groups) / num.nonzero
+
   # Convert sum to mean
   pred.errs = pred.errs / nsim
 
@@ -125,12 +125,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     
     xax <- 1:max.steps
     nxax <- xax + 0.2
-    plot.main <- paste("n, g, #nonzero, MRR =",
-                       toString(paste(c(n, g, num.nonzero, MRR), sep = ", ")))
+    plot.main <- paste("n, g, #nonzero, FS Power =",
+                       toString(paste(c(n, g, num.nonzero, fwd.power), sep = ", ")))
     if (rand.beta == TRUE) {
       plot.main = paste(plot.main, "(randomized signal)")
     }
-    plot(xax, MSRS, type = "l", main = plot.main, xlab = "Step", ylab = "MSRS", ylim = c(-.1,1.1))
+    plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "TrueStep", ylim = c(-.1,1.1))
     abline(v = num.nonzero, lty = "dotted")
     
     points(nxax, null.Pvals, col="red")
@@ -146,7 +146,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     points(xax, Pvals.point[2, ], col = "green", pch = 25, cex = .5)
   }
 
-  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero)
+  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, fwd.power = fwd.power)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

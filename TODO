@@ -1,6 +1,8 @@
-* Finish stopping rules and rerun that simulation
+* Finish forward stepwise performance simulation, add that to the section in the paper about forward stepwise
+
+* Finish stopping rules
 *** How to HybridStop? need T_k?
-* Check p-value code, see if log.p option can be used
-*** Debug categorical variables issue
+
 * Many TODO's listed in the paper
-* Simulation: track estimation/prediction as well?
+
+* Smooth details of estimation/prediction, then produce some tables/plots and include them in paper

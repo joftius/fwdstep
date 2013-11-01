@@ -2,6 +2,10 @@
 ** Use this to prove something about error control?
 
 * Focal points of paper
+** Global null control (at 1st step)
+** When does OMP work? And can we think of it as conditional test?
+
+
 ** Summary of previous work
 ** Extension to group lasso
 ** (null) P-value fix

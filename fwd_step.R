@@ -48,31 +48,17 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   Xgmax.regress = Xgmax
   Pgmax = Xgmax %*% ginv(Xgmax)
   # If X[, gmax] is categorical, leave one column out
+
+  
+  ########### Is this doing anything? Xgmax.regress isn't used ###########
   if (sum(gmax) > 1) {
     if (length(unique(rowSums(Xgmax))) == 1) {
       Xgmax.regress = Xgmax[ , -1]
     }
   }
   Y.resid = (diag(rep(1,n)) - Pgmax) %*% Y
-  # try this instead, whole model residual:
-#  X.regress = matrix(0, nrow = n, ncol = 1)
-#  for (var in new.active.set) {
-#    inds = which(groups == var)
-#    cols = X.orig[ , inds]
-##     if (length(inds) > 1) {
-##       if (length(unique(rowSums(cols))) == 1) {
-##         X.regress = cbind(X.regress, cols[ , -ncol(cols)])
-##       } else {
-##         X.regress = cbind(X.regress, cols)
-##       }
-##     } else {
-##       X.regress = cbind(X.regress, cols)
-##     }
-##   }
-##   X.regress = X.regress[ , -1]
-##   Y.resid = lm(Y ~ X.regress - 1)$residual
       
-####### This is necessary? ########
+####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {

@@ -1,5 +1,5 @@
 
-
+# n choose 2 algorithm for calculating coherence
 
 pairwise_corrs = function(mat, standardize = FALSE) {
   if (standardize) {
@@ -14,3 +14,7 @@ pairwise_corrs = function(mat, standardize = FALSE) {
   return(corrs)
 }
 
+coherence = function(mat) {
+  corrs = pairwise_corrs(mat, standardize=TRUE)
+  return(max(abs(corrs)))
+}

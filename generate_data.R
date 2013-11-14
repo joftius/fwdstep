@@ -73,8 +73,14 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   return(beta)
 }
 
+# Normalize columns by 2-norm
+col_normalize = function(X) {
+  norms = sqrt(colSums(X^2))
+  return(t(t(X) / norms))
+}
+
 # Fixed group sizes, gaussian design
-gaussian_design = function(n, groups, ortho.within = FALSE) {
+gaussian_design = function(n, groups, ortho.within = FALSE, corr = 0) {
   p = length(groups)
   X = matrix(rnorm(n*p), nrow=n)
 
@@ -85,11 +91,21 @@ gaussian_design = function(n, groups, ortho.within = FALSE) {
     }
   }
 
-  X = X %*% diag(1/sqrt(colSums(X^2)))
-  
+  if (corr != 0) {
+    Z = matrix(rep(t(rnorm(n)), p), nrow=n)
+    X = sqrt(1-r)*X + sqrt(r)*Z
+  }
+
+  X = col_normalize(X)
   return(X)
 }
 
+ternary_design = function(n, groups) {
+  p = length(groups)
+  entries = sample(c(-1,0,1), n*p, replace=TRUE)
+  X = matrix(entries, nrow=n)
+  X = col_normalize(X)
+}
 
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
@@ -116,8 +132,7 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
 
   }
 
-  X = X %*% diag(1/sqrt(colSums(X^2)))
-  
+  X = col_normalize(X)
   return(X)
 }
 

@@ -68,7 +68,7 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   }
   X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
   
-  return(list(test.output = results, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
+  return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
 
 
@@ -93,6 +93,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   active.set = 0
   eff.p = 0
   p.vals = c()
+  c.vars = c()
   Ls = c()
 
   Y.update = Y
@@ -107,6 +108,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     Y.update = output$Y.update
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
+    c.vars = c(c.vars, output$var)
     # tracking lambda_2
     Ls = c(Ls, output$test.output[1])
 
@@ -120,6 +122,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     }
     
   }
+
   return(list(active.set = active.set, p.vals = p.vals, Ls = Ls))
 }
 

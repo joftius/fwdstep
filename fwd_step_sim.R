@@ -3,11 +3,11 @@ source('fwd_step.R')
 source('generate_data.R')
 source('selection.R')
 source('pred_and_estim.R')
-source('suff_conds.R')
+source('fwd_step/coherence.R')
 
 
 fwd_group_simulation = function(n, sigma, groups, beta, nsim,
-  max.steps, alpha = .1, categorical = FALSE, predictions = FALSE,
+  max.steps, alpha = .1, design = 'gaussian', categorical = FALSE, predictions = FALSE,
   rand.beta = FALSE, coherence = FALSE, plot = FALSE) {
 
   # Initialize
@@ -57,8 +57,16 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
       X = categorical_design(n, groups, ortho.within = FALSE)
       X.test = categorical_design(n, groups, ortho.within = FALSE)
     } else {
-      X = gaussian_design(n, groups)
-      X.test = gaussian_design(n, groups)
+
+      design_name = paste0(design, "_design")
+      if (exists(design_name, mode = "function")) {
+        design_fun = get(design_name)
+        X = design_fun(n, groups)
+        X.test = design_fun(n, groups)
+      } else {
+        stop(paste("Misspecified design matrix:", design))
+      }
+      
     }
 
     # Construct response
@@ -123,27 +131,25 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     Pvals.bar <- apply(P.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
     Pvals.point <- apply(P.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
     
-    xax <- 1:max.steps
-    nxax <- xax + 0.2
-    plot.main <- paste("n, g, #nonzero, FS Power =",
-                       toString(paste(c(n, g, num.nonzero, fwd.power), sep = ", ")))
-    if (rand.beta == TRUE) {
-      plot.main = paste(plot.main, "(randomized signal)")
-    }
-    plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "TrueStep", ylim = c(-.1,1.1))
+    xax <- 1:max.steps - 0.15
+    nxax <- xax + 0.3
+    plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", k-Oracle power: ", round(fwd.power, 3))
+
+    plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2)
     abline(v = num.nonzero, lty = "dotted")
     
-    points(nxax, null.Pvals, col="red")
+    points(nxax, null.Pvals, col="orangered")
     arrows(nxax, null.Pvals.bar[1, ], nxax, null.Pvals.bar[2, ],
-           code = 3, angle = 90, length = 0, col = "red")
-    points(nxax, null.Pvals.point[1, ], col = "red", pch = 24, cex = .5)
-    points(nxax, null.Pvals.point[2, ], col = "red", pch = 25, cex = .5)
+           code = 3, angle = 90, length = 0, col = "orangered")
+    points(nxax, null.Pvals.point[1, ], col = "orangered", pch = 24, cex = .5)
+    points(nxax, null.Pvals.point[2, ], col = "orangered", pch = 25, cex = .5)
   
-    points(xax, Pvals, col="green")
+    points(xax, Pvals, col="blue")
     arrows(xax, Pvals.bar[1, ], xax, Pvals.bar[2, ],
-           code = 3, angle = 90, length = 0, col = "green")
-    points(xax, Pvals.point[1, ], col = "green", pch = 24, cex = .5)
-    points(xax, Pvals.point[2, ], col = "green", pch = 25, cex = .5)
+           code = 3, angle = 90, length = 0, col = "blue")
+    points(xax, Pvals.point[1, ], col = "blue", pch = 24, cex = .5)
+    points(xax, Pvals.point[2, ], col = "blue", pch = 25, cex = .5)
+
   }
 
   outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, fwd.power = fwd.power)

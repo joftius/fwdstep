@@ -76,11 +76,12 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   #
   # assuming rank == num of variables in group...
   kmax = sum(which)
+  kmaxrank = kmax
   if (length(dim(Xmax)) == 2) {
     kmaxrank = rankMatrix(Xmax)[1]
     if (kmaxrank != kmax) {
 #      print(paste("Expected rank, computed rank =", kmax, kmaxrank))
-      kmax = kmaxrank
+#      kmax = kmaxrank
     }
   }
 
@@ -91,31 +92,35 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   # Uwhich = X_{g^star}^T y
   
   soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
-  if (kmax > 1) {
+  if (kmaxrank > 1) {
     #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
     Xeta = (Xmax %*% soln)[,1]
     Xmax = Xmax - outer(Xeta, soln, '*') / sum(soln^2)
     Wmax = Xmax[,1:(ncol(Xmax)-1)]
-    #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
-    Xeta = lm(Xeta ~ Wmax - 1)$residuals
+    Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
+    #Xeta = lm(Xeta ~ Wmax - 1)$residuals
     conditional_variance = sum(Xeta^2)
-  } else if (length(dim(Xmax)) == 2) {
+  } else if (kmax >= 2) {
     # case where Xmax is a matrix but has rank 1
     Xeta = Xmax[,1] / wmax * sign(U[which])
     if (dim(Xmax)[2] == 1) {
-      conditional_variance = t(Xmax[,1]) %*% Sigma %*% Xmax[,1]
+      conditional_variance = t(Xeta[,1]) %*% Sigma %*% Xeta[,1]
     } else {
       conditional_variance = sum(Xeta^2)
     }
   } else {
     # case where Xmax is a vector (list)
     Xeta = Xmax / wmax * sign(U[which])
-    conditional_variance = sum(Xmax * Sigma %*% Xmax)
+    conditional_variance = sum(Xeta^2)
+    ##
+    ##
+    # Sigma?
+    #conditional_variance = sum(Xeta * Sigma %*% Xeta)
   }
   #
   # use formula above display (42) in tests:adaptive
   #
-  conditional_variance = sum(Xeta^2)
+  #conditional_variance = sum(Xeta^2)
   Xeta = Xeta / conditional_variance
   
   C_X = t(X) %*% Xeta
@@ -151,7 +156,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
     Mplus = 0
     Mminus = Inf
   }
-  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmax, i=imax))
+  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmaxrank, i=imax))
 }
 
 pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {

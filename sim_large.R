@@ -4,34 +4,37 @@ source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
 
-nsim = 50
-n = 100
+design = 'gaussian'
+nsim = 200
+n = 130
+num.nonzero = 16
+max.steps = 20
+mult = sqrt(2*log(p))
 sigma = 1
 
 groups = 1:200
 p = length(groups)
-mult = 1*sqrt(2*log(p))
-upper = 1.5*mult
-lower = 1.1*mult
-num.nonzero = 8
-max.steps = 12
-beta = beta_staircase(groups, num.nonzero, upper, lower)
+upper.coeff = 1.8
+lower.coeff = 1.6
+upper = upper.coeff*mult
+lower = lower.coeff*mult
 
-pdf('figs/large_sim_gaussian_lasso.pdf')
+beta = beta_staircase(groups, num.nonzero, upper, lower)
+filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff, '.pdf')
+pdf(filename)
 output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 
-groups = sort(c(rep(1:20, 5), rep(21:30, 10)))
+groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
 p = length(groups)
-mult = 1*sqrt(2*log(p))
-upper = 1.5*mult
-lower = 1.1*mult
-num.nonzero = 8
-max.steps = 12
+g = length(unique(groups))
+mult = sqrt(2*log(g))
+upper = upper.coeff*mult
+lower = lower.coeff*mult
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-
-pdf('figs/large_sim_gaussian_design.pdf')
+filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff, '.pdf')
+pdf(filename)
 output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
@@ -43,5 +46,5 @@ results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1)
 rownames(results.l) = paste("(1)", rownames(results.l))
 rownames(results.g) = paste("(2)", rownames(results.g))
 
-file = "large_sim_selection.tex"
+file = paste0(design, "_large_selection.tex")
 tex_table(file, rbind(results.l, results.g), caption = caption)

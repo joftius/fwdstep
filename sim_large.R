@@ -5,19 +5,19 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 
 
-design = 'ternary'
-corr = 0 # nonzero only supported for gaussian design
-nsim = 400
+design = 'gaussian'
+corr = .1 # nonzero only supported for gaussian design
+nsim = 500
 n = 100
-num.nonzero = 8
+num.nonzero = 10
 max.steps = 12
-mult = sqrt(2*log(p))
-sigma = 1
+upper.coeff = 1.8
+lower.coeff = 1.8
 
+sigma = 1
 groups = 1:200
 p = length(groups)
-upper.coeff = 1.8
-lower.coeff = 1.7
+mult = sqrt(2*log(p))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 

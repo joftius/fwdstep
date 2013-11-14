@@ -93,7 +93,7 @@ gaussian_design = function(n, groups, ortho.within = FALSE, corr = 0) {
 
   if (corr != 0) {
     Z = matrix(rep(t(rnorm(n)), p), nrow=n)
-    X = sqrt(1-r)*X + sqrt(r)*Z
+    X = sqrt(1-corr)*X + sqrt(corr)*Z
   }
 
   X = col_normalize(X)

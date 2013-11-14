@@ -4,25 +4,35 @@ source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
 
-design = 'gaussian'
-nsim = 200
-n = 130
-num.nonzero = 16
-max.steps = 20
+
+design = 'ternary'
+corr = 0 # nonzero only supported for gaussian design
+nsim = 400
+n = 100
+num.nonzero = 8
+max.steps = 12
 mult = sqrt(2*log(p))
 sigma = 1
 
 groups = 1:200
 p = length(groups)
 upper.coeff = 1.8
-lower.coeff = 1.6
+lower.coeff = 1.7
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
+if ((corr != 0) & (design != 'gaussian')) {
+  stop("nonzero only supported for gaussian design")
+}
+
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff, '.pdf')
+filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+filename = paste0(filename, '.pdf')
 pdf(filename)
-output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
+output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 
@@ -33,9 +43,13 @@ mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff, '.pdf')
+filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+filename = paste0(filename, '.pdf')
 pdf(filename)
-output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, rand.beta = TRUE, plot = TRUE)
+output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 

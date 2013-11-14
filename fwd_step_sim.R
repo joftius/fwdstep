@@ -7,7 +7,7 @@ source('fwd_step/coherence.R')
 
 
 fwd_group_simulation = function(n, sigma, groups, beta, nsim,
-  max.steps, alpha = .1, design = 'gaussian', categorical = FALSE, predictions = FALSE,
+  max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE,
   rand.beta = FALSE, coherence = FALSE, plot = FALSE) {
 
   # Initialize
@@ -58,13 +58,18 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
       X.test = categorical_design(n, groups, ortho.within = FALSE)
     } else {
 
-      design_name = paste0(design, "_design")
-      if (exists(design_name, mode = "function")) {
-        design_fun = get(design_name)
-        X = design_fun(n, groups)
-        X.test = design_fun(n, groups)
+      if (design == 'gaussian') {
+        X = gaussian_design(n, groups, corr)
+        X.test = gaussian_design(n, groups, corr)
       } else {
-        stop(paste("Misspecified design matrix:", design))
+        design_name = paste0(design, "_design")
+        if (exists(design_name, mode = "function")) {
+          design_fun = get(design_name)
+          X = design_fun(n, groups)
+          X.test = design_fun(n, groups)
+        } else {
+          stop(paste("Misspecified design matrix:", design))
+        }
       }
       
     }

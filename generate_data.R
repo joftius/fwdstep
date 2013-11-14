@@ -100,6 +100,13 @@ gaussian_design = function(n, groups, ortho.within = FALSE, corr = 0) {
   return(X)
 }
 
+binary_design = function(n, groups) {
+  p = length(groups)
+  entries = sample(c(0,1), n*p, replace=TRUE)
+  X = matrix(entries, nrow=n)
+  X = col_normalize(X)
+}
+
 ternary_design = function(n, groups) {
   p = length(groups)
   entries = sample(c(-1,0,1), n*p, replace=TRUE)

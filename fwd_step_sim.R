@@ -62,8 +62,6 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
         X = gaussian_design(n, groups, corr = corr)
         X.test = gaussian_design(n, groups, corr = corr)
 
-        print(mean(colMeans(cor(X))))
-        
       } else {
         design_name = paste0(design, "_design")
         if (exists(design_name, mode = "function")) {

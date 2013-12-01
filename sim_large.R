@@ -6,13 +6,15 @@ source('tex_table.R')
 
 
 design = 'gaussian'
-corr = .1 # nonzero only supported for gaussian design
-nsim = 500
+corr = 0 # nonzero only supported for gaussian design
+
+nsim = 400
 n = 100
 num.nonzero = 10
-max.steps = 12
-upper.coeff = 1.8
-lower.coeff = 1.8
+k = num.nonzero
+max.steps = 13
+upper.coeff = 1.9
+lower.coeff = 1.1
 
 sigma = 1
 groups = 1:200
@@ -57,8 +59,13 @@ caption = "Evaluation of model selection using several stopping rules based on o
 results.l = with(output.l, sim_select_stats(signal.p, active.set, true.step, m1))
 results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1))
 
-rownames(results.l) = paste("(1)", rownames(results.l))
-rownames(results.g) = paste("(2)", rownames(results.g))
+#rownames(results.l) = paste("(1)", rownames(results.l))
+rownames(results.g) = paste("(g)", rownames(results.g))
 
-file = paste0(design, "_large_selection.tex")
+file = paste0("tables/", design, "_n", n, "_p", p, "_k", k, "_lower", lower.coeff, "_upper", upper.coeff)
+if (corr != 0) {
+  file = paste0(file, "_corr", corr)
+}
+file = paste0(file, ".tex")
+
 tex_table(file, rbind(results.l, results.g), caption = caption)

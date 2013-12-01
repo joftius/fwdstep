@@ -177,7 +177,7 @@ Label the outcome variable of $n$ i.i.d. measurements $y \in \real^n$. Let an in
 be the number of groups. For each $1 \leq g \leq G$ the design matrix encoding the
 $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
 the number of individual variables in group $g$. Define $p = \sum_{g=1}^G
-p_g$ be the total number of individual variables, so $p = G$ in the
+p_g$ the total number of individual variables, so $p = G$ in the
 case where all groups have size 1. Let $X$ be the matrix constructed
 by column-binding the $X_g$, that is  
 %Throughout most of this paper we assume orthogonality within groups, that is
@@ -219,8 +219,10 @@ more difficult for the group $X_g$ to enter the model. The
 modeler can choose weights arbitrarily, but we will only use one
 particular choice, based on $p_g$, that we discuss later. With this we
 are ready to describe the forward stepwise procedure, given in Algorithm
-\ref{algo:fs}. Note that to prevent saturation, and to enable our p-value
-computations, \textit{max.steps} should be at most $\min (n, G) - 1$. 
+\ref{algo:fs}. Note that to enable our p-value computations,
+\textit{max.steps} should be at most $\min (n, G) - 1$. In our
+implementation we treat the active set $A$ as an ordered set to easily
+track the order of variables entering the model.
 
 \begin{algorithm}
 \DontPrintSemicolon
@@ -236,6 +238,9 @@ $r_0 \gets y$\;
   $g^* \gets \argmax_{g \in A^c} \norm{X_g^T r_{g-1}}_2 / w_g$\;
   $A \gets A \cup \{ g^* \}$\;
   $A^c \gets A^c \backslash \{ g^* \}$\;
+  \For{$g \in A^c$}{
+    $X_g \gets (I - X_{g^*}X_{g^*}^\dagger) X_g$;
+  }
   $r_g \gets $\lsfitResidual{$r_{g-1}, X_{g^*}$}\;
 }
 \KwRet{$A$}
@@ -257,7 +262,7 @@ we do not address in this paper.
 So far we have left open the question of choosing among the models in
 the forward stepwise sequence, i.e. when to stop stepping
 forward. Some classical approaches can be posed as optimization
-criteria and stop at the step minimizing
+criteria which stop at the step minimizing
 \begin{equation}
 \begin{aligned}
 \label{eq:subsetregress}
@@ -277,6 +282,44 @@ using the asymptotic p-values of \cite{significance:lasso} and showed
 their stopping rules control false discovery rate--the expected
 proportion of noise variables among variables declared significant
 \citep{fdr}. We explore this further in Section \ref{sec:simulations}.
+
+Although forward stepwise is a greedy algorithm producing a
+potentially sub-optimal sequence of models, under favorable conditions
+it can still perform well. There is a parallel literature to the
+compressed sensing literature \textit{(cite some here)} with theorems
+stating that forward stepwise can exactly select the true model under
+some stringent conditions involving quantities like the sparsity of
+the true model and the coherence of the design matrix. We do not
+pursue this any further because we find empirically that forward
+stepwise can work well in much less restrictive situations than those
+guaranteed by theorems.
+
+To explore the performance of forward stepwise empirically we
+conducted simulations with results shown in ~\ref{fig:fwdstepsims}
+
+
+\begin{figure}
+\begin{center}
+\subfigure[Gaussian design]{
+%\label{fig:smallgauss}
+\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gaussian_p2n_n100_lower1p4_upper1p6.pdf}}
+\hspace{-15pt}
+\subfigure[Categorical design]{
+%\label{fig:smallcat}
+\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gaussian_p2n_n100_lower1p4_upper1p6_corr0p2.pdf}}
+\caption{\small \it The left panel shows results of a simulation with
+  an independent Gaussian design matrix and a signal vector having
+  three groups with non-zero coefficients of sizes one, two, and
+  three, and seven groups of noise variables with sizes varying from
+  one to ten, for a total of 30 variables. For the right panel we
+  repeated this setup, but group sizes corresponded to levels of
+  categorical variables. The groups of size one were increased to two,
+so there are 10 categorical variables with a total of 32 levels.}
+\label{fig:fwdstepsim}
+\end{center}
+\end{figure}
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -491,11 +534,11 @@ includegraphics etc), do the simulation comparing stopping rules
 \begin{center}
 \subfigure[Gaussian design]{
 \label{fig:smallgauss}
-\includegraphics[width=0.5\textwidth]{../figs/small_sim_gaussian_design.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_size1_n100_p200_g200_k10_lower1p8_upper1p9.pdf}}
 \hspace{-15pt}
 \subfigure[Categorical design]{
 \label{fig:smallcat}
-\includegraphics[width=0.5\textwidth]{../figs/small_sim_categorical_design.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_size1_n100_p200_g200_k10_lower1p8_upper1p9_corr0p1.pdf}}
 \caption{\small \it The left panel shows results of a simulation with
   an independent Gaussian design matrix and a signal vector having
   three groups with non-zero coefficients of sizes one, two, and
@@ -517,11 +560,11 @@ so there are 10 categorical variables with a total of 32 levels.}
 \begin{center}
 \subfigure[Large Gaussian lasso]{
 \label{fig:largelasso}
-\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_lasso.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_size5-10_n100_p200_g35_k10_lower1p8_upper1p9.pdf}}
 \hspace{-15pt}
 \subfigure[Large Gaussian group lasso]{
 \label{fig:largegrplasso}
-\includegraphics[width=0.5\textwidth]{../figs/large_sim_gaussian_design.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_size5-10_n100_p200_g35_k10_lower1p8_upper1p9_corr0p1.pdf}}
 \caption{\small \it The left panel shows results of a simulation with
   an independent Gaussian design matrix and a signal vector having
   three groups with non-zero coefficients of sizes one, two, and

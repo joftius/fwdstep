@@ -15,8 +15,10 @@ source('coherence.R')
 fname = "p4n"          ##
 ns = c(100) #, 200)    ##
 ps = ceiling(ns*4)     ##
-nsim = 50              ##
-kplus = 8              ##
+nsim = 75              ##
+kplus = 10             ##
+##########################
+corr = .1
 ##########################
 mus = n_to_mu(ns)
 ks = mu_to_k(mus)
@@ -28,8 +30,8 @@ for (i in 1:length(ns)) {
   n = ns[i]
   p = ps[i]
   mult = sqrt(2*log(p))
-  upper.coeff = 1.4
-  lower.coeff = 1.4
+  upper.coeff = 1.9
+  lower.coeff = 1.7
   upper = upper.coeff*mult
   lower = lower.coeff*mult
   mu = mus[i]
@@ -48,7 +50,7 @@ for (i in 1:length(ns)) {
       # Generate data
       beta = beta_staircase(groups, k, upper, lower, rand.sign=TRUE, permute=TRUE)
       true.groups = true_active_groups(groups, beta)
-      X = gaussian_design(n, groups)
+      X = gaussian_design(n, groups, corr = corr)
       Y = X %*% beta + rnorm(n)
       
       # Calculate coherence
@@ -68,8 +70,18 @@ for (i in 1:length(ns)) {
 
   # Save plot
   plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
-  pdf(paste0('../figs/fwdstep/gaussian_', fname, "_n", n, "_lower", lower.coeff, "_upper", upper.coeff, ".pdf"))
+  filename = paste0('../figs/fwdstep/gaussian_', fname, "_n", n, "_lower", lower.coeff, "_upper", upper.coeff)
+  if (corr != 0) {
+    filename = paste0(filename, "_corr", corr)
+    plot.main = paste0(plot.main, ", corr = ", corr)
+  }
+  filename = paste0(filename, ".pdf")
+  
+  pdf(filename)
   plot(klist, power.MCavg, type = "l", main = plot.main, xlab = "Sparsity", ylab = "Average power", ylim = c(-0.1, 1.1), lwd = 2)
+  abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
+  abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
+  
   for (j in 1:(1+kplus)) {
     xjitter = 0.05*rnorm(nsim)
     yjitter = 0.01*rnorm(nsim)

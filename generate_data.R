@@ -168,3 +168,10 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
 #groups = c(1,1,1,2,2,3,3,3,3)
 #X = categorical_design(n, groups)
 
+generate_interactions = function(X, pairs) {
+  Z = X
+  for (pair in pairs) {
+    Z = cbind(Z, X[, pair[1]] * X[, pair[2]])
+  }
+  return(Z)
+}

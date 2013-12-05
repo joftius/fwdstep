@@ -67,7 +67,7 @@ for (i in 1:length(ns)) {
 
   # Save plot
   plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
-  pdf(paste0('../figs/fwdstep/ternary_', fname, "_n", n, "_lower", lower.coeff, "_upper", upper.coeff, ".pdf"))
+  pdf(paste0('../figs/fwdstep/ternary_', fname, "_n", n, "_lower", lower.coeff, "_upper", upper.coeff, "_no_renormalize.pdf"))
   plot(klist, power.MCavg, type = "l", main = plot.main, xlab = "Sparsity", ylab = "Average power", ylim = c(-0.1, 1.1), lwd = 2)
   abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
   abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")

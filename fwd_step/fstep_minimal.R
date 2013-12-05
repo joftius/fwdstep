@@ -77,7 +77,7 @@ fstep_fit = function(X, Y, groups, max.steps = 0) {
       }
     }
     # Re-normalize?
-    X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
+    #X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
     X = X.project
   }
 

@@ -98,8 +98,8 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
     Xeta = (Xmax %*% soln)[,1]
     Xmax = Xmax - outer(Xeta, soln, '*') / sum(soln^2)
     Wmax = Xmax[,1:(ncol(Xmax)-1)]
-    Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
-    #Xeta = lm(Xeta ~ Wmax - 1)$residuals
+    #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
+    Xeta = lm(Xeta ~ Wmax - 1)$residuals
     conditional_variance = sum(Xeta^2)
   } else if (kmax >= 2) {
 #    print("kmax >= 2")

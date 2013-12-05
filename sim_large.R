@@ -5,7 +5,7 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 
 
-design = 'orthogonal'
+design = 'ternary'
 corr = 0 # nonzero only supported for gaussian design
 
 nsim = 500

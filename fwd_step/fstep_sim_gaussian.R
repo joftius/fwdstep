@@ -12,13 +12,13 @@ source('coherence.R')
 #nsim = 60               ##
 #kplus = 20              ##
 #########################
-fname = "p4n"          ##
+fname = "p2n"          ##
 ns = c(100) #, 200)    ##
-ps = ceiling(ns*4)     ##
+ps = ceiling(ns*2)     ##
 nsim = 75              ##
 kplus = 10             ##
 ##########################
-corr = .1
+corr = 0
 ##########################
 mus = n_to_mu(ns)
 ks = mu_to_k(mus)
@@ -30,8 +30,8 @@ for (i in 1:length(ns)) {
   n = ns[i]
   p = ps[i]
   mult = sqrt(2*log(p))
-  upper.coeff = 1.9
-  lower.coeff = 1.7
+  upper.coeff = 1.5
+  lower.coeff = 1.5
   upper = upper.coeff*mult
   lower = lower.coeff*mult
   mu = mus[i]
@@ -75,7 +75,7 @@ for (i in 1:length(ns)) {
     filename = paste0(filename, "_corr", corr)
     plot.main = paste0(plot.main, ", corr = ", corr)
   }
-  filename = paste0(filename, ".pdf")
+  filename = paste0(filename, "_no_renormalize.pdf")
   
   pdf(filename)
   plot(klist, power.MCavg, type = "l", main = plot.main, xlab = "Sparsity", ylab = "Average power", ylim = c(-0.1, 1.1), lwd = 2)

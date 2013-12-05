@@ -46,16 +46,15 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   X.project = X
   Xgmax = X[, gmax]
   Xgmax.regress = Xgmax
-  Pgmax = Xgmax %*% ginv(Xgmax)
   # If X[, gmax] is categorical, leave one column out
-
-  
   ########### Is this doing anything? Xgmax.regress isn't used ###########
   if (sum(gmax) > 1) {
-    if (length(unique(rowSums(Xgmax))) == 1) {
+    if (length(unique(rowSums(Xgmax == 0))) == 1) {
+#      print("categorical variable")
       Xgmax.regress = Xgmax[ , -1]
     }
   }
+  Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
   Y.resid = (diag(rep(1,n)) - Pgmax) %*% Y
       
 ####### This is necessary for p-value? ########
@@ -66,7 +65,8 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
       X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
     }
   }
-  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
+  # Renormalize
+#  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }

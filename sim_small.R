@@ -4,53 +4,68 @@ source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
 
-nsim = 50
+
+design = 'orthogonal'
+corr = 0 # nonzero only supported for gaussian design
+
+nsim = 500
 n = 100
+num.nonzero = 8
+k = num.nonzero
+max.steps = 12
+upper.coeff = 1.5
+lower.coeff = 1.1
+
 sigma = 1
-groups = c(1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 9, 9, rep(10, 10))
+groups = 1:50
 p = length(groups)
-mult = 1*sqrt(2*log(p))
-upper = 1.5*mult
-lower = 1.1*mult
-num.nonzero = 3
-max.steps = 8
+mult = sqrt(2*log(p))
+upper = upper.coeff*mult
+lower = lower.coeff*mult
+
+if ((corr != 0) & (design != 'gaussian')) {
+  stop("nonzero only supported for gaussian design")
+}
+
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-beta_old = beta
-
-pdf('figs/small_sim_gaussian_design.pdf')
-output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, predictions = TRUE, plot = TRUE)
+filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+filename = paste0(filename, '.pdf')
+pdf(filename)
+output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
-warnings()
 
 
-groups = sort(c(groups, 2, 8))
+groups = sort(c(rep(1:8, 5), 9:18))
 p = length(groups)
-mult = 1*sqrt(2*log(p))
-upper = 1.5*mult
-lower = 1.1*mult
-beta = beta_staircase(groups, num.nonzero, upper, lower, rand.sign = TRUE, perturb = TRUE, cat.vars = 1:max(groups))
-warnings()
-
-pdf('figs/small_sim_categorical_design.pdf')
-output.c = fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, categorical = TRUE, plot = TRUE)
+g = length(unique(groups))
+mult = sqrt(2*log(g))
+upper = upper.coeff*mult
+lower = lower.coeff*mult
+beta = beta_staircase(groups, num.nonzero, upper, lower)
+filename = paste0('figs/', design, '_size1-5_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+filename = paste0(filename, '.pdf')
+pdf(filename)
+output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
-warnings()
+
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."
+results.l = with(output.l, sim_select_stats(signal.p, active.set, true.step, m1))
 results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1))
-results.c = with(output.c, sim_select_stats(signal.p, active.set, true.step, m1))
-rownames(results.g) = paste("(1)", rownames(results.g))
-rownames(results.c) = paste("(2)", rownames(results.c))
-file = "small_sim_selection.tex"
-tex_table(file, rbind(results.g, results.c), caption = caption)
 
+#rownames(results.l) = paste("(1)", rownames(results.l))
+rownames(results.g) = paste("(g)", rownames(results.g))
 
-caption = "Prediction and estimation errors for a small simulation"
-p.results.g = output.g$pred.err
-file = "small_sim_estimation.tex"
-tex_table(file, p.results.g, caption = caption)
+file = paste0("tables/", design, "_n", n, "_p", p, "_k", k, "_lower", lower.coeff, "_upper", upper.coeff)
+if (corr != 0) {
+  file = paste0(file, "_corr", corr)
+}
+file = paste0(file, ".tex")
 
-
-#print(c(max(abs(beta)), max(abs(beta_old)), upper, lower))
-#print(beta_old)
-#print(beta)
+tex_table(file, rbind(results.l, results.g), caption = caption)

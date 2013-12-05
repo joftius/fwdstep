@@ -114,6 +114,27 @@ ternary_design = function(n, groups) {
   X = col_normalize(X)
 }
 
+orthogonal_design = function(n, groups) {
+  # If n > p, orthogonalize
+  # If p = k*n, orthogonalize the k-submatrices
+  # Else stop(error)
+  X = gaussian_design(n, groups)
+  if (n > p) {
+    X = svd(X)$u
+  } else {
+    if (p %% n == 0) {
+      k = p/n
+      for (j in 0:(k-1)) {
+        X[ , (j+1):(j+n)] = svd(X[ , (j+1):(j+n)])$u
+      }
+    } else {
+      stop("p not a multiple of n")
+    }
+  }
+  X = col_normalize(X)
+  return(X)
+}
+
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
 categorical_design = function(n, groups, ortho.within = FALSE) {

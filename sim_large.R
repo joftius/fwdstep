@@ -5,16 +5,16 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 
 
-design = 'gaussian'
+design = 'orthogonal'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 400
+nsim = 500
 n = 100
 num.nonzero = 10
 k = num.nonzero
-max.steps = 13
-upper.coeff = 1.9
-lower.coeff = 1.1
+max.steps = 14
+upper.coeff = 1.7
+lower.coeff = 1.5
 
 sigma = 1
 groups = 1:200

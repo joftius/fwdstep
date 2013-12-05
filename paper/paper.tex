@@ -171,7 +171,11 @@ measurements for all genes in a single functional pathway. An entire
 group is included or excluded together from the final model. For
 consistency we will use $g, h$ as indices rather than the usual $i, j$
 throughout. Since single variables can be considered groups of size 1,
-our general exposition includes non-grouped situations as a special case. 
+our general exposition includes non-grouped situations as a special
+case. Our variant of forward stepwise uses a different method than
+usual for choosing which group to add because we are using the
+same objective in the forward stepwise procedure that was used to
+derive our test statistic.
 
 Label the outcome variable of $n$ i.i.d. measurements $y \in \real^n$. Let an integer $G \geq 1$ 
 be the number of groups. For each $1 \leq g \leq G$ the design matrix encoding the
@@ -205,7 +209,7 @@ where $\epsilon$ is noise. Unless otherwise specified we assume
 i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ and that
 $\sigma$ is known.
 
-We allow for the possibility $p > n$ in which case \ref{eq:gmodel} is
+We allow for the possibility $p > n$ in which case ~\ref{eq:gmodel} is
 generically underdetermined. In such cases it still may be possible to
 estimate $\beta$ well if it is sparse--that is, if it has few nonzero
 entries \citep{donoho:pursuit}. In the rest of this paper we refer to
@@ -220,9 +224,15 @@ modeler can choose weights arbitrarily, but we will only use one
 particular choice, based on $p_g$, that we discuss later. With this we
 are ready to describe the forward stepwise procedure, given in Algorithm
 \ref{algo:fs}. Note that to enable our p-value computations,
-\textit{max.steps} should be at most $\min (n, G) - 1$. In our
-implementation we treat the active set $A$ as an ordered set to easily
-track the order of variables entering the model.
+\textit{max.steps} should be at most $\min (n, G) - 1$. If the noise
+variance is known--as we assume unless specified otherwise--and
+$\beta$ is expected to be quite sparse, then \textit{max.steps} can be
+much smaller as long as it is still above the expected sparsity of
+$\beta$. This last constraint is suggested so that forward stepwise
+still has a chance of recovering all the nonzero coefficients of
+$\beta$ before reaching \textit{max.steps}. In our implementation we
+treat the active set $A$ as an ordered set to easily track the order
+of variables entering the model.
 
 \begin{algorithm}
 \DontPrintSemicolon
@@ -234,30 +244,32 @@ track the order of variables entering the model.
 $A \gets \emptyset$\;
 $A^c \gets \{ 1, \ldots, G \}$\;
 $r_0 \gets y$\;
-\For{$step \leftarrow 1$ \KwTo $max.steps$}{
-  $g^* \gets \argmax_{g \in A^c} \norm{X_g^T r_{g-1}}_2 / w_g$\;
+\For{$s \gets 1$ \KwTo $max.steps$}{
+  $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
+  $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
   $A \gets A \cup \{ g^* \}$\;
   $A^c \gets A^c \backslash \{ g^* \}$\;
   \For{$g \in A^c$}{
-    $X_g \gets (I - X_{g^*}X_{g^*}^\dagger) X_g$;
+    $X_g \gets P X_g$\;
   }
-  $r_g \gets $\lsfitResidual{$r_{g-1}, X_{g^*}$}\;
+  $r_s \gets P r_{s-1}$\;
 }
 \KwRet{$A$}
 \label{algo:fs}
 \end{algorithm}
 
 
-Subset selection refers to the problem of choosing a subset of the $p$
-potential variables to include in a model. Since there are $2^p$ such
-choices, exhaustive search is computationally infeasible when $p$ is
+Subset selection refers to the problem of choosing a subset of the $G$
+potential groups to include in a model. Since there are $2^G$ such
+choices, exhaustive search is computationally infeasible when $G$ is
 large. If exhaustive search were possible, performing a large
 search runs the risk of over-fitting unless model complexity is
-appropriately penalized. Algorithm \ref{algo:fs} produces a much
-smaller set of potential models, at most \textit{max.steps}. However,
+appropriately penalized. Forward stepwise produces a much
+smaller set of potential models, with cardinality at most \textit{max.steps}. However,
 it is a greedy algorithm so the set of models it produces may not
-contain the best possible model. This is an inherent shortcoming which
-we do not address in this paper.
+contain the best possible model. This is an inherent shortcoming of
+forward stepwise procedures and should be kept in mind when choosing
+between model selection methods.
 
 So far we have left open the question of choosing among the models in
 the forward stepwise sequence, i.e. when to stop stepping
@@ -289,38 +301,53 @@ it can still perform well. There is a parallel literature to the
 compressed sensing literature \textit{(cite some here)} with theorems
 stating that forward stepwise can exactly select the true model under
 some stringent conditions involving quantities like the sparsity of
-the true model and the coherence of the design matrix. We do not
-pursue this any further because we find empirically that forward
-stepwise can work well in much less restrictive situations than those
-guaranteed by theorems.
+the true model and the coherence of the design matrix. Recall that the
+coherence $\mu(X)$ of a matrix $X$ with columns scaled to have unit
+2-norm is defined as
 
-To explore the performance of forward stepwise empirically we
-conducted simulations with results shown in ~\ref{fig:fwdstepsims}
+\begin{equation}
+  \mu(X) = \max_{i \neq j} \{ | \innerp{ X_i }{ X_j } | \}
+\end{equation}
+
+Writing $k$ for the sparsity of $\beta$, typical results in this
+literature say that if $k < (1/\mu + 1)/2$ and the nonzero
+coefficients of $\beta$ are sufficiently large then forward stepwise
+recovers $\beta$ with high probability. We refer the
+reader to the literature for details. For our purposes the
+conditions required to guarantee exact recovery are usually far too
+stringent. We conduct simulations to show empirically that forward
+stepwise can work well even when it is not working perfectly, and that
+it does so under a much wider range of conditions.
 
 
 \begin{figure}
 \begin{center}
-\subfigure[Gaussian design]{
-%\label{fig:smallgauss}
-\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gaussian_p2n_n100_lower1p4_upper1p6.pdf}}
+\subfigure[Ternary design]{
+\label{fig:fsternary}
+\includegraphics[width=0.5\textwidth]{../figs/fwdstep/ternary_p2n_n100_lower1p4_upper1p4.pdf}}
 \hspace{-15pt}
-\subfigure[Categorical design]{
-%\label{fig:smallcat}
+\subfigure[Gaussian design with correlation]{
+\label{fig:fsgausscorr}
 \includegraphics[width=0.5\textwidth]{../figs/fwdstep/gaussian_p2n_n100_lower1p4_upper1p6_corr0p2.pdf}}
-\caption{\small \it The left panel shows results of a simulation with
-  an independent Gaussian design matrix and a signal vector having
-  three groups with non-zero coefficients of sizes one, two, and
-  three, and seven groups of noise variables with sizes varying from
-  one to ten, for a total of 30 variables. For the right panel we
-  repeated this setup, but group sizes corresponded to levels of
-  categorical variables. The groups of size one were increased to two,
-so there are 10 categorical variables with a total of 32 levels.}
+\caption{\small \it The left panel shows the results of the simulation
+  using design matrices with i.i.d. ternary entries taking values $0,
+  \pm 1$ with equal probability. The left panel shows the results
+  with design matrices of standard Gaussian entries with
+  equi-correlation of 0.2. }
 \label{fig:fwdstepsim}
 \end{center}
 \end{figure}
 
-
-
+For various sparsity levels $k$, Algorithm ~\ref{algo:fs} was run on
+various data sets with max.steps equal to $k$ and the ``average
+power'' was calculated as the number of true variables in the active
+set after $k$ steps divided by $k$. Nonzero coefficients had magnitude
+in a range of multiples of $\sqrt{2\log(p)}$, e.g. in $[1.4
+\sqrt{2\log(p)}, 1.6 \sqrt{2\log(p)}]$. Results are shown in
+Figure~\ref{fig:fwdstepsim}. Some calculations show the required
+sparsity level to guarantee exact recovery in these situations is
+about 2 or smaller, and the required nonzero coefficient magnitude is
+likely in the range of 10 to 100 times $\sqrt{2\log(p)}$. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -393,9 +420,9 @@ complicated. For the group lasso, $\hat \beta(\lambda)$ does not have
 piecewise linear components. To overcome this difficulty we will
 restrict our attention to the first group of variables to enter the
 active set since the analysis then follows almost exactly as for the
-lasso. (\todo Change this if I can find $\lambda_k$). 
+lasso.
 
-The \emph{group lasso estimator} is the following solution to a convex
+The \emph{group lasso estimator} is a solution to the following convex
 problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}

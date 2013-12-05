@@ -1,4 +1,3 @@
-
 # A minimal version of forward stepwise for phase diagram simulations
 
 library(MASS)
@@ -12,7 +11,6 @@ update_active_set = function(active.set, group) {
   }
   return(new.active.set)
 }
-
 
 # Determine which group to add next
 add_group = function(X, R, groups, weights, active.set) {
@@ -34,7 +32,6 @@ add_group = function(X, R, groups, weights, active.set) {
   imax = which.max(terms)
   return(imax)
 }
-
 
 
 # Input data, output sequence of added variables
@@ -63,6 +60,7 @@ fstep_fit = function(X, Y, groups, max.steps = 0) {
     Xgmax.regress = Xgmax
     Pgmax = Xgmax %*% ginv(Xgmax)
     Hgmax = diag(rep(1, n)) - Pgmax
+    ### I think this part is never needed
     # If X[, gmax] is categorical, leave one column out
     #if (sum(gmax) > 1) {
     #  if (length(unique(rowSums(Xgmax))) == 1) {
@@ -71,7 +69,6 @@ fstep_fit = function(X, Y, groups, max.steps = 0) {
     #}
     R = R - Pgmax %*% R
 
-    ####### This is necessary for p-value? ########
     # Project all other groups orthogonal to the one being added
     for (gind in 1:max(groups)) {
       if (gind != next.step) {
@@ -79,6 +76,7 @@ fstep_fit = function(X, Y, groups, max.steps = 0) {
         X.project[, group] = Hgmax %*% X[, group]
       }
     }
+    # Re-normalize?
     X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
     X = X.project
   }

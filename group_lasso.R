@@ -12,8 +12,8 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   normb = sqrt(sum(b^2))
 
   if (normb == 0) {
-    stop("Something is wrong, norm(b) can't be zero!")
-#    return(c(0, Inf))
+#    stop("Something is wrong, norm(b) can't be zero!")
+    return(c(0, Inf))
   }
   
   if ((norma / normb) < tol) {
@@ -93,6 +93,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   
   soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
   if (kmaxrank > 1) {
+#    print("kmaxrank > 1")
     #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
     Xeta = (Xmax %*% soln)[,1]
     Xmax = Xmax - outer(Xeta, soln, '*') / sum(soln^2)
@@ -101,14 +102,18 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
     #Xeta = lm(Xeta ~ Wmax - 1)$residuals
     conditional_variance = sum(Xeta^2)
   } else if (kmax >= 2) {
+#    print("kmax >= 2")
     # case where Xmax is a matrix but has rank 1
     Xeta = Xmax[,1] / wmax * sign(U[which])
     if (dim(Xmax)[2] == 1) {
+#      print("and 1 column")
       conditional_variance = t(Xeta[,1]) %*% Sigma %*% Xeta[,1]
     } else {
+#      print("and >1 columns")
       conditional_variance = sum(Xeta^2)
     }
   } else {
+#    print("just a vector")
     # case where Xmax is a vector (list)
     Xeta = Xmax / wmax * sign(U[which])
     conditional_variance = sum(Xeta^2)
@@ -135,15 +140,13 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   nm.b = c()
   nm.labels = setdiff(c(1:g), c(active.set, imax))
   for (label in nm.labels) {
-    if (label != imax) {
-      group = groups == label
-      weight = weights[label]
-      nm.a = c(nm.a, sqrt(sum(a[group]^2)))
-      nm.b = c(nm.b, sqrt(sum(b[group]^2)))
-      tf = trignometric_form(a[group], b[group], weight)
-      Vplus = c(Vplus, tf[1])
-      Vminus = c(Vminus, tf[2])
-    }
+    group = groups == label
+    weight = weights[label]
+    nm.a = c(nm.a, sqrt(sum(a[group]^2)))
+    nm.b = c(nm.b, sqrt(sum(b[group]^2)))
+    tf = trignometric_form(a[group], b[group], weight)
+    Vplus = c(Vplus, tf[1])
+    Vminus = c(Vminus, tf[2])
   }
 #  print(rbind(nm.labels, nm.a, nm.b))
   

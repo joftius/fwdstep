@@ -54,7 +54,7 @@ for (i in 1:length(ns)) {
       Y = X %*% beta + rnorm(n)
       
       # Calculate coherence
-      mu.mat[j, iter] = coherence(X)
+ #     mu.mat[j, iter] = coherence(X)
       
       # Fit forward stepwise
       added.groups = fstep_fit(X, Y, groups, k)
@@ -66,7 +66,7 @@ for (i in 1:length(ns)) {
 
   print(pow.mat)
 
-  print(mu.mat)
+#  print(mu.mat)
 
   # Save plot
   plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
@@ -85,9 +85,9 @@ for (i in 1:length(ns)) {
   for (j in 1:(1+kplus)) {
     xjitter = 0.05*rnorm(nsim)
     yjitter = 0.01*rnorm(nsim)
-    alphas = 2*mu.mat[j, ]
-    alphas = sapply(alphas, function(a) min(a, 1))
-    points(rep(klist[j], nsim) + xjitter, pow.mat[j, ] + yjitter, pch = ".", col = rgb(red=0, green=0, blue=1, alpha = alphas), cex = 2)
+#    alphas = 2*mu.mat[j, ]
+#    alphas = sapply(alphas, function(a) min(a, 1))
+    points(rep(klist[j], nsim) + xjitter, pow.mat[j, ] + yjitter, pch = ".", col = rgb(red=0, green=0, blue=1), cex = 2)
   }
   dev.off()
 }

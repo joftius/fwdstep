@@ -5,12 +5,13 @@
 
 # TODO
 # * Random group sizes
-# * Fix categorical data generation
-# *** beta coefs sum to 0 over categorical group!
-
+true_active_groups = function(groups, beta) {
+  beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
+  active.groups = beta.ind$Group.1[which(beta.ind$x == TRUE)]
+  return(active.groups)
+}
 
 # Staircase signal
-
 beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.vars = NULL) {
   # Generate a staircase-shaped signal vector
   # groups: vector of group indices in the form c(1,1,...,2,2,...)
@@ -24,11 +25,6 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   g = max(groups)
   p = length(groups)
   beta = sort(seq(from=lower, to=upper, length=num.nonzero), decreasing=TRUE)
-
-  if (rand.sign) {
-    signs = sample(c(-1, 1), num.nonzero, replace = TRUE)
-    beta = signs*beta
-  }
 
   if (rand.within) {
     mult = (upper - lower)/(num.nonzero - 1)
@@ -45,6 +41,19 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 
   beta = beta[groups]
   nz.inds = beta != 0
+
+  if (rand.sign) {
+    signs = sample(c(-1, 1), length(beta), replace = TRUE)
+    beta = signs*beta
+  }
+
+  
+  # Normalize coeff across group for fair comparison with non-grouped vars
+  for (g in groups) {
+    group = g == groups
+    gs = sum(group)
+    beta[group] = beta[group]/sqrt(gs)
+  }
 
   if (perturb) {
     beta[nz.inds] = beta[nz.inds] + rnorm(sum(nz.inds)) * sqrt(1/10)
@@ -164,14 +173,134 @@ categorical_design = function(n, groups, ortho.within = FALSE) {
   return(X)
 }
 
-#n = 6
-#groups = c(1,1,1,2,2,3,3,3,3)
-#X = categorical_design(n, groups)
-
-generate_interactions = function(X, pairs) {
-  Z = X
-  for (pair in pairs) {
-    Z = cbind(Z, X[, pair[1]] * X[, pair[2]])
+# Input: inds of main effects
+# Output: a permutation of those inds with no fixed points (derangement)
+derangement = function(inds) {
+  fixed = 1
+  while (fixed > 0) {
+    perm = sample(inds)
+    fixed = sum(perm == inds)
   }
-  return(Z)
+  return(perm)
+}
+
+
+# Input design matrix with groups
+# Output larger design matrix with all possible (grouped) interactions
+# main.groups: groups of main effects (original variables)
+# all.groups: include main effects and their copies with interactions
+# int.groups: list, the [[g]]'th element contains all group indices that group g appears in
+generate_glinternet = function(X, groups) {
+  X.out = X
+  g.out = groups
+  inds.out = list()
+  gmax = max(groups)
+  gnew = gmax
+  for (g in 1:(gmax-1)) {
+    for (h in (g+1):gmax) {
+      ginds = which(groups == g)
+      hinds = which(groups == h)
+      gs = length(ginds)
+      hs = length(hinds)
+      X.out = cbind(X.out, X[, ginds])
+      X.out = cbind(X.out, X[, hinds])
+      gnew = gnew + 1
+      for (i in ginds) {
+        for (j in hinds) {
+          X.out = cbind(X.out, X[, i] * X[, j])
+        }
+      }
+      g.out = c(g.out, rep(gnew, gs + hs + gs*hs))
+      if (length(inds.out) < g) {
+        inds.out[[g]] = gnew
+      } else {
+        inds.out[[g]] = union(inds.out[[g]], gnew)
+      }
+      if (length(inds.out) < h) {
+        inds.out[[h]] = gnew
+      } else {
+        inds.out[[h]] = union(inds.out[[h]], gnew)
+      }
+    }
+  }
+  return(list(X=X.out, main.groups=groups, all.groups=g.out, int.groups=inds.out))
+}
+
+
+# Signal vector generation for glinternet
+# convention: 1/3 of nonzero are only main effects, 2/3 have interactions
+# num.nonzero should be divisible by 3
+# Note: at most (5/3)*num.nonzero main effects and (2/3)*num.nz interactions
+# are included, but group sparsity still = num.nonzero
+beta_glinternet = function(all.groups, num.nonzero, upper, lower, rand.sign=TRUE, perturb=TRUE) {
+  if (num.nonzero %% 3 != 0) stop("num.nonzero not divisible by 3")
+  m = num.nonzero/3
+  magnitudes = seq(from=upper, to=lower, length=num.nonzero)
+  # Scramble the magnitudes around
+  magnitudes = sample(magnitudes)
+  p = max(all.groups)
+  beta = c(magnitudes[1:m], rep(0, p-num.nonzero), magnitudes[(m+1):num.nonzero])
+  beta = beta[all.groups]
+  nz.inds = beta != 0
+
+  if (rand.sign) {
+    signs = sample(c(-1, 1), sum(nz.inds), replace = TRUE)
+    beta[nz.inds] = signs*beta[nz.inds]
+  }
+
+  if (perturb) {
+    beta[nz.inds] = beta[nz.inds] + rnorm(sum(nz.inds)) * sqrt(1/10)
+    maxmod = max(abs(beta))
+    beta[nz.inds] = beta[nz.inds] * upper / maxmod
+  }
+  
+  # Normalize coeff across group for fair comparison with non-grouped vars
+  for (g in all.groups) {
+    group = g == all.groups
+    gs = sum(group)
+    beta[group] = beta[group]/sqrt(max(1,gs-1))
+  }
+
+  return(beta)
+}
+
+# Find group index of interaction group for main effects h and g
+int_group_of = function(g, h, int.groups) {
+  int.group = intersect(int.groups[[g]], int.groups[[h]])
+  if (length(int.group) != 1) {
+    stop(paste("There is no unique interaction group for groups", g, h))
+  }
+  return(int.group)
+}
+
+# Truth: m=k/3, 1:m main groups and last 2*m mixed groups are nonzero
+power_glinternet = function(k, main.groups, all.groups, int.groups, active.set) {
+  m = k/3
+  p = length(unique(all.groups))
+  true.main = 1:m
+  true.mixed = (p-2*m+1):p
+  true.and.active = intersect(active.set, true.main)
+  true.and.active = unique(union(true.and.active, intersect(active.set, true.mixed)))
+  S = length(true.and.active)
+  left.over = setdiff(active.set, true.and.active)
+  undiscovered.mains = setdiff(true.main, true.and.active)
+  undiscovered.mixed = setdiff(true.mixed, true.and.active)
+  for (g in left.over) {
+    if (g <= max(main.groups)) {
+      # Case (1): if an undiscovered truly active mixed group contains g, add 1 (should it be 1/3?)
+      true.containing.g = intersect(int.groups[[g]], true.mixed)
+      not.already.counted = intersect(true.containing.g, undiscovered.mixed)
+      if (length(not.already.counted) > 0) {
+        S = S + 1
+      }
+    } else if (length(undiscovered.mains) > 0) {
+        # Case (2): if g contains an undiscovered truly active main effect, add 1
+      discovery = 0
+      for (h in undiscovered.mains) {
+        if (is.element(g, int.groups[[h]])) discovery = 1
+      }
+      S = S + discovery
+    }
+  }
+  return(S/k)
 }

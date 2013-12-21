@@ -35,11 +35,13 @@ add_group = function(X, R, groups, weights, active.set) {
 
 
 # Input data, output sequence of added variables
-fstep_fit = function(X, Y, groups, max.steps = 0) {
+fstep_fit = function(X, Y, groups, max.steps = 0, weights = 0) {
   n = length(Y)
   R = Y
   active.set = 0
-  weights = sqrt(rle(groups)$lengths)
+  if ((length(weights) == 1) & (weights[1] == 0)) {
+    weights = sqrt(rle(groups)$lengths)
+  }
   
   if (max.steps == 0) {
     # Don't over-fit

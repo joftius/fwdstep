@@ -5,11 +5,11 @@ source('fstep_minimal.R')
 
 ##########################
 ### Modify these lines ###
-fname = "p20"           ##
+fname = "p40"           ##
 ns = c(100) #, 200, 400)   ##
-ps = 20 # floor(ns/2)        ##
-nsim = 20               ##
-klist = 1:5
+ps = 40 # floor(ns/2)        ##
+nsim = 100               ##
+klist = 1:8
 #########################
 #fname = "p2n"          ##
 #ns = c(100) #, 200)    ##
@@ -25,62 +25,54 @@ lkl = length(klist)
 for (i in 1:length(ns)) {
   mu.mat = matrix(0, nrow=lkl, ncol = nsim)
   pow.mat = mu.mat
-  partialpow.mat = mu.mat
   
   n = ns[i]
   p = ps[i]
   mult = sqrt(2*log(p+p*(p-1)/2))
   upper.coeff = 2.9
-  lower.coeff = 2.1
+  lower.coeff = 2.9
   upper = upper.coeff*mult
   lower = lower.coeff*mult
   klist = 3*klist
   groups = 1:p
 
-  
   for (j in 1:lkl) {
     k = klist[j]
     print(k)
     
     for (iter in 1:nsim) {
-      # Generate data
-      print(iter)
+
       data = generate_glinternet(gaussian_design(n, groups, corr = corr), groups)
       X = data$X
-
       all.groups = data$all.groups
       main.groups = data$main.groups
       int.groups = data$int.groups
-      beta = beta_glinternet(all.groups=all.groups, num.nonzero=k, upper=upper, lower=lower)
+      beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
+      beta = beta.data$beta
+      true.ints = beta.data$true.ints
       m = k/3
       ptl.set = unique(all.groups)
       r = length(ptl.set)
       true.groups = c(ptl.set[1:m], ptl.set[(r-2*m+1):r])
-
-      
       Y = X %*% beta + rnorm(n)
-      
-      # Calculate coherence
- #     mu.mat[j, iter] = coherence(X)
+      Y = Y - mean(Y)
+
+      # Weights?
+      #weights = sqrt(rle(all.groups)$lengths)
+      #weights = rep(1, max(all.groups)) #c(rep(1, p), rep(sqrt(2), max(all.groups) - p))
       
       # Fit forward stepwise
-      added.groups = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k)
-      true.added = intersect(added.groups, true.groups)
-      false.added = setdiff(added.groups, true.groups)
-      pow.mat[j, iter] = length(true.added) / k
-
-      # Calculate more generous version of power
-      # Includes cases where a main effect is added but the interaction is not
-      # and cases where interactions are added that should not have been
-      partialpow.mat[j, iter] = power_glinternet(k, main.groups, all.groups, int.groups, added.groups)
+      added.groups = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=(2*k/3))
+#      true.added = intersect(added.groups, true.groups)
+#      false.added = setdiff(added.groups, true.groups)
+      pow.mat[j, iter] = power_glinternet(k, true.ints, all.groups, int.groups, added.groups)
 
     }
   }
   
   power.MCavg = rowMeans(pow.mat)
-  ppower.MCavg = rowMeans(partialpow.mat)
 
-  print(rbind(klist, power.MCavg, ppower.MCavg))
+  print(rbind(klist, power.MCavg))
 
   # Save plot
   plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
@@ -93,7 +85,6 @@ for (i in 1:length(ns)) {
   
   pdf(filename)
   plot(klist, power.MCavg, type = "l", main = plot.main, xlab = "Sparsity", ylab = "Average power", ylim = c(-0.1, 1.1), lwd = 2)
-  points(klist, ppower.MCavg, type="l", lty = "dotted", lwd = 2, col = "green")
   abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
   abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
   

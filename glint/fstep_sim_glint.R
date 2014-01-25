@@ -1,6 +1,8 @@
 
+# Use this as a template, it works in the fwd_step folder
+
 source('../generate_data.R')
-source('fstep_minimal.R')
+#source('fstep_minimal.R')
 
 
 ##########################
@@ -51,9 +53,6 @@ for (i in 1:length(ns)) {
       beta = beta.data$beta
       true.ints = beta.data$true.ints
       m = k/3
-      ptl.set = unique(all.groups)
-      r = length(ptl.set)
-      true.groups = c(ptl.set[1:m], ptl.set[(r-2*m+1):r])
       Y = X %*% beta + rnorm(n)
       Y = Y - mean(Y)
 

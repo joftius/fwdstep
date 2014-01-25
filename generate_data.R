@@ -185,6 +185,16 @@ derangement = function(inds) {
 }
 
 
+#### Glinternet stuff
+# X = [X1 X2 X3 ... X1X2 X1X3 X2X3 ...]
+# all.groups = [1, 2, 3, ..., g+1, g+2, ...]
+# main.groups = groups from original X (before interactions)
+# int.groups = [[p+1, p+2,...], [...], ...]
+#               [inds of interaction groups containing X1], [... X2], ...]
+# beta nonzeros are for first k/3 main.groups
+
+
+
 # Input design matrix with groups
 # Output larger design matrix with all possible (grouped) interactions
 # main.groups: groups of main effects (original variables)
@@ -274,6 +284,7 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
     } else {
       # Interaction effects are normalized separately
       # i.e. they do not share their coeff mass with the main effects
+      # otherwise it would be difficult to find them
       mains.of.g = main_effects_of(g, int.groups)
       ginds = which(group)
       start.ind = 1
@@ -285,7 +296,6 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
       beta[ginds[start.ind:gs]] = beta[ginds[start.ind:gs]]/sqrt(gs-start.ind+1)
     }
   }
-
 
   return(list(beta=beta, true.ints=true.ints))
 }
@@ -306,7 +316,7 @@ main_effects_of = function(gh, int.groups) {
   }
 }
 
-# Truth: m=k/3, first 1:m main groups, (m+1):2m main effects are matched to (2m+1):k with interactions
+# Truth: let m=k/3, first 1:m are main effect groups, next (m+1):2m main effects are matched to (2m+1):k with interactions
 power_glinternet = function(k, true.ints, all.groups, int.groups, active.set) {
   m = k/3
   p = dim(int.groups)[1]

@@ -245,16 +245,17 @@ generate_glinternet = function(X, groups) {
 # are included, but group sparsity still = num.nonzero
 beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, rand.sign=TRUE, perturb=TRUE) {
   if (num.nonzero %% 3 != 0) stop("num.nonzero not divisible by 3")
+  k = num.nonzero*(5/3)
   m = num.nonzero/3
   p = dim(int.groups)[1]
-  magnitudes = seq(from=upper, to=lower, length=num.nonzero)
+  magnitudes = seq(from=upper, to=lower, length=k)
   # Scramble the magnitudes around
   magnitudes = sample(magnitudes)
   true.ints = c()
 
   beta = rep(0, length(all.groups))
   beta[1:m] = magnitudes[1:m]
-  for (i in (m+1):(2*m)) {
+  for (i in (m+1):num.nonzero) {
     g = int_group_of(i, m+i, int.groups)
     true.ints = c(true.ints, g)
     inds = all.groups == g

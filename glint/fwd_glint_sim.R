@@ -50,13 +50,16 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
       }
     }
     # Glinternet specific part
-    data = generate_glinternet(X)
+    data = generate_glinternet(X, groups)
+    data.test = generate_glinternet(X.test, groups)
     X = data$X
+    X.test = data.test$X
     all.groups = data$all.groups
     main.groups = data$main.groups
     int.groups = data$int.groups
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
     beta = beta.data$beta
+    true.active.groups = true_active_groups(all.groups, beta)
     true.ints = beta.data$true.ints
     m=k/3
     ptl.set = unique(all.groups)
@@ -84,6 +87,9 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
 
   }
 
+
+# HERE
+  
   TrueStep = colMeans(recover.mat)
   num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
   fwd.power = mean(num.recovered.groups) / num.nonzero

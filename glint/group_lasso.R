@@ -1,3 +1,5 @@
+# Does this need to be modified for glinternet?
+
 # This file contains core functions for computing the test statistic
 
 library(Matrix)

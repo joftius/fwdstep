@@ -1,3 +1,5 @@
+# Does this need to be modified for glinternet?
+
 
 library(MASS) # for ginv
 source('group_lasso.R')
@@ -123,6 +125,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     
   }
 
+  print(warnings())
   return(list(active.set = active.set, p.vals = p.vals, Ls = Ls))
 }
 

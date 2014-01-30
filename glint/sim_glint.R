@@ -8,16 +8,16 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 50
+nsim = 80
 n = 100
-num.nonzero = 10
+num.nonzero = 9
 k = num.nonzero
-max.steps = 14
-upper.coeff = 1.7
-lower.coeff = 1.5
+max.steps = 15
+upper.coeff = 2.9
+lower.coeff = 2.1
 
 sigma = 1
-groups = 1:200
+groups = 1:80
 p = length(groups)
 mult = sqrt(2*log(p))
 upper = upper.coeff*mult
@@ -28,31 +28,38 @@ if ((corr != 0) & (design != 'gaussian')) {
 }
 
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+filename = paste0('../figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
 filename = paste0(filename, '_glint.pdf')
 pdf(filename)
-output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
+output.l <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
 
 
-groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+num.nonzero = 6
+k = 6
+max.steps = 9
+groups = sort(c(rep(1:12, 5), rep(13:16, 10)))
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
-beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+
+filename = paste0('../figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
 filename = paste0(filename, '_glint.pdf')
 pdf(filename)
-output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
+output.g <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
+
+print(warnings())
+
+stop("No selection stats for this")
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."
 results.l = with(output.l, sim_select_stats(signal.p, active.set, true.step, m1))

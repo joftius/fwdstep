@@ -317,6 +317,39 @@ main_effects_of = function(gh, int.groups) {
   }
 }
 
+
+
+# input: g is group being added, p is # main effects
+true_step_glinternet = function(g, p, int.groups, active.set, true.active.groups, already.counted) {
+  true.active.int.groups = true.active.groups[which(true.active.groups > p)]
+  if (g <= p) {
+    if ((is.element(g, true.active.groups)) & (!is.element(g, already.counted))) {
+      # case 1
+      return(1)
+    }
+    containing.g = intersect(int.groups[g,], true.active.int.groups)
+    if (length(containing.g) > 0) {
+      if (!is.element(g, already.counted)) {
+        # case 2
+        return (1/3)
+      }
+    }
+    return(0)
+  }
+  mains.of.g = main_effects_of(g, int.groups)
+  if (is.element(g, true.active.groups)) {
+    # case 4
+    return(1-length(intersect(mains.of.g, already.counted))/3)
+  }
+  if (length(intersect(mains.of.g, true.active.groups)) > 0) {
+    # case 5
+    return(1)
+  }
+
+  # other cases
+  return(0)
+}
+
 # Truth: let m=k/3, first 1:m are main effect groups, next (m+1):2m main effects are matched to (2m+1):k with interactions
 power_glinternet = function(k, true.ints, all.groups, int.groups, active.set) {
   m = k/3

@@ -13,11 +13,11 @@ n = 100
 num.nonzero = 9
 k = num.nonzero
 max.steps = 15
-upper.coeff = 2.9
-lower.coeff = 2.1
+upper.coeff = 8.5
+lower.coeff = 5.1
 
 sigma = 1
-groups = 1:80
+groups = 1:50
 p = length(groups)
 mult = sqrt(2*log(p))
 upper = upper.coeff*mult
@@ -41,14 +41,14 @@ dev.off()
 num.nonzero = 6
 k = 6
 max.steps = 9
-groups = sort(c(rep(1:12, 5), rep(13:16, 10)))
+groups = sort(c(rep(1:15, 2), rep(16:20, 4)))
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
-filename = paste0('../figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+filename = paste0('../figs/', design, '_size2-4_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }

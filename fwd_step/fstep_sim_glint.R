@@ -5,11 +5,11 @@ source('fstep_minimal.R')
 
 ##########################
 ### Modify these lines ###
-fname = "p30"           ##
-ns = c(200) #, 200, 400)   ##
-ps = 30 # floor(ns/2)        ##
+fname = "p20"           ##
+ns = c(100) #, 200, 400)   ##
+ps = 20 # floor(ns/2)        ##
 nsim = 100               ##
-klist = 1:4
+klist = 1:5
 #########################
 #fname = "p2n"          ##
 #ns = c(100) #, 200)    ##
@@ -29,8 +29,8 @@ for (i in 1:length(ns)) {
   n = ns[i]
   p = ps[i]
   mult = sqrt(2*log(p+p*(p-1)/2))
-  upper.coeff = 2.5
-  lower.coeff = 2.1
+  upper.coeff = 8.5
+  lower.coeff = 5.1
   upper = upper.coeff*mult
   lower = lower.coeff*mult
   klist = 3*klist
@@ -53,7 +53,7 @@ for (i in 1:length(ns)) {
       m = k/3
       ptl.set = unique(all.groups)
       r = length(ptl.set)
-      true.groups = c(ptl.set[1:m], ptl.set[(r-2*m+1):r])
+      true.active.groups = true_active_groups(all.groups, beta)
       Y = X %*% beta + rnorm(n)
       Y = Y - mean(Y)
 
@@ -62,19 +62,24 @@ for (i in 1:length(ns)) {
       #weights = rep(1, max(all.groups)) #c(rep(1, p), rep(sqrt(2), max(all.groups) - p))
       
       # Fit forward stepwise
-      added.groups = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k)
+      active.set = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k)
 
-      active.set = c()
-      count = 0
-      for (g in added.groups) {
-        if (count < (4*k/3)) {
-          active.set = c(active.set, g)
-          count = count + ifelse(g <= p, 1, 3)
+      c.pow = 0
+      already.counted = c()
+      cg = 1
+      for (ag in active.set) {
+        c.pow = c.pow + true_step_glinternet(ag, p, int.groups, active.set[1:cg], true.active.groups, already.counted)
+        if (ag <= p) {
+          already.counted = union(already.counted, ag)
+        } else {
+          already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
         }
+        cg = cg + 1
       }
+      
 #      true.added = intersect(added.groups, true.groups)
 #      false.added = setdiff(added.groups, true.groups)
-      pow.mat[j, iter] = power_glinternet(k, true.ints, all.groups, int.groups, active.set)
+      pow.mat[j, iter] = c.pow/k
 
     }
   }

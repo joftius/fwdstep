@@ -64,7 +64,6 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     m=k/3
     ptl.set = unique(all.groups)
     r = length(ptl.set)
-    true.groups = c(ptl.set[1:m], ptl.set[(r-2*m+1):r])
     
     # Construct response
     Y = rnorm(n)*sigma
@@ -81,9 +80,19 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     # Non-null results
     results.b = forward_group(X, Y.beta, groups=all.groups, weights, sigma, max.steps = max.steps)
     P.mat.b[i, ] = results.b$p.vals
-    AS.mat.b[i, ] = results.b$active.set
-    recover.mat[i, ] = sapply(results.b$active.set, function(x)
-                 is.element(x, true.active.groups))
+    rb.as = results.b$active.set
+    AS.mat.b[i, ] = rb.as
+    already.counted = c()
+    cg = 1
+    for (ag in rb.as) {
+      recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
+      if (ag <= p) {
+        already.counted = union(already.counted, ag)
+      } else {
+        already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
+      }
+      cg = cg + 1
+    }
 
   }
 

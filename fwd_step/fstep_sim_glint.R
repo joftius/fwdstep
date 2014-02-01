@@ -6,10 +6,10 @@ source('fstep_minimal.R')
 ##########################
 ### Modify these lines ###
 fname = "p20"           ##
-ns = c(100) #, 200, 400)   ##
+ns = c(200) #, 200, 400)   ##
 ps = 20 # floor(ns/2)        ##
 nsim = 100               ##
-klist = 1:5
+klist = 1:4
 #########################
 #fname = "p2n"          ##
 #ns = c(100) #, 200)    ##
@@ -28,8 +28,8 @@ for (i in 1:length(ns)) {
   
   n = ns[i]
   p = ps[i]
-  mult = sqrt(2*log(p+p*(p-1)/2))
-  upper.coeff = 8.5
+  mult = sqrt(2*log(p*(p+1)/2))
+  upper.coeff = 5.9
   lower.coeff = 5.1
   upper = upper.coeff*mult
   lower = lower.coeff*mult

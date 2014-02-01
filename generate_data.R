@@ -256,7 +256,7 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
   beta = rep(0, length(all.groups))
   beta[1:m] = magnitudes[1:m]
   for (i in (m+1):num.nonzero) {
-    g = int_group_of(i, m+i, int.groups)
+    g = int_group_of(i, 2*m+i, int.groups)
     true.ints = c(true.ints, g)
     inds = all.groups == g
     beta[inds] = rep(magnitudes[i], sum(inds))
@@ -300,6 +300,11 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
 
   return(list(beta=beta, true.ints=true.ints))
 }
+
+#betad = beta_glinternet(all.groups, int.groups, num.nonzero, upper, lower)
+#beta = betad$beta
+#true.ints = betad$true.ints
+#for (x in true.ints) print(main_effects_of(x, int.groups))
 
 # Find group index of interaction group for main effects h and g
 int_group_of = function(g, h, int.groups) {

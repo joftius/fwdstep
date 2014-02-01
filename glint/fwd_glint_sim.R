@@ -55,6 +55,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     X = data$X
     X.test = data.test$X
     all.groups = data$all.groups
+    weights = sqrt(rle(all.groups)$lengths)
     main.groups = data$main.groups
     int.groups = data$int.groups
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)

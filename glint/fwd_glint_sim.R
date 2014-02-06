@@ -20,6 +20,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   P.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
+  int.recover.mat = P.mat
   ez.recover.mat = P.mat
   pred.errs = matrix(0, nrow=3, ncol=3)
   mu.list = c()
@@ -62,7 +63,12 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
     beta = beta.data$beta
     true.active.groups = true_active_groups(all.groups, beta)
+    all.active = true.active.groups
     true.ints = beta.data$true.ints
+    for (x in true.ints) {
+      all.active = c(all.active, main_effects_of(x, int.groups))
+    }
+    all.active = unname(sort(all.active))
     m=k/3
     ptl.set = unique(all.groups)
     r = length(ptl.set)
@@ -87,6 +93,8 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     P.mat.b[i, ] = results.b$p.vals
     rb.as = results.b$active.set
     recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.active.groups))
+    int.recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.ints))
+    ez.recover.mat[i,] = sapply(rb.as, function(x) is.element(x, all.active))
 
 #act.mains = c()    
 #for (x in true.ints) act.mains = c(act.mains, main_effects_of(x, int.groups))
@@ -95,17 +103,17 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
 #print(sort(rb.as))
     
     AS.mat.b[i, ] = rb.as
-    already.counted = c()
-    cg = 1
-    for (ag in rb.as) {
-      ez.recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
-      if (ag <= p) {
-        already.counted = union(already.counted, ag)
-      } else {
-        already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
-      }
-      cg = cg + 1
-    }
+##     already.counted = c()
+##     cg = 1
+##     for (ag in rb.as) {
+##       ez.recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
+##       if (ag <= p) {
+##         already.counted = union(already.counted, ag)
+##       } else {
+##         already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
+##       }
+##       cg = cg + 1
+##     }
 
   }
 
@@ -117,7 +125,9 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
 
   TrueStep = colMeans(recover.mat)
   num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
+  num.recovered.ints = rowSums(int.recover.mat[, 1:num.nonzero])
   fwd.power = mean(num.recovered.groups) / num.nonzero
+  int.fwd.power = mean(num.recovered.ints) / length(true.ints)
   ez.fwd.power = mean(ez.num.recovered.groups) / num.nonzero
 
   # Convert sum to mean
@@ -137,7 +147,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     
     xax <- 1:max.steps - 0.15
     nxax <- xax + 0.3
-    plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", k-Oracle power: ", round(fwd.power, 3))
+    plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", Power: ", round(fwd.power, 3), ", Int. Power: ", round(int.fwd.power, 3))
 
     plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2)
     points(xax, ez.TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2, lty=3)

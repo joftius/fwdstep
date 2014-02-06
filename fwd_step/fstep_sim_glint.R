@@ -25,6 +25,7 @@ lkl = length(klist)
 for (i in 1:length(ns)) {
   mu.mat = matrix(0, nrow=lkl, ncol = nsim)
   pow.mat = mu.mat
+  ez.pow.mat = pow.mat
   
   n = ns[i]
   p = ps[i]
@@ -60,9 +61,10 @@ for (i in 1:length(ns)) {
       # Weights?
       #weights = sqrt(rle(all.groups)$lengths)
       #weights = rep(1, max(all.groups)) #c(rep(1, p), rep(sqrt(2), max(all.groups) - p))
+      weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
       
       # Fit forward stepwise
-      active.set = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k)
+      active.set = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k, weights=weights)
 
       c.pow = 0
       already.counted = c()
@@ -77,14 +79,16 @@ for (i in 1:length(ns)) {
         cg = cg + 1
       }
       
-#      true.added = intersect(added.groups, true.groups)
-#      false.added = setdiff(added.groups, true.groups)
-      pow.mat[j, iter] = c.pow/k
+      true.added = intersect(active.set, true.active.groups)
+      false.added = setdiff(active.set, true.active.groups)
+      ez.pow.mat[j, iter] = c.pow/k
+      pow.mat[j, iter] = length(true.added)/k
 
     }
   }
   
   power.MCavg = rowMeans(pow.mat)
+  ez.power.MCavg = rowMeans(ez.pow.mat)
 
   print(rbind(klist, power.MCavg))
 
@@ -99,6 +103,7 @@ for (i in 1:length(ns)) {
   
   pdf(filename)
   plot(klist, power.MCavg, type = "l", main = plot.main, xlab = "Sparsity", ylab = "Average power", ylim = c(-0.1, 1.1), lwd = 2)
+  points(klist, ez.power.MCavg, type = "l", lty = 3, lwd = 2)
   abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
   abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
   

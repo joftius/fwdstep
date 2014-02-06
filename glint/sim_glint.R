@@ -8,13 +8,13 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 80
+nsim = 50
 n = 200
-num.nonzero = 9
+num.nonzero = 6
 k = num.nonzero
 max.steps = 12
-upper.coeff = 4.5
-lower.coeff = 2.1
+upper.coeff = 5.9
+lower.coeff = 5.1
 
 sigma = 1
 groups = 1:20
@@ -37,8 +37,7 @@ pdf(filename)
 output.l <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
 
-
-stop("No groups for now")
+stop("no")
 
 num.nonzero = 6
 k = 6

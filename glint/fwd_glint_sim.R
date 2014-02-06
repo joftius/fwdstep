@@ -20,6 +20,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   P.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
+  ez.recover.mat = P.mat
   pred.errs = matrix(0, nrow=3, ncol=3)
   mu.list = c()
   start.time = as.numeric(Sys.time())
@@ -55,7 +56,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     X = data$X
     X.test = data.test$X
     all.groups = data$all.groups
-    weights = sqrt(rle(all.groups)$lengths)
+    weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
     main.groups = data$main.groups
     int.groups = data$int.groups
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
@@ -79,14 +80,25 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     AS.mat[i, ] = results$active.set
 
     # Non-null results
+
+#source('group_lasso.R')
+    
     results.b = forward_group(X, Y.beta, groups=all.groups, weights, sigma, max.steps = max.steps)
     P.mat.b[i, ] = results.b$p.vals
     rb.as = results.b$active.set
+    recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.active.groups))
+
+#act.mains = c()    
+#for (x in true.ints) act.mains = c(act.mains, main_effects_of(x, int.groups))
+#print(true.active.groups)
+#print(unname(sort(act.mains)))
+#print(sort(rb.as))
+    
     AS.mat.b[i, ] = rb.as
     already.counted = c()
     cg = 1
     for (ag in rb.as) {
-      recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
+      ez.recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
       if (ag <= p) {
         already.counted = union(already.counted, ag)
       } else {
@@ -100,9 +112,13 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
 
 # HERE
   
+  ez.TrueStep = colMeans(ez.recover.mat)
+  ez.num.recovered.groups = rowSums(ez.recover.mat[, 1:num.nonzero])
+
   TrueStep = colMeans(recover.mat)
   num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
   fwd.power = mean(num.recovered.groups) / num.nonzero
+  ez.fwd.power = mean(ez.num.recovered.groups) / num.nonzero
 
   # Convert sum to mean
   pred.errs = pred.errs / nsim
@@ -124,6 +140,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", k-Oracle power: ", round(fwd.power, 3))
 
     plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2)
+    points(xax, ez.TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2, lty=3)
     abline(v = num.nonzero, lty = "dotted")
     
     points(nxax, null.Pvals, col="orangered")
@@ -152,6 +169,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   
   return(outlist)
 }
+
 
 print(warnings())
 

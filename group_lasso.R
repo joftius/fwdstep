@@ -1,3 +1,5 @@
+# Does this need to be modified for glinternet?
+
 # This file contains core functions for computing the test statistic
 
 library(Matrix)
@@ -26,7 +28,13 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   Stheta = sqrt(1-Ctheta^2)
   theta = acos(Ctheta)
   
-  Sphi = sqrt(sum(b^2)) * Stheta / w
+  Sphi = normb * Stheta / w
+
+  if (Sphi > 1) {
+    # infeasible
+    return(c(0, Inf))
+  }
+  
   phi1 = asin(Sphi)
   phi2 = pi - phi1
   
@@ -104,12 +112,13 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   } else if (kmax >= 2) {
 #    print("kmax >= 2")
     # case where Xmax is a matrix but has rank 1
-    Xeta = Xmax[,1] / wmax * sign(U[which])
+    Xeta = Xmax / wmax * sign(U[which])
     if (dim(Xmax)[2] == 1) {
 #      print("and 1 column")
       conditional_variance = t(Xeta[,1]) %*% Sigma %*% Xeta[,1]
     } else {
 #      print("and >1 columns")
+      Xeta = Xeta[,1]
       conditional_variance = sum(Xeta^2)
     }
   } else {
@@ -129,7 +138,11 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   Xeta = Xeta / conditional_variance
   
   C_X = t(X) %*% Xeta
-  
+
+  #print(c(kmax, kmaxrank))
+  #print(dim(U))
+  #print(dim(C_X))
+  #print(dim(matrix(Xeta)))
   a = U - C_X * L
   b = C_X
   

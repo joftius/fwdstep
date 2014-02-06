@@ -27,7 +27,7 @@ true_active_groups = function(groups, beta) {
 }
 
 # Compute which group to add to the active set and associated pvalue
-add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
+add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   n = length(Y)
   # From group_lasso.R
   results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
@@ -68,7 +68,7 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
     }
   }
   # Renormalize
-#  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
+  X.project = X.project %*% diag(1/sapply(sqrt(colSums(X.project^2)), function(x) ifelse(x==0,1,x)))
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
@@ -77,6 +77,7 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
 # Iterate add_group for max.steps
 forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   n = length(Y)
+
   group.sizes = rle(groups)$lengths
 
   if ((length(weights) == 1) & (weights[1] == 0)) {
@@ -100,11 +101,10 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
 
   Y.update = Y
   X.update = X
-  X.orig = X
 
   for (i in 1:max.steps) {
     
-    output = add_group(X.orig, X.update, Y.update, groups, weights, sigma, active.set, eff.p)
+    output = add_group(X.update, Y.update, groups, weights, sigma, active.set, eff.p)
     active.set = output$active.set
     eff.p = output$eff.p
     Y.update = output$Y.update

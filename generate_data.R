@@ -322,33 +322,38 @@ main_effects_of = function(gh, int.groups) {
   }
 }
 
-
-
 # input: g is group being added, p is # main effects
 true_step_glinternet = function(g, p, int.groups, active.set, true.active.groups, already.counted) {
   true.active.int.groups = true.active.groups[which(true.active.groups > p)]
   if (g <= p) {
-    if ((is.element(g, true.active.groups)) & (!is.element(g, already.counted))) {
+    # main effect group
+    if (is.element(g, true.active.groups)) {
       # case 1
-      return(1)
-    }
-    containing.g = intersect(int.groups[g,], true.active.int.groups)
-    if (length(containing.g) > 0) {
       if (!is.element(g, already.counted)) {
-        # case 2
-        return (1/3)
+        return(1)
+      }
+    } else {
+    # true active mixed groups that contain g
+      containing.g = intersect(int.groups[g,], true.active.int.groups)
+      if (length(containing.g) > 0) {
+        if (!is.element(g, already.counted)) {
+          # case 2
+          return (1/3)
+        }
       }
     }
     return(0)
   }
   mains.of.g = main_effects_of(g, int.groups)
+  counted.mains = length(intersect(mains.of.g, already.counted))
+  true.mains.of.g = length(intersect(mains.of.g, true.active.groups))
   if (is.element(g, true.active.groups)) {
     # case 4
-    return(1-length(intersect(mains.of.g, already.counted))/3)
+    return(1-counted.mains/3)
   }
-  if (length(intersect(mains.of.g, true.active.groups)) > 0) {
+  if (true.mains.of.g > 0) {
     # case 5
-    return(1)
+    return(true.mains.of.g/3-counted.mains/3)
   }
 
   # other cases

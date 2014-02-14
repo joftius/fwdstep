@@ -31,7 +31,7 @@ for (i in 1:length(ns)) {
   p = ps[i]
   mult = sqrt(2*log(p*(p+1)/2))
   upper.coeff = 5.9
-  lower.coeff = 5.1
+  lower.coeff = 4.4
   upper = upper.coeff*mult
   lower = lower.coeff*mult
   klist = 3*klist
@@ -60,28 +60,29 @@ for (i in 1:length(ns)) {
 
       # Weights?
       #weights = sqrt(rle(all.groups)$lengths)
-      #weights = rep(1, max(all.groups)) #c(rep(1, p), rep(sqrt(2), max(all.groups) - p))
-      weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
+      weights = rep(1, max(all.groups)) #c(rep(1, p), rep(sqrt(2), max(all.groups) - p))
+      #weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
       
       # Fit forward stepwise
       active.set = fstep_fit(X=X, Y=Y, groups=all.groups, max.steps=k, weights=weights)
 
-      c.pow = 0
-      already.counted = c()
-      cg = 1
-      for (ag in active.set) {
-        c.pow = c.pow + true_step_glinternet(ag, p, int.groups, active.set[1:cg], true.active.groups, already.counted)
-        if (ag <= p) {
-          already.counted = union(already.counted, ag)
-        } else {
-          already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
-        }
-        cg = cg + 1
-      }
+##       c.pow = 0
+##       already.counted = c()
+##       cg = 1
+##       for (ag in active.set) {
+##         c.pow = c.pow + true_step_glinternet(ag, p, int.groups, active.set[1:cg], true.active.groups, already.counted)
+##         if (ag <= p) {
+##           already.counted = union(already.counted, ag)
+##         } else {
+##           already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
+##         }
+##         cg = cg + 1
+##       }
       
       true.added = intersect(active.set, true.active.groups)
+      true.added.ints = intersect(true.added, true.ints)
       false.added = setdiff(active.set, true.active.groups)
-      ez.pow.mat[j, iter] = c.pow/k
+      ez.pow.mat[j, iter] = length(true.added.ints)/length(true.ints)
       pow.mat[j, iter] = length(true.added)/k
 
     }

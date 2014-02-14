@@ -72,14 +72,15 @@ fstep_fit = function(X, Y, groups, max.steps = 0, weights = 0) {
     R = R - Pgmax %*% R
 
     # Project all other groups orthogonal to the one being added
-    for (gind in 1:max(groups)) {
-      if (gind != next.step) {
-        group = groups == gind
-        X.project[, group] = Hgmax %*% X[, group]
-      }
-    }
+##     for (gind in 1:max(groups)) {
+##       if (gind != next.step) {
+##         group = groups == gind
+##         X.project[, group] = Hgmax %*% X[, group]
+##       }
+##     }
     # Re-normalize?
     #X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
+#    X.project = X.project %*% diag(1/sapply(sqrt(colSums(X.project^2)), function(x) ifelse(x==0,1,x)))
     X = X.project
   }
 

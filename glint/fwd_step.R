@@ -57,18 +57,18 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
     }
   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-  Y.resid = (diag(rep(1,n)) - Pgmax) %*% Y
+  Y.resid = Y - Pgmax %*% Y
       
 ####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
-  for (gind in 1:max(groups)) {
-    if (gind != imax) {
-      group = groups == gind
-      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
-    }
-  }
+##   for (gind in 1:max(groups)) {
+##     if (gind != imax) {
+##       group = groups == gind
+##       X.project[, group] = X[, group] - Pgmax %*% X[, group]
+##     }
+##   }
   # Renormalize
-  X.project = X.project %*% diag(1/sapply(sqrt(colSums(X.project^2)), function(x) ifelse(x==0,1,x)))
+#  X.project = X.project %*% diag(1/sapply(sqrt(colSums(X.project^2)), function(x) ifelse(x==0,1,x)))
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
@@ -99,7 +99,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   c.vars = c()
   Ls = c()
 
-  Y.update = Y
+  Y.update = Y - mean(Y)
   X.update = X
 
   for (i in 1:max.steps) {

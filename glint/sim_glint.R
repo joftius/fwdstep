@@ -9,12 +9,12 @@ design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
 nsim = 150
-n = 200
+n = 300
 num.nonzero = 6
 k = num.nonzero
-max.steps = 12
-upper.coeff = 1.9
-lower.coeff = 1.1
+max.steps = 14
+upper.coeff = 9.9
+lower.coeff = 7.4
 
 sigma = 1
 groups = 1:20
@@ -33,15 +33,47 @@ if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
 filename = paste0(filename, '_glint.pdf')
+
 pdf(filename)
 output.l <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
 
-stop("no")
+ps.fname = paste0('../figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  ps.fname = paste0(ps.fname, '_corr', corr)
+}
+ps.fname = paste0(ps.fname, '_glint.pdf')
+m1 = output.l$m1
+psr = t(apply(output.l$psr.mat, 1, cumsum)/m1)
+l = nrow(psr)
+m = ncol(psr)
+for (j in 1:nrow(psr)) {
+  inds = which(psr[j,] >= 1)
+  if (length(inds) > 1) {
+    inds = inds[-1]
+    psr[j,inds] = psr[j,inds] + cumsum(rep(1/(3*m1), length(inds)))
+  }
+}
+psr = psr + matrix(0.04*rnorm(l*m), nrow=l)
+pvals = output.l$signal.p
+plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
+pdf(ps.fname)
+plot(psr[1, ], pvals[1, ], pch = ".", cex = 2, xlim=c(-0.1, max(psr) + .1), ylim=c(-0.1, 1.1), xlab = "Proportion of signal recovered", ylab = "P-values", main = plot.main)
+for (j in 2:l) {
+  inds = which(psr[j,] <= 2)
+  points(psr[j, inds], pvals[j, inds], pch = ".", cex = 2)
+}
+abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
+abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
+abline(v = 1, col = "gray")
+dev.off()
 
+stop('not now')
+
+n = 400
 num.nonzero = 6
 k = 6
-max.steps = 9
+max.steps = 12
 groups = sort(c(rep(1:15, 2), rep(16:20, 4)))
 p = length(groups)
 g = length(unique(groups))

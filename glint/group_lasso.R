@@ -51,7 +51,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
 }
 
 # fix Sigma
-group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) {
+group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, already.counted=c()) {
 
   U = t(X) %*% Y
   g = length(weights)
@@ -64,7 +64,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   }
   
   for (j in 1:g) {
-    if (is.element(j, active.set)) {
+    if (is.element(j, already.counted)) {
       terms[j] = 0
     } else {
       terms[j] = sqrt(terms[j]) / weights[j]

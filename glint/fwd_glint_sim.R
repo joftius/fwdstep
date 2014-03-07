@@ -83,13 +83,13 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     Y.test = Y.noiseless.test + rnorm(n)*sigma
 
     # Null results
-    results = forward_group(X, Y, groups=all.groups, weights=weights, sigma, max.steps = max.steps)
+    results = forward_group(X, Y, groups=all.groups, int.groups=int.groups, weights=weights, sigma, max.steps = max.steps)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
 
-    results.b = forward_group(X, Y.beta, groups=all.groups, weights, sigma, max.steps = max.steps)
+    results.b = forward_group(X, Y.beta, groups=all.groups, int.groups=int.groups, weights, sigma, max.steps = max.steps)
     P.mat.b[i, ] = results.b$p.vals
     rb.as = results.b$active.set
     recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.active.groups))
@@ -100,17 +100,16 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     already.counted = c()
     cg = 1
     for (ag in rb.as) {
-      ps.recover.mat[i, cg] = true_step_glinternet(ag, p, int.groups, rb.as[1:cg], true.active.groups, already.counted)
       if (ag <= p) {
         already.counted = union(already.counted, ag)
       } else {
         already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
       }
+      ps.recover.mat[i, cg] = length(intersect(already.counted, all.active))/max(length(all.active),1)
       cg = cg + 1
     }
 
   }
-
 
 # HERE
   

@@ -8,18 +8,18 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 150
-n = 300
+nsim = 200
+n = 200
 num.nonzero = 6
 k = num.nonzero
 max.steps = 14
-upper.coeff = 9.9
-lower.coeff = 7.4
+upper.coeff = 3.91
+lower.coeff = 2.5
 
 sigma = 1
 groups = 1:20
 p = length(groups)
-mult = sqrt(2*log(p*(p+1)/2))
+mult = sqrt(2*log(p))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
@@ -44,7 +44,8 @@ if (corr != 0) {
 }
 ps.fname = paste0(ps.fname, '_glint.pdf')
 m1 = output.l$m1
-psr = t(apply(output.l$psr.mat, 1, cumsum)/m1)
+#psr = t(apply(output.l$psr.mat, 1, cumsum)/m1)
+psr = output.l$psr.mat
 l = nrow(psr)
 m = ncol(psr)
 for (j in 1:nrow(psr)) {
@@ -68,12 +69,12 @@ abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
 abline(v = 1, col = "gray")
 dev.off()
 
-stop('not now')
 
-n = 400
+stop("Not this time!")
+
 num.nonzero = 6
 k = 6
-max.steps = 12
+max.steps = 10
 groups = sort(c(rep(1:15, 2), rep(16:20, 4)))
 p = length(groups)
 g = length(unique(groups))

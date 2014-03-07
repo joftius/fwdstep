@@ -65,23 +65,22 @@
 \begin{frontmatter}
 
 % "Title of the paper"
-\title{A significance test in forward stepwise model selection}
+\title{A significance test in forward stepwise regression}
 
 %%%
 %%% \runtitle{} - I don't know what this is
 %%%
 
 % indicate corresponding author with \corref{}
-\author{\fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}
-\and \fnms{Joshua} \snm{Loftus}
-\and ???}
-\thankstext{t1}{Supported in part by NSF grant DMS 1208857 and
-AFOSR grant 113039.}
+%\author{\fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}
+%\and \fnms{Joshua} \snm{Loftus}}
+%\thankstext{t1}{Supported in part by NSF grant DMS 1208857 and AFOSR grant 113039.}
 
 \affiliation{Stanford University}
 
 \address{Department of Statistics\\  Stanford University\\ Sequoia
-Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
+Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
+%\printead{e1}}
 
 %%%
 %%% \runauthor{Taylor} - I don't know what this is
@@ -89,21 +88,20 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
 
 \begin{abstract}
 % perhaps de-emphasize group lasso and emphasize forward stepwise?
-  We apply the methods of \cite{tests:adaptive} and
-  \cite{significance:lasso} on significance tests for penalized
-  regression to forward stepwise model selection. For the $k$th
-  variable to enter the model, previous work relied on an asymptotic
-  null distribution that breaks down when grouped variables are
-  entering the model and is difficult to derive. We iteratively apply
-  an exact null distribution for the first (potentially grouped)
-  variable on the residual from previous steps. The resulting method
-  has the strengths of stepwise selection, for example parallel
-  computation, but also remedies the problem of inflated test
-  statistics and over-fitting.
+  We extend the methods developed by \cite{significance:lasso} and
+  \cite{tests:adaptive} on significance tests for penalized
+  regression to stepwise model selection by iteratively applying
+  the global null hypothesis test on the residual in a forward stepwise
+  procedure. While not fully theoretically justified, the resulting method
+  has the computational strengths of stepwise selection and partially
+  solves the problem of inflated test statistics due to model selection.
+  We illustrate the flexibility of this method by applying it to
+  novel specialized applications of forward stepwise to a hierarchically
+  constrained interactions model and generalized additive models.
 \end{abstract}
 
 %%%
-%%% - Gotta change these
+%%% - Gotta change these??????????
 %%%
 \begin{keyword}[class=AMS]
 \kwd[Primary ]{62M40}
@@ -112,11 +110,9 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
 \end{keyword}
 
 \begin{keyword}
-\kwd{penalized regression}
-\kwd{convex analysis}
-\kwd{least squares}
-\kwd{Gaussian processes}
-%\kwd{extreme value theory}
+\kwd{forward stepwise}
+\kwd{model selection}
+\kwd{significance test}
 \end{keyword}
 
 \end{frontmatter}
@@ -125,37 +121,45 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ \printead{e1}}
 \section{Introduction}
 \label{sec:intro}
 
-Forward stepwise regression is a stochastic model selection procedure
-that begins with an empty model and adds the best predictor variable
-in each step.  Classical significance tests fail when a model has been
-selected this way and tend to be anti-conservative.  Recently,
-\cite{significance:lasso} found a novel test statistic with an
-appropriate null distribution that behaves well when a model has been
-selected using the lasso \citep{tibshirani:lasso}.
+Forward stepwise regression is a classical model selection procedure
+that begins with an empty model and sequentially adds the best predictor
+variable in each step. Classical significance tests fail
+when a model
+has been selected this way and tend to be anti-conservative.
+In the lasso setting, \cite{significance:lasso} derived a novel test
+statistic along with a correct asymptotic distribution, making possible
+valid inferences after model selection.
 \cite{tests:adaptive} modified and extended those results to the
-group lasso \citep{grouplasso} and other adaptive regression
-problems.  The present work explores the behavior of those test
-statistics for models selected by forward stepwise procedures and
-works out some of the details involved in applying these methods to
-models with grouped variables.  Our test statistic can be
-used for valid significance testing when computed from the same
-data as the model selection.  The resulting method can
+group lasso \citep{grouplasso} and other penalized regression
+problems, but only under the global null hypothesis.
+One of the strengths of these test statistics is that they can be
+used for valid significance testing when computed on the same
+data used for model selection, eliminating the need for data splitting.
+The present work iteratively applies the global null test
+of \cite{tests:adaptive} for each step in forward stepwise selection,
+and works out some of the details necessary for
+models with grouped variables. The resulting method can
 be more statistically efficient than validation on held-out data, and
-also more computationally efficient than penalized methods with
+more computationally efficient than penalized methods with
 regularization parameters chosen by cross-validation.
 
 
-
-(\todo Change this paragraph as the sections are completed)
-In Section \ref{sec:stepwise} we establish notation and describe our
-forward stepwise procedure. Section \ref{sec:testing} briefly reviews
+In Section~\ref{sec:stepwise} we establish notation and describe the
+forward stepwise algorithm used in most of the paper.
+Section~\ref{sec:testing} briefly reviews
 the parts of \cite{significance:lasso} and \cite{tests:adaptive}
 relevant to our significance test, and describes the group lasso which
-we require for applying the test with grouped
-variables. Simulation results in Section \ref{sec:simulations} using
-various stopping rules for the forward stepwise procedure--including
-some from \cite{sequential:fdr}--appear promising.
-
+we require for applying the test with grouped variables.
+Simulation results in Section~\ref{sec:simulations} show
+empirically that our method performs well in settings where forward
+stepwise itself performs well, and that
+various stopping rules using our test statistic--including
+some from \cite{sequential:fdr}--appear promising. In
+Section~\ref{sec:applications} we apply
+the method to several variants of forward
+stepwise tailored to models with interactions and generalized additive
+models, as well as to a real data example.
+(\todo Change this paragraph if necessary as the sections are completed)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,35 +167,80 @@ some from \cite{sequential:fdr}--appear promising.
 \section{Forward stepwise model selection}
 \label{sec:stepwise}
 
+\subsection{Background and notation}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figs/pubmed.pdf}
+\caption{\small \it Forward stepwise enjoys widespread use among
+practitioners}
+\label{fig:pubmed}
+\end{center}
+\end{figure}
+
+
+As a classical method dating back about half a century
+(see \cite{classical:selection} for a review),
+forward stepwise regression has not received much attention in
+recent years in the theoretical statistics community. But it continues
+to be widely used by practitioners.
+For example, search results on PubMed for forward stepwise
+(summarized in Figure~\ref{fig:pubmed}) show that many recent
+papers mention the method and there is an increasing trend over time.
+Its popularity among researchers continues despite the fact that it
+invalidates inferences using the standard $\chi^2$ or $F$-tests.
+
+
+Some classical attempts to address this issue include Monte Carlo
+estimation of tables of adjusted $F$-statistic values \citep{mc:ftoenter}
+and permutation statistics \citep{permutation:stop}. Aside from the works
+this paper is based on, there have been other recent attempts to do
+inference after model selection. Most of these make use of subsampling
+\citep{meinshausen:buhlmann} or data splitting \citep{wasserman:roeder}.
+Our approach allows use of the full data and does not require the
+extra computation involved in subsampling.
+Before describing the full approach we first introduce notation and
+specify our implementation of forward stepwise, which is slightly
+different from the most commonly used versions.
+(\todo Check R's \textit{step} for the group criterion)
+
+
 We allow forward stepwise selection to add groups of variables in each
 step, not only in the case of binary encoding for categorical
 variables but also for any grouping purpose. For example, groups of
 variables may be pre-designated factors such as expression
-measurements for all genes in a single functional pathway. An entire
-group is included or excluded together from the final model. For
-consistency we will use $g, h$ as indices rather than the usual $i, j$
-throughout. Since single variables can be considered groups of size 1,
-our general exposition includes non-grouped situations as a special
+measurements for all genes in a single functional pathway.
+To emphasize this we will use $g, h$ as indices rather than the usual
+$i, j$ throughout. Since single variables can be considered groups of
+size 1, our general exposition includes non-grouped situations as a special
 case. Our variant of forward stepwise uses a different method than
 usual for choosing which group to add because we are using the
 same objective in the forward stepwise procedure that was used to
-derive our test statistic.
+derive the test statistics in penalized regression settings.
 
-Label the outcome variable of $n$ i.i.d. measurements $y \in \real^n$. Let an integer $G \geq 1$ 
-be the number of groups. For each $1 \leq g \leq G$ the design matrix encoding the
+Denote $y \in \real^n$ for $n$ i.i.d. measurements of the outcome variable.
+Let an integer $G \geq 2$ be the number of groups of explanatory variables.
+For each $1 \leq g \leq G$ the design matrix encoding the
 $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
-the number of individual variables in group $g$. Define $p = \sum_{g=1}^G
-p_g$ the total number of individual variables, so $p = G$ in the
+the number of individual variables or columns in group $g$. When a group
+encodes a categorical variable as binary indicators for the levels of
+that variable, we use the full encoding with a column for every level.
+Although this introduces collinearity, our method does not require the
+design matrix to have full rank.
+
+
+Define $p = \sum_{g=1}^Gp_g$,
+the total number of individual variables, so $p = G$ in the
 case where all groups have size 1. Let $X$ be the matrix constructed
 by column-binding the $X_g$, that is  
-%Throughout most of this paper we assume orthogonality within groups, that is
-%$X_g^T X_g = I_{p_g \times p_g}$ for all $g$. ( \todo Take this out if
-%we don't actually need it).  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation*}
 X = \begin{pmatrix} X_1 & X_2 & \cdots & X_G  \end{pmatrix}
 \end{equation*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We assume throughout that the individual columns of $X$ are scaled to
+have unit 2-norm (we do not scale groups, this is accomplished later
+by weighting).
 With each group we associate the $p_g \times 1$ coefficient vector
 $\beta_g$, and write $\beta$ for the $p \times 1$ vector constructed
 by stacking all of the $\beta_g$ in order.  Finally, our model for the
@@ -209,42 +258,48 @@ where $\epsilon$ is noise. Unless otherwise specified we assume
 i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ and that
 $\sigma$ is known.
 
-We allow for the possibility $p > n$ in which case ~\ref{eq:gmodel} is
+We allow for the possibility $p > n$ in which case \eqref{eq:gmodel} is
 generically underdetermined. In such cases it still may be possible to
 estimate $\beta$ well if it is sparse--that is, if it has few nonzero
-entries \citep{donoho:pursuit}. In the rest of this paper we refer to
-variable groups $X_g$ as noise variables if $\beta_g$ is a zero vector
-and as true predictor variables if $\beta_g$ has nonzero entries.
+entries. In the rest of this paper we refer to variable groups $X_g$
+as noise groups if $\beta_g$ is a zero vector and as true or signal
+groups if $\beta_g$ has any nonzero entries. We refer to the number
+of such nonzero groups as the \textit{sparsity} of the model, and
+denote this $k := \# \{ g : \beta_g \neq 0 \}$.
 
 Before we describe the forward stepwise procedure we require one last
 ingredient. To each group of variables we assign a weight $w_g$. These
 weights act like penalties or costs, so increasing $w_g$ makes it
 more difficult for the group $X_g$ to enter the model. The
-modeler can choose weights arbitrarily, but we will only use one
+modeler can choose weights arbitrarily, but we will mostly use one
 particular choice, based on $p_g$, that we discuss later. With this we
-are ready to describe the forward stepwise procedure, given in Algorithm
-\ref{algo:fs}. Note that to enable our p-value computations,
-\textit{max.steps} should be at most $\min (n, G) - 1$. If the noise
-variance is known--as we assume unless specified otherwise--and
-$\beta$ is expected to be quite sparse, then \textit{max.steps} can be
-much smaller as long as it is still above the expected sparsity of
-$\beta$. This last constraint is suggested so that forward stepwise
-still has a chance of recovering all the nonzero coefficients of
-$\beta$ before reaching \textit{max.steps}. In our implementation we
-treat the active set $A$ as an ordered set to easily track the order
-of variables entering the model.
+are ready to describe the forward stepwise procedure.
+
+
+\subsection{Description of the algorithm}
+
+First, the user must specify the maximum number of steps allowed,
+which we denote \textit{steps} (consistent with the \textit{R} function
+for stepwise). To enable our test statistic computations,
+\textit{steps} should be at most $\min (n, G) - 1$, but it is
+computationally desirable to set it as low as possible while still being
+larger than the (unknown) sparsity of $\beta$.
+This way forward stepwise has a chance of recovering all the nonzero
+coefficients of $\beta$ and then terminating without performing much
+additional computation.
+In our implementation we treat the active set $A$ as an ordered list to easily track the order of groups entering the model.
 
 \begin{algorithm}
 \DontPrintSemicolon
-\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ grouped variables}
+\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
 \KwResult{Active set $A$ of variable groups included in the model}
 \SetKwFunction{lsfitResidual}{lsfitResidual}
-\caption{Forward stepwise procedure with groups and weights}
+\caption{\small \it Forward stepwise procedure with groups and weights}
 \BlankLine
 $A \gets \emptyset$\;
 $A^c \gets \{ 1, \ldots, G \}$\;
 $r_0 \gets y$\;
-\For{$s \gets 1$ \KwTo $max.steps$}{
+\For{$s \gets 1$ \KwTo $steps$}{
   $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
   $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
   $A \gets A \cup \{ g^* \}$\;
@@ -258,22 +313,33 @@ $r_0 \gets y$\;
 \label{algo:fs}
 \end{algorithm}
 
+In the common case where all groups are single variables this version
+coincides with the standard implementations of forward stepwise.
+We will now use forward stepwise to refer specifically to
+Algorithm~\ref{algo:fs} unless otherwise specified.
 
-Subset selection refers to the problem of choosing a subset of the $G$
-potential groups to include in a model. Since there are $2^G$ such
-choices, exhaustive search is computationally infeasible when $G$ is
-large. If exhaustive search were possible, performing a large
-search runs the risk of over-fitting unless model complexity is
-appropriately penalized. Forward stepwise produces a much
-smaller set of potential models, with cardinality at most \textit{max.steps}. However,
-it is a greedy algorithm so the set of models it produces may not
+\subsection{Performance of forward stepwise}
+
+Among model selection procedures, forward stepwise is one which performs
+variable selection: from a potentially large set of variables it chooses
+a subset to include in the model. The most general form of variable
+selection is called subset selection, a procedure which searches among
+all $2^G$ subsets of $G$ variable groups and picks the best model.
+This exhaustive search is computationally infeasible when $G$ is
+large, and when possible it still
+runs the risk of over-fitting unless model complexity is
+appropriately penalized (as in \eqref{eq:subsetregress} below).
+Forward stepwise produces a much
+smaller set of potential models, with cardinality at most
+\textit{steps}. However
+it is a greedy algorithm, so the set of models it produces may not
 contain the best possible model. This is an inherent shortcoming of
 forward stepwise procedures and should be kept in mind when choosing
 between model selection methods.
 
 So far we have left open the question of choosing among the models in
 the forward stepwise sequence, i.e. when to stop stepping
-forward. Some classical approaches can be posed as optimization
+forward. Some approaches for this problem can be posed as optimization
 criteria which stop at the step minimizing
 \begin{equation}
 \begin{aligned}
@@ -281,43 +347,50 @@ criteria which stop at the step minimizing
 \frac{1}{2} \| y - X \beta_s \|_2^2 + \lambda \pen(\beta_s)
 \end{aligned}
 \end{equation}
-where we have written $\{ \beta_s : s = 1, \ldots, max.steps \}$ as
+(\todo describe construction of $\beta$ after finding $A$)
+where we have written $\{ \beta_s : s = 1, \ldots, steps \}$ as
 the sequence of models outputted by forward stepwise. The function
 $\pen(\beta)$ is a penalty on model complexity usually taken to be the
 number of nonzero entries of $\beta$. Proposals for $\lambda$ include
 2 ($C_p$ of \cite{CP}, AIC of \cite{AIC}), $\log(n)$ (BIC of \cite{BIC}), and
-$2\log(p)$ (RIC of \cite{RIC}). In the current paper we provide
-accurate p-values when adding the first noise variable group in the forward
-stepwise sequence, and it is natural to consider using these p-values
+$2\log(p)$ (RIC of \cite{RIC}). Stopping rules based on classical test
+statistics have also been used, so it is natural to consider using
+the new test statistics of \cite{significance:lasso} or
+\cite{tests:adaptive}
 to choose a model. \cite{sequential:fdr} examined some stopping rules
 using the asymptotic p-values of \cite{significance:lasso} and showed
 their stopping rules control false discovery rate--the expected
 proportion of noise variables among variables declared significant
-\citep{fdr}. We explore this further in Section \ref{sec:simulations}.
+\citep{fdr}. We explore this further in Section~\ref{sec:simulations}.
 
 Although forward stepwise is a greedy algorithm producing a
 potentially sub-optimal sequence of models, under favorable conditions
-it can still perform well. There is a parallel literature to the
-compressed sensing literature \textit{(cite some here)} with theorems
-stating that forward stepwise can exactly select the true model under
-some stringent conditions involving quantities like the sparsity of
-the true model and the coherence of the design matrix. Recall that the
+it can still perform well. There is a small segment of the
+compressed sensing literature \citep{donoho:pursuit, cai:wang:omp}
+with results stating that forward stepwise (often referred to in that
+literature as Orthogonal Matching Pursuit or OMP) can exactly select
+the true model
+under some stringent conditions involving quantities like the sparsity
+of the true model and the coherence of the design matrix. The
 coherence $\mu(X)$ of a matrix $X$ with columns scaled to have unit
 2-norm is defined as
 
 \begin{equation}
-  \mu(X) = \max_{i \neq j} \{ | \innerp{ X_i }{ X_j } | \}
+  \mu := \mu(X) = \max_{i \neq j} \{ | \innerp{ X_i }{ X_j } | \}
 \end{equation}
 
-Writing $k$ for the sparsity of $\beta$, typical results in this
+Recalling that $k$ is the sparsity of $\beta$, typical results in this
 literature say that if $k < (1/\mu + 1)/2$ and the nonzero
 coefficients of $\beta$ are sufficiently large then forward stepwise
-recovers $\beta$ with high probability. We refer the
-reader to the literature for details. For our purposes the
-conditions required to guarantee exact recovery are usually far too
-stringent. We conduct simulations to show empirically that forward
+recovers $\beta$ with high probability. The coherence condition is
+necessary to guarantee exact recovery \citep{cai:wang:xu:sharp} in the
+sense that it is possible to construct counterexamples with
+$k = (1/\mu + 1)/2$. We refer the reader to the literature for details.
+For our purposes the
+conditions required to guarantee exact recovery are usually too
+stringent. Simulations show empirically that forward
 stepwise can work well even when it is not working perfectly, and that
-it does so under a much wider range of conditions.
+it does so under a wide range of conditions.
 
 
 \begin{figure}
@@ -338,16 +411,22 @@ it does so under a much wider range of conditions.
 \end{center}
 \end{figure}
 
-For various sparsity levels $k$, Algorithm ~\ref{algo:fs} was run on
-various data sets with max.steps equal to $k$ and the ``average
+For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
+various data sets with \textit{steps} equal to $k$ and the ``average
 power'' was calculated as the number of true variables in the active
 set after $k$ steps divided by $k$. Nonzero coefficients had magnitude
-in a range of multiples of $\sqrt{2\log(p)}$, e.g. in $[1.4
-\sqrt{2\log(p)}, 1.6 \sqrt{2\log(p)}]$. Results are shown in
-Figure~\ref{fig:fwdstepsim}. Some calculations show the required
+in a range of multiples of $\gamma := \sqrt{2\log(G)}$, e.g. in $[1.4
+\gamma, 1.6 \gamma]$. Results are shown in
+Figure~\ref{fig:fwdstepsim}. After computing the
+coherence of these design matrices, some calculations show the required
 sparsity level to guarantee exact recovery in these situations is
 about 2 or smaller, and the required nonzero coefficient magnitude is
-likely in the range of 10 to 100 times $\sqrt{2\log(p)}$. 
+likely in the range of 10 to 100 times $\gamma$. These simulations are far
+from the stringent conditions required by theory to guarantee perfect
+recovery, but the performance, while not perfect, may still be good
+enough for some purposes.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -355,16 +434,14 @@ likely in the range of 10 to 100 times $\sqrt{2\log(p)}$.
 \section{Significance testing: from lasso to group lasso}
 \label{sec:testing}
 
-\todo Update this section to match/complement \citep{tests:adaptive}
-
-
+\todo Reorganize and update this section \\
 
 In the ordinary least squares setting, a significance test for a
 single variable can be conducted by comparing the drop in residual
 sums of squares (RSS) to a $\chi^2_1$ distribution. Similarly, when
 adding a group of $k$ variables we can compare the drop in RSS to a
 $\chi^2_k$ random variable. This generally does not work when the
-variable to be added has been chosen by a method that uses the data,
+group to be added has been chosen by a method that uses the data,
 and in particular it fails for forward stepwise procedures adding
 the ``best'' (e.g. most highly correlated) predictor in each step. In
 that case, the test statistic (drop in RSS) does not match the
@@ -375,11 +452,12 @@ asymptotic null distribution, proved a type of convergence under broad
 ``minimum growth'' conditions, and demonstrated in simulations that
 the test statistic closely matches its asymptotic distribution even in
 finite samples.  That work marked an important advance in the problem
-of combining inference with model selection.  The current paper
-extends some of their results to the group lasso \citep{grouplasso}.
-In the process we had to derive an exact finite sample null
-distribution for the test statistic, this appears in
-\cite{tests:adaptive}. 
+of combining inference with model selection.  \cite{tests:adaptive}
+extended that work to the group lasso \citep{grouplasso} and other
+problems, and modified the test statistic to one with an exact finite
+sample distribution under the global null hypothesis.
+
+
 
 
 Writing $\hat \beta(\lambda)$ for the lasso solution for a fixed value of $\lambda$, we need
@@ -422,6 +500,7 @@ restrict our attention to the first group of variables to enter the
 active set since the analysis then follows almost exactly as for the
 lasso.
 
+
 The \emph{group lasso estimator} is a solution to the following convex
 problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -435,7 +514,7 @@ problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The parameter $\lambda \geq 0$ enforces sparsity in groups: for large
 $\lambda$ most of the $\beta_g$ will be zero vectors. The weights
-$w_g$ are usually taken to be $\sqrt p_g$ to normalize the penalty
+$w_g$ are usually taken to be $\sqrt {p_g}$ to normalize the penalty
 across groups.  Note that this includes the usual lasso estimator as a
 special case when all of the groups are of size 1, since then the
 penalty term is the $L^1$-norm of $\beta$. 
@@ -539,25 +618,12 @@ test statistic by not using the approximation)
 \section{Simulations}
 \label{sec:simulations}
 
-\todo Expand, include simulation results (copy latex for
-includegraphics etc), do the simulation comparing stopping rules
-
-\begin{itemize}
-  \item Show null and non-null p-value-by-step plots for several examples
-  \item Discuss one of these carefully (perhaps with a noise variable
-    entering before a signal variable), for several fixed stopping points
-  \item Compare a few stopping rules, e.g. naive one(s),
-    TailStop/HybridStop, AIC/BIC/Cp
-  \item (the stopping comparisons are not done yet, but I am guessing
-    they will be comparable, perhaps AIC/BIC/Cp will be better, and in
-    that case look for other advantages of ours to mention,
-    e.g. interpretability for being based on p-values rather than a
-    complexity penalty)
-
-\end{itemize}
+\todo Clean up and reorganize \\
+\todo Write a little more exposition \\
+\todo Compare to AIC and other classical stopping rules? \\
 
 
-\begin{figure}
+\begin{figure}[h]
 \begin{center}
 \subfigure[Gaussian design]{
 \label{fig:smallgauss}
@@ -578,12 +644,11 @@ so there are 10 categorical variables with a total of 32 levels.}
 \end{figure}
 
 
-
 \input{../small_sim_selection.tex}
 
 \input{../small_sim_estimation.tex}
 
-\begin{figure}
+\begin{figure}[h]
 \begin{center}
 \subfigure[Large Gaussian lasso]{
 \label{fig:largelasso}
@@ -614,25 +679,130 @@ performed 100 realizations.
 
 
 
-\section{Real data example}
-\todo Simulation with non-Gaussian design matrix (from AIDS data probably)
+\section{Applications}
+\label{sec:applications}
+We now turn to applying forward stepwise and examining the behavior of
+our test statistic in several unique settings, including a real data
+example.
+
+
+\subsection{Glinternet for hierarchical interactions}
+\label{sec:glint}
+With many variables, fitting models with pairwise interactions can drastically increase model complexity. \cite{glint} simplify this problem by imposing a hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if its main effects are also included. They accomplish this by creating a design matrix with main effects alone and also with groups including main effects and their first order interactions. Concretely, the expanded design matrix is
+\begin{equation}
+\label{eq:glintmat}
+\tilde X = \begin{pmatrix} X_1 & \cdots & X_G & X_{1:2} & \cdots & X_{1:G} & X_{2:3} & \cdots & X_{(G-1):G}  \end{pmatrix}
+\end{equation}
+where $X_{g:h}$ is the submatrix including $X_g$, $X_h$, and all
+$p_gp_h$  column multiples between columns in group $g$ and columns
+in group $h$. For example, if
+\[
+X_g = \begin{pmatrix} X_{g1} & X_{g2} \end{pmatrix}, \quad
+X_h = \begin{pmatrix} X_{h1} & X_{h2} \end{pmatrix}
+\]
+are two groups each containing two columns, then
+\[
+X_{g:h} = \begin{pmatrix} X_g & X_h & X_{g1} * X_{h1} & X_{g1} * X_{h2} & X_{g1} * X_{h1} & X_{g2} * X_{h2} \end{pmatrix}
+\]
+where * denotes the pointwise product (Hadamard product) of vectors (the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times the $i$th entry of $X_{h1}$). Note that this expanded matrix has $G(G+1)/2$ groups.
+For the rest of this section we drop the tilde
+and denote the expanded design matrix as $X$.
+After constructing the design matrix, they proceed by
+fitting a group lasso model to the data. Because interaction terms only
+appear in groups along with their main effects, the hierarchy condition
+holds for the fitted model. 
+
+We can also fit a model by forward stepwise on the same expanded design
+matrix. The grouping still guarantees that our fitted model will
+satisfy the hierarchy condition. However, we must first modify our
+implementation of forward stepwise to prevent the possibility of
+including main effect groups after the main effects are already included
+in the model as part of an interaction group. To do this we compute the
+residual using the whole model in each step, rather than by subtracting
+the effect of the current group being included. For a set of group indices
+$A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the
+design matrix containing all the groups in $A$.
+
+\begin{algorithm}
+\DontPrintSemicolon
+\caption{\small \it Modification to compute residual from full model}
+\BlankLine
+\CommentSty{\# Everything the same as before, except:}\;
+%  $P_A \gets I - X_AX_A^\dagger$\;
+%  $r_s \gets P_A r_{s-1}$\;
+$r_s \gets y - \text{lsfit}(X_A, y)$\;
+\BlankLine
+\label{algo:fs:full}
+\end{algorithm}
+
+Testing this method by simulation, we constructed signals which have
+$k/3$ main effects nonzero but with no interactions and the remaining
+$2k/3$ nonzero main effects are matched to each other to form interactions.
+This way each nonzero main effect with any nonzero interactions has
+exactly one nonzero interaction.
+The design matrices are independent Gaussian with all groups of size 1.
+Results are shown in Figure~\ref{fig:glint}. The left
+panel shows average power of forward stepwise. Power is calculated
+using the group structure we impose, and not in terms of the original
+main effects and interactions. However, the dotted line shows a more
+forgiving definition of power where we are rewarded for discovering part
+of a nonzero group, i.e. for discovering only one main effect from a
+true interaction group. In the right panel we see that the global null
+result still holds (red vertical lines), and that with a signal the
+p-value is small until the signal has been recovered (blue). The
+interaction power is the proportion of nonzero interaction groups
+that were discovered and is labeled ``Int. Power.''
+
+\begin{figure}
+\begin{center}
+\subfigure[Forward stepwise on glinternet]{
+\label{fig:glint:fwd}
+\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gauss_glint_p20_n200_lower2p9_upper3p6.pdf}}
+\hspace{-15pt}
+\subfigure[P-value with glinternet]{
+\label{fig:glint:pval}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_size1_n200_p40_g40_k6_lower2p5_upper3p9_glint.pdf}}
+\caption{\small \it The left panel shows the power of forward stepwise
+for various sparsity levels. The right panel shows our p-value marginally
+over each step, with red indiciating the global null case and blue
+indicating a signal with $k=6$ nonzero groups.}
+\label{fig:glint}
+\end{center}
+\end{figure}
+
+
+\subsection{Generalized additive model selection}
+\todo Finish code \\
+\todo Write section \\
+
+\subsection{Real data example}
+\todo Code simulation with HIVdb data \\
+\todo Write section \\
 
 
 
 \section{Discussion}
 \label{sec:discuss}
 
+\todo Brief summary \\
 \todo After finising everything else, move some points of discussion
-here, re-read and see if there's anything else interesting to comment
-on here. Mention ongoing work
+here \\
+\todo Mention ongoing work, like tracking all the constraints to
+get an exact p-value at every step. \\
+
+\newpage
 
 \bibliographystyle{ims}
 %\bibliographystyle{acmtrans-ims}
 \bibliography{paper}
 
+\newpage
 
 \appendix
 \section{Derivation of closed forms of statistic}
+
+\todo Clean this section \\
+\todo Make $M=\lambda_2$ a special case corollary \\
 
 For the sake of completeness this appendix provides full derivations
 of closed forms for the quantities required to compute our

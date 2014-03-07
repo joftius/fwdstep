@@ -1,47 +1,47 @@
-This is BibTeX, Version 0.99d (TeX Live 2010)
+This is BibTeX, Version 0.99d (TeX Live 2013)
 Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: paper.aux
 The style file: ims.bst
 Database file #1: paper.bib
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
-You've used 11 entries,
+You've used 19 entries,
             3217 wiz_defined-function locations,
-            737 strings with 6851 characters,
-and the built_in function-call counts, 6514 in all, are:
-= -- 513
-> -- 214
-< -- 7
-+ -- 89
-- -- 72
-* -- 514
-:= -- 984
-add.period$ -- 39
-call.type$ -- 11
-change.case$ -- 80
-chr.to.int$ -- 11
-cite$ -- 11
-duplicate$ -- 512
-empty$ -- 550
-format.name$ -- 103
-if$ -- 1279
+            797 strings with 8500 characters,
+and the built_in function-call counts, 11542 in all, are:
+= -- 919
+> -- 390
+< -- 12
++ -- 163
+- -- 132
+* -- 941
+:= -- 1725
+add.period$ -- 70
+call.type$ -- 19
+change.case$ -- 142
+chr.to.int$ -- 19
+cite$ -- 19
+duplicate$ -- 904
+empty$ -- 956
+format.name$ -- 197
+if$ -- 2262
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 95
-newline$ -- 69
-num.names$ -- 44
-pop$ -- 196
+missing$ -- 169
+newline$ -- 116
+num.names$ -- 76
+pop$ -- 345
 preamble$ -- 1
-purify$ -- 68
+purify$ -- 120
 quote$ -- 0
-skip$ -- 159
+skip$ -- 271
 stack$ -- 0
-substring$ -- 346
-swap$ -- 245
+substring$ -- 605
+swap$ -- 445
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 99
+type$ -- 171
 warning$ -- 0
-while$ -- 42
+while$ -- 74
 width$ -- 0
-write$ -- 159
+write$ -- 277

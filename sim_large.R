@@ -5,14 +5,15 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 
 
-design = 'ternary'
+#design = 'ternary'
+design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
 nsim = 500
 n = 100
-num.nonzero = 10
+num.nonzero = 6
 k = num.nonzero
-max.steps = 14
+max.steps = 12
 upper.coeff = 1.7
 lower.coeff = 1.5
 

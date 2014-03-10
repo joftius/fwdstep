@@ -93,6 +93,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   active.set = 0
   eff.p = 0
   p.vals = c()
+  chi.pvals = c()
   c.vars = c()
   Ls = c()
 
@@ -105,9 +106,12 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     output = add_group(X.orig, X.update, Y.update, groups, weights, sigma, active.set, eff.p)
     active.set = output$active.set
     eff.p = output$eff.p
+    RSS = sum(Y.update^2)
     Y.update = output$Y.update
+    RSS = RSS - sum(Y.update^2)
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
+    chi.pvals = c(chi.pvals, pchisq(RSS, lower.tail=F, df=1))
     c.vars = c(c.vars, output$var)
     # tracking lambda_2
     Ls = c(Ls, output$test.output[1])
@@ -123,6 +127,6 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
     
   }
 
-  return(list(active.set = active.set, p.vals = p.vals, Ls = Ls))
+  return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls))
 }
 

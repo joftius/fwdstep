@@ -192,7 +192,7 @@ invalidates inferences using the standard $\chi^2$ or $F$-tests.
 
 
 Some classical attempts to address this issue include Monte Carlo
-estimation of tables of adjusted $F$-statistic values \citep{mc:ftoenter}
+estimation of tables of adjusted $F$-statistic values \citep{mc:ftoenter},
 and permutation statistics \citep{permutation:stop}. Aside from the works
 this paper is based on, there have been other recent attempts to do
 inference after model selection. Most of these make use of subsampling
@@ -688,7 +688,7 @@ example.
 
 \subsection{Glinternet for hierarchical interactions}
 \label{sec:glint}
-With many variables, fitting models with pairwise interactions can drastically increase model complexity. \cite{glint} simplify this problem by imposing a hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if its main effects are also included. They accomplish this by creating a design matrix with main effects alone and also with groups including main effects and their first order interactions. Concretely, the expanded design matrix is
+With many variables, fitting models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with main effects alone and also with groups including main effects and their first order interactions. Concretely, the expanded design matrix is
 \begin{equation}
 \label{eq:glintmat}
 \tilde X = \begin{pmatrix} X_1 & \cdots & X_G & X_{1:2} & \cdots & X_{1:G} & X_{2:3} & \cdots & X_{(G-1):G}  \end{pmatrix}
@@ -704,9 +704,8 @@ are two groups each containing two columns, then
 \[
 X_{g:h} = \begin{pmatrix} X_g & X_h & X_{g1} * X_{h1} & X_{g1} * X_{h2} & X_{g1} * X_{h1} & X_{g2} * X_{h2} \end{pmatrix}
 \]
-where * denotes the pointwise product (Hadamard product) of vectors (the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times the $i$th entry of $X_{h1}$). Note that this expanded matrix has $G(G+1)/2$ groups.
-For the rest of this section we drop the tilde
-and denote the expanded design matrix as $X$.
+where * denotes the pointwise product (Hadamard product) of vectors (the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times the $i$th entry of $X_{h1}$). Note that this expanded matrix has $\tilde G = G(G+1)/2$ groups.
+%For the rest of this section we drop the tilde and denote the expanded design matrix as $X$.
 After constructing the design matrix, they proceed by
 fitting a group lasso model to the data. Because interaction terms only
 appear in groups along with their main effects, the hierarchy condition
@@ -714,25 +713,46 @@ holds for the fitted model.
 
 We can also fit a model by forward stepwise on the same expanded design
 matrix. The grouping still guarantees that our fitted model will
-satisfy the hierarchy condition. However, we must first modify our
-implementation of forward stepwise to prevent the possibility of
-including main effect groups after the main effects are already included
-in the model as part of an interaction group. To do this we compute the
-residual using the whole model in each step, rather than by subtracting
-the effect of the current group being included. For a set of group indices
-$A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the
-design matrix containing all the groups in $A$.
-
+satisfy the hierarchy condition. To achieve a small computational speed-up, we first modify Algorithm~\ref{algo:fs} to keep track of which main effects have already been included. This reduces the search among potential variables.
+%However, we must first modify our implementation of forward stepwise to prevent the possibility of including main effect groups after the main effects are already included in the model as part of an interaction group. To do this we compute the residual using the whole model in each step, rather than by subtracting the effect of the current group being included. For a set of group indices $A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the design matrix containing all the groups in $A$.
+% \begin{algorithm}
+% \DontPrintSemicolon
+% \caption{\small \it Modification to compute residual from full model}
+% \BlankLine
+% \CommentSty{\# Everything the same as before, additionally:}\;
+% %  $P_A \gets I - X_AX_A^\dagger$\;
+% %  $r_s \gets P_A r_{s-1}$\;
+% \If{$g^*$ is an interaction group}{
+%   $g_1, g_2 \gets$ main effects groups of $g^*$\;
+%   A^c \gets A^c \slash \{ g_1, g_2 \}\;
+% }%\;
+% %$r_s \gets y - \text{lsfit}(X_A, y)$\;
+% \BlankLine
+% \label{algo:fs:full}
+% \end{algorithm}
 \begin{algorithm}
 \DontPrintSemicolon
-\caption{\small \it Modification to compute residual from full model}
+\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
+\KwResult{Active set $A$ of variable groups included in the model}
+\SetKwFunction{lsfitResidual}{lsfitResidual}
+\caption{\small \it Forward stepwise for glinternet}
 \BlankLine
-\CommentSty{\# Everything the same as before, except:}\;
-%  $P_A \gets I - X_AX_A^\dagger$\;
-%  $r_s \gets P_A r_{s-1}$\;
-$r_s \gets y - \text{lsfit}(X_A, y)$\;
-\BlankLine
-\label{algo:fs:full}
+Compute design matrix~(\ref{eq:glintmat}) and expanded grouping $\tilde G$\;
+$A \gets \emptyset$\;
+$A^c \gets \{ 1, \ldots, G \}$\;
+$r_0 \gets y$\;
+\For{$s \gets 1$ \KwTo $steps$}{
+  $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
+  $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
+  $A \gets A \cup \{ g^* \}$\;
+  $A^c \gets A^c \backslash \{ g^* \}$\;
+  \For{$g \in A^c$}{
+    $X_g \gets P X_g$\;
+  }
+  $r_s \gets P r_{s-1}$\;
+}
+\KwRet{$A$}
+\label{algo:fsgl}
 \end{algorithm}
 
 Testing this method by simulation, we constructed signals which have

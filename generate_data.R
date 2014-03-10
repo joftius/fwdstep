@@ -88,24 +88,38 @@ col_normalize = function(X) {
   return(t(t(X) / norms))
 }
 
+# Normalize groups by Frobenius norm
+frob_normalize = function(X, groups) {
+    X.out = X
+    for (g in 1:max(groups)) {
+        inds = groups == g
+        frob.norm = sqrt(sum(X[,inds]^2))
+        if (frob.norm > 0)
+            X.out[,inds] = X.out[,inds]/frob.norm
+    }
+    return(X.out)
+}
+
 # Fixed group sizes, gaussian design
-gaussian_design = function(n, groups, ortho.within = FALSE, corr = 0) {
+gaussian_design = function(n, groups, col.normalize = TRUE, corr = 0) {
   p = length(groups)
   X = matrix(rnorm(n*p), nrow=n)
 
-  if (ortho.within == TRUE) {
-    for (g in 1:max(groups)) {
-      group = groups == g
-      X[ , group] = svd(X[ , group])$u
-    }
-  }
+  ## if (ortho.within == TRUE) {
+  ##   for (g in 1:max(groups)) {
+  ##     group = groups == g
+  ##     X[ , group] = svd(X[ , group])$u
+  ##   }
+  ## }
 
   if (corr != 0) {
     Z = matrix(rep(t(rnorm(n)), p), nrow=n)
     X = sqrt(1-corr)*X + sqrt(corr)*Z
   }
 
-  X = col_normalize(X)
+  if (col.normalize) {
+    X = col_normalize(X)
+  }
   return(X)
 }
 
@@ -194,7 +208,6 @@ derangement = function(inds) {
 # beta nonzeros are for first k/3 main.groups
 
 
-
 # Input design matrix with groups
 # Output larger design matrix with all possible (grouped) interactions
 # main.groups: groups of main effects (original variables)
@@ -202,6 +215,7 @@ derangement = function(inds) {
 # int.groups: list, the [[g]]'th element contains all group indices that group g appears in
 generate_glinternet = function(X, groups) {
   X.out = X
+  n = dim(X)[1]
   g.out = groups
   main.out = groups
   gmax = max(groups)
@@ -213,16 +227,16 @@ generate_glinternet = function(X, groups) {
       hinds = which(groups == h)
       gs = length(ginds)
       hs = length(hinds)
-      X.out = cbind(X.out, X[, ginds]/sqrt(2))
-      X.out = cbind(X.out, X[, hinds]/sqrt(2))
+      X.out = cbind(X.out, X[, ginds]) #/sqrt(2))
+      X.out = cbind(X.out, X[, hinds]) #/sqrt(2))
       gnew = gnew + 1
       for (i in ginds) {
         for (j in hinds) {
           Xij = X[, i] * X[, j]
-          normij = sqrt(sum(Xij^2))
-          if (normij > 0) {
-            Xij = Xij/normij
-          }
+          ## normij = sqrt(sum(Xij^2))
+          ## if (normij > 0) {
+          ##   Xij = Xij/normij
+          ## }
           X.out = cbind(X.out, Xij)
         }
       }
@@ -230,7 +244,6 @@ generate_glinternet = function(X, groups) {
       g.out = c(g.out, rep(gnew, gs + hs + gs*hs))
       inds.out[g, h] = gnew
       inds.out[h, g] = gnew
-      
     }
   }
   colnames(X.out) = NULL
@@ -276,6 +289,7 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
   }
   
   # Normalize coeff across group for fair comparison with non-grouped vars
+  # Don't do this, design matrix already used Frobenius norm
   for (g in unique(all.groups)) {
     group = g == all.groups
     gs = sum(group)
@@ -294,7 +308,8 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
         beta[ginds[start.ind:hs]] = beta[ginds[start.ind:hs]]/sqrt(hs)
         start.ind = start.ind + hs
       }
-      beta[ginds[start.ind:gs]] = beta[ginds[start.ind:gs]]/sqrt(gs-start.ind+1)
+      # Inflate interaction size
+      beta[ginds[start.ind:gs]] = sqrt(gs)*beta[ginds[start.ind:gs]] #/sqrt(gs-start.ind+1)
     }
   }
 

@@ -28,6 +28,8 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   start.time = as.numeric(Sys.time())
 
   ### Begin main loop ###
+main3 = c()  
+int37 = c()
   for (i in 1:nsim) {
 
     # Monitoring completion time
@@ -39,8 +41,8 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     }
 
     if (design == 'gaussian') {
-      X = gaussian_design(n, groups, corr = corr)
-      X.test = gaussian_design(n, groups, corr = corr)
+      X = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
+      X.test = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
 
     } else {
       design_name = paste0(design, "_design")
@@ -55,11 +57,13 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     # Glinternet specific part
     data = generate_glinternet(X, groups)
     data.test = generate_glinternet(X.test, groups)
-    X = data$X
-    X.test = data.test$X
     all.groups = data$all.groups
+    X = frob_normalize(data$X, all.groups)
+    X.test = frob_normalize(data.test$X, all.groups)
+
 #    weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
     weights = rep(1, max(all.groups))
+#    weights = sqrt(rle(all.groups)$lengths)
     main.groups = data$main.groups
     int.groups = data$int.groups
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
@@ -81,6 +85,10 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + rnorm(n)*sigma
+
+main3 = c(main3, abs(t(X[,3]) %*% Y.beta))
+z=t(X[,all.groups==61])%*%Y.beta
+int37 = c(int37, sqrt(sum(z^2)))
 
     # Null results
     results = forward_group(X, Y, groups=all.groups, int.groups=int.groups, weights=weights, sigma, max.steps = max.steps)
@@ -160,7 +168,7 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
 
   }
 
-  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power)
+  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power, main3=main3, int37=int37)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

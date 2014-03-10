@@ -21,6 +21,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
   P.mat = matrix(nrow=nsim, ncol=max.steps)
   AS.mat = P.mat
   P.mat.b = P.mat
+  Chi.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
   pred.errs = matrix(0, nrow=3, ncol=3)
@@ -89,6 +90,7 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
 
     # Non-null results
     results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps = max.steps)
+    Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
     AS.mat.b[i, ] = results.b$active.set
     recover.mat[i, ] = sapply(results.b$active.set, function(x)
@@ -136,6 +138,11 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     Pvals = colMeans(P.mat.b)
     Pvals.bar <- apply(P.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
     Pvals.point <- apply(P.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
+
+    Chivals = colMeans(Chi.mat.b)
+    Chivals.bar <- apply(Chi.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
+    Chivals.point <- apply(Chi.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
+
     
     xax <- 1:max.steps - 0.15
     nxax <- xax + 0.3
@@ -155,6 +162,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
            code = 3, angle = 90, length = 0, col = "blue")
     points(xax, Pvals.point[1, ], col = "blue", pch = 24, cex = .5)
     points(xax, Pvals.point[2, ], col = "blue", pch = 25, cex = .5)
+
+    points(xax, Chivals, col="green")
+    arrows(xax, Chivals.bar[1, ], xax, Chivals.bar[2, ],
+           code = 3, angle = 90, length = 0, col = "green")
+    points(xax, Chivals.point[1, ], col = "green", pch = 24, cex = .5)
+    points(xax, Chivals.point[2, ], col = "green", pch = 25, cex = .5)
 
   }
 

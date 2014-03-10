@@ -1,7 +1,3 @@
-# Does this need to be modified for glinternet?
-# YES!
-# Form residuals using the full model after every step
-# (Do NOT only regress out the next variable being included)
 
 library(MASS) # for ginv
 source('group_lasso.R')
@@ -67,7 +63,7 @@ add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, a
 ##     }
 ##   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-  Y.resid = lm(Y ~ Xgmax.regress)$residual
+  Y.resid = lm(Y ~ Xgmax.regress-1)$residual
 # full version?  
 #  Y.resid = Y
       

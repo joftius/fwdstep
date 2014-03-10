@@ -8,13 +8,13 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 200
-n = 200
+nsim = 150
+n = 250
 num.nonzero = 6
 k = num.nonzero
-max.steps = 14
-upper.coeff = 3.91
-lower.coeff = 2.5
+max.steps = 10
+upper.coeff = 2.9
+lower.coeff = 1.4
 
 sigma = 1
 groups = 1:20
@@ -70,19 +70,20 @@ abline(v = 1, col = "gray")
 dev.off()
 
 
-stop("Not this time!")
+
+#stop("Not this time!")
 
 num.nonzero = 6
 k = 6
-max.steps = 10
-groups = sort(c(rep(1:15, 2), rep(16:20, 4)))
+max.steps = 8
+groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
-filename = paste0('../figs/', design, '_size2-4_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+filename = paste0('../figs/', design, '_size2-3_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
@@ -92,6 +93,9 @@ output.g <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, ns
 dev.off()
 
 print(warnings())
+
+print(summary(output.l$main3))
+print(summary(output.l$int37))
 
 stop("No selection stats for this")
 

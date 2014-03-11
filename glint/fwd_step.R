@@ -64,8 +64,6 @@ add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, a
 ##   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
   Y.resid = lm(Y ~ Xgmax.regress-1)$residual
-# full version?  
-#  Y.resid = Y
       
 ####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
@@ -89,6 +87,7 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   group.sizes = rle(groups)$lengths
 
   if ((length(weights) == 1) & (weights[1] == 0)) {
+    print("######## Making weights ############")
     weights = sqrt(rle(groups)$lengths)
   }
 

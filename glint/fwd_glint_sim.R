@@ -5,15 +5,26 @@ source('../generate_data.R')
 #source('pred_and_estim.R') not for glinternet
 #source('fwd_step/coherence.R')
 
+## n=250
+## sigma=1
+## groups=1:20
+## num.nonzero=6
+## max.steps=12
+## lower=7
+## upper=9
+## nsim=5
+## design="gaussian"
+## corr=0
+## k=6
 
 # Note: glint version passes k here instead of beta
 fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsim,
   max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE, coherence = FALSE, plot = FALSE) {
 
   # Initialize
-  weights = sqrt(rle(groups)$lengths)
   p = length(groups)
   g = length(unique(groups))
+  G = g*(g+1)/2
   k=num.nonzero
   P.mat = matrix(nrow=nsim, ncol=max.steps)
   AS.mat = P.mat
@@ -28,10 +39,10 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   start.time = as.numeric(Sys.time())
 
   ### Begin main loop ###
-main3 = c()  
-int37 = c()
+  main1 = c()  
+  int37 = c()
+  
   for (i in 1:nsim) {
-
     # Monitoring completion time
     if (i %% 10 == 0) {
       elapsed.time = as.numeric(Sys.time()) - start.time
@@ -41,8 +52,8 @@ int37 = c()
     }
 
     if (design == 'gaussian') {
-      X = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
-      X.test = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
+      X = gaussian_design(n, groups, col.normalize = TRUE, corr = corr)
+      X.test = gaussian_design(n, groups, col.normalize = TRUE, corr = corr)
 
     } else {
       design_name = paste0(design, "_design")
@@ -58,16 +69,19 @@ int37 = c()
     data = generate_glinternet(X, groups)
     data.test = generate_glinternet(X.test, groups)
     all.groups = data$all.groups
+    X = data$X
     X = frob_normalize(data$X, all.groups)
     X.test = frob_normalize(data.test$X, all.groups)
-
-#    weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
-    weights = rep(1, max(all.groups))
 #    weights = sqrt(rle(all.groups)$lengths)
+#    weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
+    weights = rep(1, G)
     main.groups = data$main.groups
     int.groups = data$int.groups
+#source("../generate_data.R")
     beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
     beta = beta.data$beta
+#beta[which(beta!=0)]
+#c(sqrt(sum(beta[all.groups==61]^2)),sqrt(sum(beta[all.groups==78]^2)),sqrt(sum(beta[all.groups==94]^2)),sqrt(sum(beta[all.groups==109]^2)))    
     true.active.groups = true_active_groups(all.groups, beta)
     all.active = true.active.groups
     true.ints = beta.data$true.ints
@@ -86,9 +100,9 @@ int37 = c()
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + rnorm(n)*sigma
 
-main3 = c(main3, abs(t(X[,3]) %*% Y.beta))
-z=t(X[,all.groups==61])%*%Y.beta
-int37 = c(int37, sqrt(sum(z^2)))
+    main1 = c(main1, abs(t(X[,1]) %*% Y.beta))
+    z=t(X[,all.groups==61])%*%Y.beta
+    int37 = c(int37, sqrt(sum(z^2)))
 
     # Null results
     results = forward_group(X, Y, groups=all.groups, int.groups=int.groups, weights=weights, sigma, max.steps = max.steps)
@@ -96,7 +110,6 @@ int37 = c(int37, sqrt(sum(z^2)))
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-
     results.b = forward_group(X, Y.beta, groups=all.groups, int.groups=int.groups, weights, sigma, max.steps = max.steps)
     P.mat.b[i, ] = results.b$p.vals
     rb.as = results.b$active.set
@@ -119,11 +132,8 @@ int37 = c(int37, sqrt(sum(z^2)))
 
   }
 
-# HERE
-  
   ez.TrueStep = colMeans(ez.recover.mat)
   ez.num.recovered.groups = rowSums(ez.recover.mat[, 1:num.nonzero])
-
   TrueStep = colMeans(recover.mat)
   num.recovered.groups = rowSums(recover.mat[, 1:num.nonzero])
   num.recovered.ints = rowSums(int.recover.mat[, 1:num.nonzero])
@@ -168,7 +178,7 @@ int37 = c(int37, sqrt(sum(z^2)))
 
   }
 
-  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power, main3=main3, int37=int37)
+  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power, main1=main1, int37=int37)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

@@ -8,13 +8,13 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 150
-n = 250
+nsim = 50
+n = 200
 num.nonzero = 6
 k = num.nonzero
 max.steps = 10
-upper.coeff = 2.9
-lower.coeff = 1.4
+upper.coeff = 5
+lower.coeff = 3
 
 sigma = 1
 groups = 1:20
@@ -73,9 +73,10 @@ dev.off()
 
 #stop("Not this time!")
 
+n = 250
 num.nonzero = 6
 k = 6
-max.steps = 8
+max.steps = 9
 groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
 p = length(groups)
 g = length(unique(groups))
@@ -94,8 +95,12 @@ dev.off()
 
 print(warnings())
 
-print(summary(output.l$main3))
+print(summary(output.l$main1))
 print(summary(output.l$int37))
+
+print(summary(output.g$main1))
+print(summary(output.g$int37))
+
 
 stop("No selection stats for this")
 

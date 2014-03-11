@@ -227,16 +227,18 @@ generate_glinternet = function(X, groups) {
       hinds = which(groups == h)
       gs = length(ginds)
       hs = length(hinds)
+      # Intercept term shrunk too much?
+#      X.out = cbind(X.out, rep(1/n,n)) 
       X.out = cbind(X.out, X[, ginds]) #/sqrt(2))
       X.out = cbind(X.out, X[, hinds]) #/sqrt(2))
       gnew = gnew + 1
       for (i in ginds) {
         for (j in hinds) {
           Xij = X[, i] * X[, j]
-          ## normij = sqrt(sum(Xij^2))
-          ## if (normij > 0) {
-          ##   Xij = Xij/normij
-          ## }
+          normij = sqrt(sum(Xij^2))
+          if (normij > 0) {
+            Xij = Xij/normij
+          }
           X.out = cbind(X.out, Xij)
         }
       }
@@ -301,15 +303,21 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
       # i.e. they do not share their coeff mass with the main effects
       # otherwise it would be difficult to find them
       mains.of.g = main_effects_of(g, int.groups)
+      mgs = 0
+      for (h in mains.of.g) {
+        mgs = mgs + sum(h == all.groups)
+      }
+      igs = gs - mgs
       ginds = which(group)
       start.ind = 1
       for (h in mains.of.g) {
         hs = sum(h == all.groups)
-        beta[ginds[start.ind:hs]] = beta[ginds[start.ind:hs]]/sqrt(hs)
-        start.ind = start.ind + hs
+        end.ind = start.ind + hs - 1
+        beta[ginds[start.ind:end.ind]] = beta[ginds[start.ind:end.ind]]/sqrt(mgs)
+        start.ind = end.ind+1
       }
       # Inflate interaction size
-      beta[ginds[start.ind:gs]] = sqrt(gs)*beta[ginds[start.ind:gs]] #/sqrt(gs-start.ind+1)
+      beta[ginds[start.ind:gs]] = sqrt(2)*beta[ginds[start.ind:gs]]/sqrt(igs)
     }
   }
 
@@ -331,9 +339,9 @@ int_group_of = function(g, h, int.groups) {
 main_effects_of = function(gh, int.groups) {
   main.effs = which(int.groups == gh, arr.ind=TRUE)[1,]
   if (main.effs[1] < main.effs[2]) {
-    return(rev(main.effs))
-  } else {
     return(main.effs)
+  } else {
+    return(rev(main.effs))
   }
 }
 

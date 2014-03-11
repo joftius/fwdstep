@@ -64,7 +64,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, 
   }
   
   for (j in 1:g) {
-    if (is.element(j, already.counted)) {
+    if (is.element(j, active.set)) {
       terms[j] = 0
     } else {
       terms[j] = sqrt(terms[j]) / weights[j]

@@ -63,7 +63,8 @@ add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, a
 ##     }
 ##   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-  Y.resid = lm(Y ~ Xgmax.regress-1)$residual
+  Y.resid = Y - Pgmax %*% Y
+    #lm(Y ~ Xgmax.regress-1)$residual
       
 ####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
@@ -87,8 +88,7 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   group.sizes = rle(groups)$lengths
 
   if ((length(weights) == 1) & (weights[1] == 0)) {
-    print("######## Making weights ############")
-    weights = sqrt(rle(groups)$lengths)
+    weights = sqrt(group.sizes)
   }
 
   # Estimate sigma instead?
@@ -104,6 +104,7 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   already.counted = c()
   eff.p = 0
   p.vals = c()
+  chi.pvals = c()
   c.vars = c()
   Ls = c()
 
@@ -111,16 +112,18 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   X.update = X
 
   for (i in 1:max.steps) {
-    
     output = add_group(X.update, Y.update, groups, int.groups, weights, sigma, active.set, already.counted, eff.p)
     active.set = output$active.set
+    imax = output$imax
+    grank = sum(groups == imax)
     already.counted = output$already.counted
     eff.p = output$eff.p
+    RSS = sum(Y.update^2)
     Y.update = output$Y.update
-    active.inds = sapply(groups, function(x) is.element(x, active.set))
-#    Y.update = lm(Y ~ X[, active.inds])$residual
+    RSS = RSS - sum(Y.update^2)
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
+    chi.pvals = c(chi.pvals, pchisq(RSS, lower.tail=F, df=grank))
     c.vars = c(c.vars, output$var)
     # tracking lambda_2
     Ls = c(Ls, output$test.output[1])
@@ -134,6 +137,6 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
       }
     }
   }
-  return(list(active.set = active.set, p.vals = p.vals, Ls = Ls))
+  return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls))
 }
 

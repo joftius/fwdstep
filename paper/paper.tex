@@ -26,10 +26,15 @@
 
 % put your definitions there:
 \startlocaldefs
-
+\usepackage{algorithm}
+\usepackage{algorithmic}
 \usepackage{graphics,amssymb,color}
 \usepackage{graphicx,subfigure}
-\usepackage[boxed]{algorithm2e}
+%\usepackage[boxed]{algorithm2e}
+
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 \newcommand{\argmax}{\mathop{\mathrm{argmax}}}
 \newcommand{\argmin}{\mathop{\mathrm{argmin}}}
@@ -59,6 +64,7 @@
 \newcommand{\K}{\mathcal{K}}
 \newcommand\tf{\widetilde{f}}
 \newcommand{\pen}{\mathcal{P}}
+\newcommand{\gstar}{g^*}
 
 \begin{document}
 
@@ -288,34 +294,65 @@ coefficients of $\beta$ and then terminating without performing much
 additional computation.
 In our implementation we treat the active set $A$ as an ordered list to easily track the order of groups entering the model.
 
+% \begin{algorithm}
+% \DontPrintSemicolon
+% \KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
+% \KwResult{Active set $A$ of variable groups included in the model}
+% \SetKwFunction{lsfitResidual}{lsfitResidual}
+% \caption{\small \it Forward stepwise procedure with groups and weights}
+% \BlankLine
+% $A \gets \emptyset$\;
+% $A^c \gets \{ 1, \ldots, G \}$\;
+% $r_0 \gets y$\;
+% \For{$s \gets 1$ \KwTo $steps$}{
+%   $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
+%   $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
+%   $A \gets A \cup \{ g^* \}$\;
+%   $A^c \gets A^c \backslash \{ g^* \}$\;
+%   \For{$g \in A^c$}{
+%     $X_g \gets P X_g$\;
+%   }
+%   $r_s \gets P r_{s-1}$\;
+% }
+% \KwRet{$A$}
+% \label{algo:fs}
+% \end{algorithm}
+
 \begin{algorithm}
-\DontPrintSemicolon
-\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
-\KwResult{Active set $A$ of variable groups included in the model}
-\SetKwFunction{lsfitResidual}{lsfitResidual}
-\caption{\small \it Forward stepwise procedure with groups and weights}
-\BlankLine
-$A \gets \emptyset$\;
-$A^c \gets \{ 1, \ldots, G \}$\;
-$r_0 \gets y$\;
-\For{$s \gets 1$ \KwTo $steps$}{
-  $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
-  $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
-  $A \gets A \cup \{ g^* \}$\;
-  $A^c \gets A^c \backslash \{ g^* \}$\;
-  \For{$g \in A^c$}{
-    $X_g \gets P X_g$\;
-  }
-  $r_s \gets P r_{s-1}$\;
-}
-\KwRet{$A$}
-\label{algo:fs}
+  \caption{Forward stepwise variant with groups and weights}
+  \label{algo:fs}
+  \begin{algorithmic}[1]
+    \REQUIRE An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ variable groups with weights $w_g$
+    \ENSURE Ordered active set $A$ of variable groups included in the model at each step
+    \STATE $A \gets \emptyset$
+    \STATE $A^c \gets \{ 1, \ldots, G\}$
+    \FOR{$s=1$ to $steps$}
+    \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$
+    \STATE $P \gets I - X_{g^*}X_{g^*}^\dagger$
+    \STATE $A \gets A \cup \{ g^* \}$
+    \STATE $A^c \gets A^c \backslash \{ g^* \}$
+    \FORALL{$g \in A^c$}
+      \STATE $X_g \gets P X_g$
+    \ENDFOR
+    \STATE $r_s \gets P r_{s-1}$
+    \ENDFOR
+    \RETURN $A$
+  \end{algorithmic}
 \end{algorithm}
 
 In the common case where all groups are single variables this version
 coincides with the standard implementations of forward stepwise.
 We will now use forward stepwise to refer specifically to
-Algorithm~\ref{algo:fs} unless otherwise specified.
+Algorithm~\ref{algo:fs} unless otherwise specified. Note that other
+implementations of forward stepwise use different criteria for choosing
+the next variable to add, such as the correlation with the residual.
+Since we do not renormalize the columns after projecting the covariates
+(lines 8 to 10 above), and since we have weights, we are not computing
+correlations unless the design matrix is orthogonal and all weights are 1.
+There are advantages and disadvantages to both criteria which we do not
+discuss. Our choice was motivated by the group lasso result in
+\cite{tests:adaptive}, but we believe other criteria can be handled
+with appropriate modifications.
 
 \subsection{Performance of forward stepwise}
 
@@ -581,17 +618,16 @@ appendix.
 \todo Modify write-up to match notation with \cite{tests:adaptive} and
 then paste it in here
 
-\subsection{Better p-values}
+\subsection{Relation to covariance test}
 
-Maybe just reference \cite{tests:adaptive}? It might be worthwhile to
-leave in the connection with \cite{significance:lasso} (getting our
-test statistic by not using the approximation)
+Consider the simple case for the first covariate to enter the model.
+In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
+\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
+
+This is Lemma 5 from \cite{significance:lasso}.
 
 \begin{itemize}
 
-\item \todo Add the figures to this section
-\item \todo Convert to exposition instead of bulleted list
-\item \todo Update to reflect latest work
   \item As in LTTT, $T = \lambda_1 (\lambda_1 - M)$ and $M = \lambda_2$
   \item Convergence to the limiting Exp(1) distribution is too slow
     \[
@@ -612,6 +648,13 @@ test statistic by not using the approximation)
     \]   
 \end{itemize}
 
+
+\subsection{Exact p-value calculation}
+
+We now describe how to calculate the p-value, following the discussion of
+group lasso in \cite{tests:adaptive}. Let $g = \gstar$ be the index of
+the group attaining the maximum on line 4 of Algorithm~\ref{algo:fs},
+and let $r = \text{rank}(X_g)$ be the rank of the group attaining the maximum.
 
 
 \section{Simulations}
@@ -687,7 +730,7 @@ example.
 
 \subsection{Glinternet for hierarchical interactions}
 \label{sec:glint}
-With many variables, fitting models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with main effects alone and also with groups including main effects and their first order interactions. Concretely, the expanded design matrix is
+In regression settings with many variables, considering models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group lasso model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
 \begin{equation}
 \label{eq:glintmat}
 \tilde X = \begin{pmatrix} X_1 & \cdots & X_G & X_{1:2} & \cdots & X_{1:G} & X_{2:3} & \cdots & X_{(G-1):G}  \end{pmatrix}
@@ -703,16 +746,16 @@ are two groups each containing two columns, then
 \[
 X_{g:h} = \begin{pmatrix} X_g & X_h & X_{g1} * X_{h1} & X_{g1} * X_{h2} & X_{g1} * X_{h1} & X_{g2} * X_{h2} \end{pmatrix}
 \]
-where * denotes the pointwise product (Hadamard product) of vectors (the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times the $i$th entry of $X_{h1}$). Note that this expanded matrix has $\tilde G = G(G+1)/2$ groups.
-%For the rest of this section we drop the tilde and denote the expanded design matrix as $X$.
-After constructing the design matrix, they proceed by
-fitting a group lasso model to the data. Because interaction terms only
-appear in groups along with their main effects, the hierarchy condition
-holds for the fitted model. 
+where * denotes the pointwise product (Hadamard product) of vectors
+(the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times
+the $i$th entry of $X_{h1}$). Note that this expanded matrix has
+$\tilde G = G + \binom{G}{2} = O(G^2)$ groups. We refer to the first
+$G$ of these as main effects or main effect groups, and the remaining
+as interaction groups. Finally, instead of fitting a
+model by group lasso, we use forward stepwise on the expanded design
+matrix. The overlapping groups still guarantee that our fitted model will
+satisfy the strong hierarchy condition. 
 
-We can also fit a model by forward stepwise on the same expanded design
-matrix. The grouping still guarantees that our fitted model will
-satisfy the hierarchy condition. To achieve a small computational speed-up, we first modify Algorithm~\ref{algo:fs} to keep track of which main effects have already been included. This reduces the search among potential variables.
 %However, we must first modify our implementation of forward stepwise to prevent the possibility of including main effect groups after the main effects are already included in the model as part of an interaction group. To do this we compute the residual using the whole model in each step, rather than by subtracting the effect of the current group being included. For a set of group indices $A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the design matrix containing all the groups in $A$.
 % \begin{algorithm}
 % \DontPrintSemicolon
@@ -729,37 +772,43 @@ satisfy the hierarchy condition. To achieve a small computational speed-up, we f
 % \BlankLine
 % \label{algo:fs:full}
 % \end{algorithm}
-\begin{algorithm}
-\DontPrintSemicolon
-\KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
-\KwResult{Active set $A$ of variable groups included in the model}
-\SetKwFunction{lsfitResidual}{lsfitResidual}
-\caption{\small \it Forward stepwise for glinternet}
-\BlankLine
-Compute design matrix~(\ref{eq:glintmat}) and expanded grouping $\tilde G$\;
-$A \gets \emptyset$\;
-$A^c \gets \{ 1, \ldots, G \}$\;
-$r_0 \gets y$\;
-\For{$s \gets 1$ \KwTo $steps$}{
-  $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
-  $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
-  $A \gets A \cup \{ g^* \}$\;
-  $A^c \gets A^c \backslash \{ g^* \}$\;
-  \For{$g \in A^c$}{
-    $X_g \gets P X_g$\;
-  }
-  $r_s \gets P r_{s-1}$\;
-}
-\KwRet{$A$}
-\label{algo:fsgl}
-\end{algorithm}
+% \begin{algorithm}
+% \DontPrintSemicolon
+% \KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
+% \KwResult{Active set $A$ of variable groups included in the model}
+% \SetKwFunction{lsfitResidual}{lsfitResidual}
+% \caption{\small \it Forward stepwise for glinternet}
+% \BlankLine
+% Compute design matrix~(\ref{eq:glintmat}) and expanded grouping $\tilde G$\;
+% $A \gets \emptyset$\;
+% $A^c \gets \{ 1, \ldots, G \}$\;
+% $r_0 \gets y$\;
+% \For{$s \gets 1$ \KwTo $steps$}{
+%   $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
+%   $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
+%   $A \gets A \cup \{ g^* \}$\;
+%   $A^c \gets A^c \backslash \{ g^* \}$\;
+%   \For{$g \in A^c$}{
+%     $X_g \gets P X_g$\;
+%   }
+%   $r_s \gets P r_{s-1}$\;
+% }
+% \KwRet{$A$}
+% \label{algo:fsgl}
+% \end{algorithm}
 
-Testing this method by simulation, we constructed signals which have
-$k/3$ main effects nonzero but with no interactions and the remaining
-$2k/3$ nonzero main effects are matched to each other to form interactions.
+To demonstrate this method by simulation, we constructed signals which have
+the first $k/3$ main effects nonzero but with no interactions, and the
+remaining $2k/3$ nonzero main effects are matched to each other to form
+interactions.
 This way each nonzero main effect with any nonzero interactions has
-exactly one nonzero interaction.
-The design matrices are independent Gaussian with all groups of size 1.
+exactly one nonzero interaction. Furthermore, each nonzero interaction
+coefficient has been inflated to be larger than the corresponding main
+effect coefficients. This special case is favorable for our algorithm,
+but our purpose here is merely to demonstrate the flexibility of the
+hypothesis test and not to propose a general procedure for models with
+interactions.
+
 Results are shown in Figure~\ref{fig:glint}. The left
 panel shows average power of forward stepwise. Power is calculated
 using the group structure we impose, and not in terms of the original
@@ -783,7 +832,7 @@ that were discovered and is labeled ``Int. Power.''
 \includegraphics[width=0.5\textwidth]{../figs/gaussian_size1_n200_p40_g40_k6_lower2p5_upper3p9_glint.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
 for various sparsity levels. The right panel shows our p-value marginally
-over each step, with red indiciating the global null case and blue
+over each step, with red indicating the global null case and blue
 indicating a signal with $k=6$ nonzero groups.}
 \label{fig:glint}
 \end{center}

@@ -317,7 +317,7 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
         start.ind = end.ind+1
       }
       # Inflate interaction size
-      beta[ginds[start.ind:gs]] = sqrt(2)*beta[ginds[start.ind:gs]]/sqrt(igs)
+      beta[ginds[start.ind:gs]] = sqrt(2)*beta[ginds[start.ind:gs]] #/sqrt(igs)
     }
   }
 

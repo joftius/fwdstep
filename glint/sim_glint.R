@@ -8,13 +8,13 @@ source('fwd_glint_sim.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 50
-n = 200
+nsim = 200
+n = 250
 num.nonzero = 6
 k = num.nonzero
 max.steps = 10
-upper.coeff = 5
-lower.coeff = 3
+upper.coeff = 8
+lower.coeff = 5
 
 sigma = 1
 groups = 1:20
@@ -73,7 +73,6 @@ dev.off()
 
 #stop("Not this time!")
 
-n = 250
 num.nonzero = 6
 k = 6
 max.steps = 9

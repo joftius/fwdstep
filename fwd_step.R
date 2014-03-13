@@ -25,7 +25,7 @@ true_active_groups = function(groups, beta) {
 }
 
 # Compute which group to add to the active set and associated pvalue
-add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
+add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   n = length(Y)
   # From group_lasso.R
   results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
@@ -48,21 +48,21 @@ add_group = function(X.orig, X, Y, groups, weights, sigma, active.set = 0, eff.p
   Xgmax.regress = Xgmax
   # If X[, gmax] is categorical, leave one column out
   ########### Is this doing anything? Xgmax.regress isn't used ###########
-  if (sum(gmax) > 1) {
-    if (length(unique(rowSums(Xgmax == 0))) == 1) {
-#      print("categorical variable")
-      Xgmax.regress = Xgmax[ , -1]
-    }
-  }
+##   if (sum(gmax) > 1) {
+##     if (length(unique(rowSums(Xgmax == 0))) == 1) {
+## #      print("categorical variable")
+##       Xgmax.regress = Xgmax[ , -1]
+##     }
+##   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-  Y.resid = (diag(rep(1,n)) - Pgmax) %*% Y
+  Y.resid = Y - Pgmax %*% Y
       
 ####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
       group = groups == gind
-      X.project[, group] = (diag(rep(1, n)) - Pgmax) %*% X[, group]
+      X.project[, group] = X[, group] - Pgmax %*% X[, group]
     }
   }
   # Renormalize
@@ -78,7 +78,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   group.sizes = rle(groups)$lengths
 
   if ((length(weights) == 1) & (weights[1] == 0)) {
-    weights = sqrt(rle(groups)$lengths)
+    weights = sqrt(group.sizes)
   }
 
   # Estimate sigma instead?
@@ -99,19 +99,19 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
 
   Y.update = Y
   X.update = X
-  X.orig = X
 
   for (i in 1:max.steps) {
-    
-    output = add_group(X.orig, X.update, Y.update, groups, weights, sigma, active.set, eff.p)
+    output = add_group(X.update, Y.update, groups, weights, sigma, active.set, eff.p)
     active.set = output$active.set
+    imax = output$imax
+    grank = sum(groups == imax)
     eff.p = output$eff.p
     RSS = sum(Y.update^2)
     Y.update = output$Y.update
     RSS = RSS - sum(Y.update^2)
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
-    chi.pvals = c(chi.pvals, pchisq(RSS, lower.tail=F, df=1))
+    chi.pvals = c(chi.pvals, pchisq(RSS, lower.tail=F, df=grank))
     c.vars = c(c.vars, output$var)
     # tracking lambda_2
     Ls = c(Ls, output$test.output[1])

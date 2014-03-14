@@ -9,13 +9,13 @@ source('tex_table.R')
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 500
+nsim = 40
 n = 100
 num.nonzero = 6
 k = num.nonzero
-max.steps = 12
-upper.coeff = 1.7
-lower.coeff = 1.5
+max.steps = 10
+upper.coeff = 5.7
+lower.coeff = 3.9
 
 sigma = 1
 groups = 1:200
@@ -39,10 +39,11 @@ output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design
 dev.off()
 
 
+nsim = 80
 groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(g))
+mult = sqrt(2*log(p)) # or log(g)?
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 beta = beta_staircase(groups, num.nonzero, upper, lower)

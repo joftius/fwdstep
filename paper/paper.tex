@@ -229,6 +229,7 @@ Let an integer $G \geq 2$ be the number of groups of explanatory variables.
 For each $1 \leq g \leq G$ the design matrix encoding the
 $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
 the number of individual variables or columns in group $g$.
+% Do we need to assume $p_g \ll n$ or $\text{rank}(X_g) = p_g$?
 When a group encodes a categorical variable as binary indicators for the
 levels of that variable, we use the full encoding with a column for every
 level. Although this introduces collinearity, our method does not require

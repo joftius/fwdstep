@@ -324,13 +324,11 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
   \begin{algorithmic}[1]
     \REQUIRE An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ variable groups with weights $w_g$
     \ENSURE Ordered active set $A$ of variable groups included in the model at each step
-    \STATE $A \gets \emptyset$
-    \STATE $A^c \gets \{ 1, \ldots, G\}$
+    \STATE $A \gets \emptyset$, $A^c \gets \{ 1, \ldots, G\}$
     \FOR{$s=1$ to $steps$}
     \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$
     \STATE $P \gets I - X_{g^*}X_{g^*}^\dagger$
-    \STATE $A \gets A \cup \{ g^* \}$
-    \STATE $A^c \gets A^c \backslash \{ g^* \}$
+    \STATE $A \gets A \cup \{ g^* \}$, $A^c \gets A^c \backslash \{ g^* \}$
     \FORALL{$g \in A^c$}
       \STATE $X_g \gets P X_g$
     \ENDFOR
@@ -347,7 +345,7 @@ Algorithm~\ref{algo:fs} unless otherwise specified. Note that other
 implementations of forward stepwise use different criteria for choosing
 the next variable to add, such as the correlation with the residual.
 Since we do not renormalize the columns after projecting the covariates
-(lines 8 to 10 above), and since we have weights, we are not computing
+(lines 6 to 8 above), and since we have weights, we are not computing
 correlations unless the design matrix is orthogonal and all weights are 1.
 There are advantages and disadvantages to both criteria which we do not
 discuss. Our choice was motivated by the group lasso result in
@@ -651,10 +649,44 @@ This is Lemma 5 from \cite{significance:lasso}.
 
 \subsection{Exact p-value calculation}
 
-We now describe how to calculate the p-value, following the discussion of
-group lasso in \cite{tests:adaptive}. Let $g = \gstar$ be the index of
-the group attaining the maximum on line 4 of Algorithm~\ref{algo:fs},
-and let $r = \text{rank}(X_g)$ be the rank of the group attaining the maximum.
+We now describe how to calculate our p-value, following the discussion of
+group lasso in \cite{tests:adaptive}. For the rest of this section let
+$g = \gstar$ be the index of
+the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
+%\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
+%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
+For a vector $u \in \real^p$, let $u_h$ denote the coordinates
+of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
+We can rearrange the columns of $X$ to group these adjacently, so that
+\[
+u^TX^T = \begin{pmatrix} u_1^T X_1^T & u_2^T X_2^T & \cdots & u_G^TX_G^T \end{pmatrix}
+\]
+One step of the calculation will be to find an orthonormal basis for the
+linear space $V = \{ u \in \real^p : u_g^T X_g^T y = 0, u_h = 0
+\text{ for all } h \neq g \}$ so that we can project orthogonally to
+this space. If $X_g$ is a single column and $X_g^Ty \neq 0$, then the
+space is trivial and the desired orthogonal projection is the identity.
+Otherwise, if $X_g$ has $p_g > 1$ columns, 
+
+Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
+\begin{algorithm}
+  \caption{Computing p-value}
+  \label{algo:pval}
+  \begin{algorithmic}[1]
+    \REQUIRE Response $y$, design matrix $X$, index $g$ of next group to enter
+    \ENSURE P-value for testing if $g$ and all other remaining groups are noise
+    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$, $r \gets \text{rank}(X_g)$
+    \IF{$X_g$ is a single column}
+    \STATE $P \gets 0$ is a $p \times p$ matrix
+    \STATE $\sigma^2_g \gets X_g^T \Sigma X_g$
+    \ELSE
+    \STATE Do that
+    \ENDIF
+    \RETURN $A$
+  \end{algorithmic}
+\end{algorithm}
+
+
 
 
 \section{Simulations}

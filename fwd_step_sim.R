@@ -6,7 +6,7 @@ source('pred_and_estim.R')
 source('fwd_step/coherence.R')
 
 
-fwd_group_simulation = function(n, sigma, groups, beta, nsim,
+fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
   max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE,
   rand.beta = FALSE, coherence = FALSE, plot = FALSE) {
 
@@ -16,6 +16,12 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
   g = length(unique(groups))
   true.active.groups = true_active_groups(groups, beta)
   num.nonzero = length(true.active.groups)
+  ldimS = length(dim(Sigma))
+  if (ldimS > 1) {
+    unwhitener = SigmaSqrt(Sigma)
+  } else if (ldimS == 0) {
+    Sigma = 1
+  }   
 
   if (g < p) {
     nz.betas = c()
@@ -90,19 +96,25 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
     }
 
     # Construct response
-    Y = rnorm(n)*sigma
+    if (ldimS <= 1) {
+      Y = rnorm(n)*sqrt(Sigma)
+      Y.t = rnorm(n)*sqrt(Sigma)
+    } else {
+      Y = unwhitener %*% rnorm(n)
+      Y.t = unwhitener %*% rnorm(n)
+    }
     Y.noiseless = X %*% beta
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
-    Y.test = Y.noiseless.test + rnorm(n)*sigma
+    Y.test = Y.noiseless.test + Y.t
 
     # Null results
-    results = forward_group(X, Y, groups, weights, sigma, max.steps = max.steps)
+    results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps = max.steps)
+    results.b = forward_group(X, Y.beta, groups, weights, Sigma, max.steps = max.steps)
 print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
     
     Chi.mat.b[i, ] = results.b$chi.pvals

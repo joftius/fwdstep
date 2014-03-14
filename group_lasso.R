@@ -10,7 +10,6 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   a = num
   b = den
   w = weight
-  
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
 
@@ -22,7 +21,6 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   if ((norma / normb) < tol) {
     return(c(0, Inf))
   }
-
   
   Ctheta = sum(a*b) / (norma*normb)
   Ctheta = min(max(Ctheta, -1), 1)
@@ -51,7 +49,6 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
 }
 
-# fix Sigma
 group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) {
 
   U = t(X) %*% Y
@@ -159,16 +156,17 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
   return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmaxrank, i=imax))
 }
 
-pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
-  first.term = pchisq((Mminus/(sd*sigma))^2, k, lower.tail=TRUE)
+# why using (sd*sigma) ???
+pvalue <- function(L, Mplus, Mminus, sd, k) {
+  first.term = pchisq((Mminus/sd)^2, k, lower.tail=TRUE)
   if (first.term == 1) {
-    num = pchisq((L/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
-    den = pchisq((Mplus/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
+    num = pchisq((L/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
+    den = pchisq((Mplus/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
     value = exp(num - den)
   } else {
     #print(c(Mminus, first.term, L/(sd*sigma)^2, Mplus/(sd*sigma)^2))
-    num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
-    den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
+    num = first.term - pchisq((L/sd)^2, k, lower.tail=TRUE)
+    den = first.term - pchisq((Mplus/sd)^2, k, lower.tail=TRUE)
     value = num/den
     #print(paste("Mminus, first.term, value:", Mminus, first.term, value))
   }

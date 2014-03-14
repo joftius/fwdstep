@@ -25,10 +25,10 @@ true_active_groups = function(groups, beta) {
 }
 
 # Compute which group to add to the active set and associated pvalue
-add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
+add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   n = length(Y)
   # From group_lasso.R
-  results = group_lasso_knot(X, Y, groups, weights, active.set = active.set)
+  results = group_lasso_knot(X, Y, groups, weights, Sigma = Sigma, active.set = active.set)
   imax = results$i
   gmax = groups == imax
   # Effective number of parameters
@@ -39,7 +39,7 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
   }
 
   # Also using group_lasso.R
-  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
+  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k)
   new.active.set = update_active_set(active.set, imax)
 
   # Form new residual
@@ -73,7 +73,7 @@ add_group = function(X, Y, groups, weights, sigma, active.set = 0, eff.p = 0) {
 
 
 # Iterate add_group for max.steps
-forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
+forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0) {
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
@@ -82,8 +82,8 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   }
 
   # Estimate sigma instead?
-  if (sigma == 0) {
-    stop("Sigma estimate needed here")
+  if (length(dim(Sigma)) == 0) {
+    stop("Sigma needed here. Maybe try identity?")
   }
   
   if (max.steps == 0) {
@@ -101,7 +101,7 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
   X.update = X
 
   for (i in 1:max.steps) {
-    output = add_group(X.update, Y.update, groups, weights, sigma, active.set, eff.p)
+    output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p)
     active.set = output$active.set
     imax = output$imax
     grank = sum(groups == imax)
@@ -124,7 +124,6 @@ forward_group = function(X, Y, groups, weights = 0, sigma = 0, max.steps = 0) {
         warning("Overfitting may occur soon")
       }
     }
-    
   }
 
   return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls))

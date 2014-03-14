@@ -7,6 +7,7 @@ source('tex_table.R')
 
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
+errcorr = .1
 
 nsim = 20
 n = 100
@@ -16,7 +17,10 @@ max.steps = 10
 upper.coeff = 3
 lower.coeff = 2
 
-sigma = 1
+
+
+Sigma = (1-errcorr)*diag(rep(1,n)) + errcorr
+
 groups = 1:50
 p = length(groups)
 mult = sqrt(2*log(p))
@@ -35,7 +39,7 @@ if (corr != 0) {
 filename = paste0(filename, '.pdf')
 print(c(upper, lower))
 pdf(filename)
-output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 
@@ -56,7 +60,7 @@ filename = paste0(filename, '.pdf')
 print(beta)
 print(c(upper, lower))
 pdf(filename)
-output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
+output.g <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 

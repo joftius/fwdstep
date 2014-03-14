@@ -2,6 +2,10 @@
 # Functions to generate simulation data #
 #########################################
 
+SigmaSqrt = function(Sigma) {
+  svdS = svd(Sigma)
+  return(svdS$u %*% diag(sqrt(svdS$d)) %*% t(svdS$v))
+}
 
 # TODO
 # * Random group sizes

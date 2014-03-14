@@ -49,7 +49,7 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 
   
   # Normalize coeff across group for fair comparison with non-grouped vars
-  for (g in groups) {
+  for (g in unique(groups)) {
     group = g == groups
     gs = sum(group)
     beta[group] = beta[group]/sqrt(gs)

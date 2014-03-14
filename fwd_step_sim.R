@@ -16,8 +16,21 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
   g = length(unique(groups))
   true.active.groups = true_active_groups(groups, beta)
   num.nonzero = length(true.active.groups)
-  upper = max(abs(beta))
-  lower = min(abs(beta[beta != 0]))
+
+  if (g < p) {
+    nz.betas = c()
+    for (g in groups) {
+      bg = sum(beta[groups == g]^2)
+      if (bg > 0) {
+        nz.betas = c(nz.betas, sqrt(bg))
+      }
+    }
+    upper = max(nz.betas)
+    lower = min(nz.betas)
+  } else {
+    upper = max(abs(beta))
+    lower = min(abs(beta[beta != 0]))
+  }
   P.mat = matrix(nrow=nsim, ncol=max.steps)
   AS.mat = P.mat
   P.mat.b = P.mat
@@ -90,6 +103,8 @@ fwd_group_simulation = function(n, sigma, groups, beta, nsim,
 
     # Non-null results
     results.b = forward_group(X, Y.beta, groups, weights, sigma, max.steps = max.steps)
+print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
+    
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
     AS.mat.b[i, ] = results.b$active.set

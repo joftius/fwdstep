@@ -5,16 +5,16 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 
 
-design = 'orthogonal'
+design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 
-nsim = 500
+nsim = 20
 n = 100
-num.nonzero = 8
+num.nonzero = 6
 k = num.nonzero
-max.steps = 12
-upper.coeff = 1.5
-lower.coeff = 1.1
+max.steps = 10
+upper.coeff = 3
+lower.coeff = 2
 
 sigma = 1
 groups = 1:50
@@ -33,23 +33,28 @@ if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
 filename = paste0(filename, '.pdf')
+print(c(upper, lower))
 pdf(filename)
 output.l <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()
 
 
+nsim=100
 groups = sort(c(rep(1:8, 5), 9:18))
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(g))
+mult = sqrt(2*log(p)) # or g?
 upper = upper.coeff*mult
 lower = lower.coeff*mult
+
 beta = beta_staircase(groups, num.nonzero, upper, lower)
 filename = paste0('figs/', design, '_size1-5_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
 filename = paste0(filename, '.pdf')
+print(beta)
+print(c(upper, lower))
 pdf(filename)
 output.g <- fwd_group_simulation(n, sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
 dev.off()

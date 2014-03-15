@@ -7,16 +7,16 @@ source('fwd_glint_sim.R')
 
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
+noisecorr = .1
 
 nsim = 200
 n = 250
 num.nonzero = 6
 k = num.nonzero
-max.steps = 10
-upper.coeff = 8
-lower.coeff = 5
-
-sigma = 1
+max.steps = 12
+upper.coeff = 3
+lower.coeff = 2
+Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:20
 p = length(groups)
 mult = sqrt(2*log(p))
@@ -32,15 +32,21 @@ filename = paste0('../figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
+}
 filename = paste0(filename, '_glint.pdf')
 
 pdf(filename)
-output.l <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
+output.l <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
 
 ps.fname = paste0('../figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   ps.fname = paste0(ps.fname, '_corr', corr)
+}
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
 }
 ps.fname = paste0(ps.fname, '_glint.pdf')
 m1 = output.l$m1
@@ -69,13 +75,11 @@ abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
 abline(v = 1, col = "gray")
 dev.off()
 
-
-
 #stop("Not this time!")
 
 num.nonzero = 6
 k = 6
-max.steps = 9
+max.steps = 12
 groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
 p = length(groups)
 g = length(unique(groups))
@@ -89,7 +93,7 @@ if (corr != 0) {
 }
 filename = paste0(filename, '_glint.pdf')
 pdf(filename)
-output.g <- fwd_glint_simulation(n, sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
+output.g <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, plot = TRUE)
 dev.off()
 
 print(warnings())

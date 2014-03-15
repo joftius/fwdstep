@@ -7,20 +7,16 @@ source('tex_table.R')
 
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
-errcorr = .1
+noisecorr = .1
 
-nsim = 20
+nsim = 500
 n = 100
-num.nonzero = 6
+num.nonzero = 5
 k = num.nonzero
 max.steps = 10
-upper.coeff = 3
-lower.coeff = 2
-
-
-
-Sigma = (1-errcorr)*diag(rep(1,n)) + errcorr
-
+upper.coeff = 1.5
+lower.coeff = 1.1
+Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:50
 p = length(groups)
 mult = sqrt(2*log(p))
@@ -36,6 +32,9 @@ filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.no
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
 }
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
+}
 filename = paste0(filename, '.pdf')
 print(c(upper, lower))
 pdf(filename)
@@ -43,8 +42,9 @@ output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design
 dev.off()
 
 
-nsim=100
 groups = sort(c(rep(1:8, 5), 9:18))
+num.nonzero = 4
+max.steps = 8
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p)) # or g?
@@ -55,6 +55,9 @@ beta = beta_staircase(groups, num.nonzero, upper, lower)
 filename = paste0('figs/', design, '_size1-5_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
+}
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
 }
 filename = paste0(filename, '.pdf')
 print(beta)

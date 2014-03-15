@@ -18,7 +18,7 @@ source('../generate_data.R')
 ## k=6
 
 # Note: glint version passes k here instead of beta
-fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsim,
+fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsim,
   max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE, coherence = FALSE, plot = FALSE) {
 
   # Initialize
@@ -26,6 +26,26 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
   g = length(unique(groups))
   G = g*(g+1)/2
   k=num.nonzero
+  ldimS = length(dim(Sigma))
+  if (ldimS > 1) {
+    unwhitener = SigmaSqrt(Sigma)
+  } else if (ldimS == 0) {
+    Sigma = 1
+  }
+##   if (g < p) {
+##     nz.betas = c()
+##     for (g in groups) {
+##       bg = sum(beta[groups == g]^2)
+##       if (bg > 0) {
+##         nz.betas = c(nz.betas, sqrt(bg))
+##       }
+##     }
+##     upper = max(nz.betas)
+##     lower = min(nz.betas)
+##   } else {
+##     upper = max(abs(beta))
+##     lower = min(abs(beta[beta != 0]))
+##   }
   P.mat = matrix(nrow=nsim, ncol=max.steps)
   AS.mat = P.mat
   P.mat.b = P.mat
@@ -95,23 +115,31 @@ fwd_glint_simulation = function(n, sigma, groups, num.nonzero, lower, upper, nsi
     r = length(ptl.set)
     
     # Construct response
-    Y = rnorm(n)*sigma
+    if (ldimS <= 1) {
+      Y = rnorm(n)*sqrt(Sigma)
+      Y.t = rnorm(n)*sqrt(Sigma)
+    } else {
+      Y = unwhitener %*% rnorm(n)
+      Y.t = unwhitener %*% rnorm(n)
+    }
     Y.noiseless = X %*% beta
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
-    Y.test = Y.noiseless.test + rnorm(n)*sigma
+    Y.test = Y.noiseless.test + Y.t
 
     main1 = c(main1, abs(t(X[,1]) %*% Y.beta))
     z=t(X[,all.groups==61])%*%Y.beta
     int37 = c(int37, sqrt(sum(z^2)))
 
     # Null results
-    results = forward_group(X, Y, groups=all.groups, int.groups=int.groups, weights=weights, sigma, max.steps = max.steps)
+    results = forward_group(X, Y, groups=all.groups, weights=weights, Sigma, max.steps = max.steps)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups=all.groups, int.groups=int.groups, weights, sigma, max.steps = max.steps)
+    results.b = forward_group(X, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps)
+print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
+    
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
     rb.as = results.b$active.set

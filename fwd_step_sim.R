@@ -43,6 +43,7 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
   Chi.mat.b = P.mat
   AS.mat.b = P.mat
   recover.mat = P.mat
+  ps.recover.mat = P.mat
   pred.errs = matrix(0, nrow=3, ncol=3)
   mu.list = c()
   start.time = as.numeric(Sys.time())
@@ -56,7 +57,6 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
 
   ### Begin main loop ###
   for (i in 1:nsim) {
-
     # Monitoring completion time
     if (i %% 10 == 0) {
       elapsed.time = as.numeric(Sys.time()) - start.time
@@ -119,9 +119,13 @@ print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true
     
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
+    rb.as = results.b$active.set
     AS.mat.b[i, ] = results.b$active.set
     recover.mat[i, ] = sapply(results.b$active.set, function(x)
                  is.element(x, true.active.groups))
+    for (cg in 1:length(rb.as)) {
+      ps.recover.mat[i, cg] = length(intersect(rb.as[1:cg], true.active.groups))/num.nonzero
+    }
 
     # Tracking prediction error and other things
     # stop.rules must agree with those in sim_pred_est_stats
@@ -198,7 +202,7 @@ print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true
 
   }
 
-  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, m1 = num.nonzero, fwd.power = fwd.power)
+  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

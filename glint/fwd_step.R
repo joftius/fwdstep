@@ -25,29 +25,21 @@ true_active_groups = function(groups, beta) {
 }
 
 # Compute which group to add to the active set and associated pvalue
-add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, already.counted=c(), eff.p = 0) {
+add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   n = length(Y)
   # From group_lasso.R
-  results = group_lasso_knot(X, Y, groups, weights, active.set = active.set, already.counted = already.counted)
+  results = group_lasso_knot(X, Y, groups, weights, Sigma = Sigma, active.set = active.set)
   imax = results$i
   gmax = groups == imax
   # Effective number of parameters
   new.eff.p = eff.p + sum(gmax)
-
-  ag=imax
-  if (ag <= p) {
-    already.counted = union(already.counted, ag)
-  } else {
-    already.counted = union(already.counted, c(main_effects_of(ag, int.groups), ag))
-  }
-
 
   if (new.eff.p >= n) {
     stop("Too many variables added. Try decreasing max.steps")
   }
 
   # Also using group_lasso.R
-  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma)
+  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k)
   new.active.set = update_active_set(active.set, imax)
 
   # Form new residual
@@ -58,13 +50,12 @@ add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, a
   ########### Is this doing anything? Xgmax.regress isn't used ###########
 ##   if (sum(gmax) > 1) {
 ##     if (length(unique(rowSums(Xgmax == 0))) == 1) {
-##       print("categorical variable")
+## #      print("categorical variable")
 ##       Xgmax.regress = Xgmax[ , -1]
 ##     }
 ##   }
   Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
   Y.resid = Y - Pgmax %*% Y
-    #lm(Y ~ Xgmax.regress-1)$residual
       
 ####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
@@ -75,16 +66,15 @@ add_group = function(X, Y, groups, int.groups, weights, sigma, active.set = 0, a
     }
   }
   # Renormalize
-#  X.project = X.project %*% diag(1/sapply(sqrt(colSums(X.project^2)), function(x) ifelse(x==0,1,x)))
+#  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
   
-  return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, already.counted=already.counted, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
+  return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
 }
 
 
 # Iterate add_group for max.steps
-forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.steps = 0) {
+forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0) {
   n = length(Y)
-
   group.sizes = rle(groups)$lengths
 
   if ((length(weights) == 1) & (weights[1] == 0)) {
@@ -92,8 +82,8 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   }
 
   # Estimate sigma instead?
-  if (sigma == 0) {
-    stop("Sigma estimate needed here")
+  if (length(dim(Sigma)) == 0) {
+    stop("Sigma needed here. Maybe try identity?")
   }
   
   if (max.steps == 0) {
@@ -101,22 +91,20 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
   }
 
   active.set = 0
-  already.counted = c()
   eff.p = 0
   p.vals = c()
   chi.pvals = c()
   c.vars = c()
   Ls = c()
 
-  Y.update = Y - mean(Y)
+  Y.update = Y
   X.update = X
 
   for (i in 1:max.steps) {
-    output = add_group(X.update, Y.update, groups, int.groups, weights, sigma, active.set, already.counted, eff.p)
+    output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p)
     active.set = output$active.set
     imax = output$imax
     grank = sum(groups == imax)
-    already.counted = output$already.counted
     eff.p = output$eff.p
     RSS = sum(Y.update^2)
     Y.update = output$Y.update
@@ -137,6 +125,7 @@ forward_group = function(X, Y, groups, int.groups, weights = 0, sigma = 0, max.s
       }
     }
   }
+
   return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls))
 }
 

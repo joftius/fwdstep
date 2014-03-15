@@ -3,13 +3,13 @@
 # This file contains core functions for computing the test statistic
 
 library(Matrix)
+library(MASS)
 
 trignometric_form = function(num, den, weight, tol=1.e-10) {
   
   a = num
   b = den
   w = weight
-  
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
 
@@ -21,7 +21,6 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   if ((norma / normb) < tol) {
     return(c(0, Inf))
   }
-
   
   Ctheta = sum(a*b) / (norma*normb)
   Ctheta = min(max(Ctheta, -1), 1)
@@ -50,8 +49,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
 }
 
-# fix Sigma
-group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, already.counted=c()) {
+group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) {
 
   U = t(X) %*% Y
   g = length(weights)
@@ -70,7 +68,6 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, 
       terms[j] = sqrt(terms[j]) / weights[j]
     }
   }
-  
   imax = which.max(terms)
   L = terms[imax]
   if (L <= 0) {
@@ -81,74 +78,58 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, 
   which = groups == imax
   Uwhich = U[which]
   Xmax = X[,which]
-  #
-  # assuming rank == num of variables in group...
   kmax = sum(which)
   kmaxrank = kmax
   if (length(dim(Xmax)) == 2) {
     kmaxrank = rankMatrix(Xmax)[1]
-    if (kmaxrank != kmax) {
-#      print(paste("Expected rank, computed rank =", kmax, kmaxrank))
-#      kmax = kmaxrank
-    }
   }
 
-  #
-  #
-  # fix this Sigma
-  Sigma = diag(rep(1, kmax))
-  # Uwhich = X_{g^star}^T y
-  
-  soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
-  if (kmaxrank > 1) {
-#    print("kmaxrank > 1")
-    #soln = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
-    Xeta = (Xmax %*% soln)[,1]
-    Xmax = Xmax - outer(Xeta, soln, '*') / sum(soln^2)
-    Wmax = Xmax[,1:(ncol(Xmax)-1)]
-    #Xeta = lsfit(Wmax, Xeta, intercept=FALSE)$residuals
-    Xeta = lm(Xeta ~ Wmax - 1)$residuals
-    conditional_variance = sum(Xeta^2)
-  } else if (kmax >= 2) {
-#    print("kmax >= 2")
-    # case where Xmax is a matrix but has rank 1
-    Xeta = Xmax / wmax * sign(U[which])
-    if (dim(Xmax)[2] == 1) {
-#      print("and 1 column")
-      conditional_variance = t(Xeta[,1]) %*% Sigma %*% Xeta[,1]
-    } else {
-#      print("and >1 columns")
-      Xeta = Xeta[,1]
-      conditional_variance = sum(Xeta^2)
+  eta = rep(0, p)
+  eta[which] = (Uwhich / sqrt(sum(Uwhich^2))) / wmax
+  if (kmax > 1) {
+    # P = ....
+    tangent.space = Null(Uwhich)
+    # dim(tangent.space) = kmax \times (kmax-1)
+    if (ncol(tangent.space) != kmax-1) {
+      stop(paste0("Tanget space dimension is wrong: ", kmax,
+                  ncol(tangent.space)))
     }
+    tangent.space = cbind(tangent.space, rep(0, kmax))
+    # Need ncol(V) = p
+    V = matrix(0, ncol=kmax, nrow=p)
+    V[which,] = tangent.space
+    XV = X %*% V[,-ncol(V)]
+    XV = cbind(XV, rep(0, nrow(XV)))
+    XXy = Xmax %*% Uwhich
+    if (length(dim(Sigma)) == 0) {
+      SXV = XV
+      P = SXV %*% ginv(t(XV) %*% SXV) %*% t(XV)
+      OP = diag(rep(1, ncol(P))) - P
+      OPS = OP
+    } else {
+      SXV = Sigma %*% XV
+      P = SXV %*% ginv(t(XV) %*% SXV) %*% t(XV)
+      OP = diag(rep(1, ncol(P))) - P
+      OPS = OP %*% Sigma
+    }
+    Xeta = OPS %*% X %*% eta
+    conditional_variance = t(XXy) %*% OPS %*% XXy
+    # diag() coerces 1x1 matrix to numeric
+    conditional_variance = diag(conditional_variance) / (wmax^2*sum(Uwhich^2))
   } else {
-#    print("just a vector")
-    # case where Xmax is a vector (list)
-    Xeta = Xmax / wmax * sign(U[which])
+    # P = 0
+    Xeta = Xmax / wmax * sign(Uwhich)
     conditional_variance = sum(Xeta^2)
-    ##
-    ##
-    # Sigma?
-    #conditional_variance = sum(Xeta * Sigma %*% Xeta)
   }
-  #
   # use formula above display (42) in tests:adaptive
-  #
-  #conditional_variance = sum(Xeta^2)
   Xeta = Xeta / conditional_variance
-  
   C_X = t(X) %*% Xeta
 
-  #print(c(kmax, kmaxrank))
-  #print(dim(U))
-  #print(dim(C_X))
-  #print(dim(matrix(Xeta)))
   a = U - C_X * L
   b = C_X
   
   Vplus = c()
   Vminus = c()
-#  print(paste("Maximizer, rank = ", imax, kmax))
   nm.a = c()
   nm.b = c()
   nm.labels = setdiff(c(1:g), c(active.set, imax))
@@ -175,16 +156,17 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0, 
   return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmaxrank, i=imax))
 }
 
-pvalue <- function(L, Mplus, Mminus, sd, k, sigma=1) {
-  first.term = pchisq((Mminus/(sd*sigma))^2, k, lower.tail=TRUE)
+# why using (sd*sigma) ???
+pvalue <- function(L, Mplus, Mminus, sd, k) {
+  first.term = pchisq((Mminus/sd)^2, k, lower.tail=TRUE)
   if (first.term == 1) {
-    num = pchisq((L/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
-    den = pchisq((Mplus/(sd*sigma))^2, k, lower.tail=FALSE, log.p=TRUE)
+    num = pchisq((L/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
+    den = pchisq((Mplus/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
     value = exp(num - den)
   } else {
     #print(c(Mminus, first.term, L/(sd*sigma)^2, Mplus/(sd*sigma)^2))
-    num = first.term - pchisq((L/(sd*sigma))^2, k, lower.tail=TRUE)
-    den = first.term - pchisq((Mplus/(sd*sigma))^2, k, lower.tail=TRUE)
+    num = first.term - pchisq((L/sd)^2, k, lower.tail=TRUE)
+    den = first.term - pchisq((Mplus/sd)^2, k, lower.tail=TRUE)
     value = num/den
     #print(paste("Mminus, first.term, value:", Mminus, first.term, value))
   }

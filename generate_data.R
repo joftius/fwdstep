@@ -4,7 +4,7 @@
 
 SigmaSqrt = function(Sigma) {
   svdS = svd(Sigma)
-  return(svdS$u %*% diag(sqrt(svdS$d)) %*% t(svdS$v))
+  return(svdS$u %*% diag(sqrt(svdS$d)) %*% t(svdS$u))
 }
 
 # TODO

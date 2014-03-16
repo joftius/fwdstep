@@ -9,12 +9,12 @@ design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = .1
 
-nsim = 500
+nsim = 200
 n = 100
 num.nonzero = 5
 k = num.nonzero
 max.steps = 10
-upper.coeff = 1.5
+upper.coeff = 1.2
 lower.coeff = 1.1
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:50
@@ -43,8 +43,8 @@ dev.off()
 
 
 groups = sort(c(rep(1:8, 5), 9:18))
-num.nonzero = 4
-max.steps = 8
+num.nonzero = 3
+max.steps = 9
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p)) # or g?

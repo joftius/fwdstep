@@ -67,7 +67,6 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 
   # Ensure coefs for categorical variables sum to 0
   if (length(cat.vars) > 0) {
-
     for (g in cat.vars) {
       gind = groups == g & nz.inds
       if (sum(gind) > 0) {
@@ -82,7 +81,6 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
     }
 
   }
-
   return(beta)
 }
 
@@ -105,7 +103,7 @@ frob_normalize = function(X, groups) {
 }
 
 # Fixed group sizes, gaussian design
-gaussian_design = function(n, groups, col.normalize = TRUE, corr = 0) {
+gaussian_design = function(n, groups, col.normalize = FALSE, corr = 0) {
   p = length(groups)
   X = matrix(rnorm(n*p), nrow=n)
 
@@ -131,14 +129,12 @@ binary_design = function(n, groups) {
   p = length(groups)
   entries = sample(c(0,1), n*p, replace=TRUE)
   X = matrix(entries, nrow=n)
-  X = col_normalize(X)
 }
 
 ternary_design = function(n, groups) {
   p = length(groups)
   entries = sample(c(-1,0,1), n*p, replace=TRUE)
   X = matrix(entries, nrow=n)
-  X = col_normalize(X)
 }
 
 orthogonal_design = function(n, groups) {
@@ -239,10 +235,10 @@ generate_glinternet = function(X, groups) {
       for (i in ginds) {
         for (j in hinds) {
           Xij = X[, i] * X[, j]
-          normij = sqrt(sum(Xij^2))
-          if (normij > 0) {
-            Xij = Xij/normij
-          }
+##           normij = sqrt(sum(Xij^2))
+##           if (normij > 0) {
+##             Xij = Xij/normij
+##           }
           X.out = cbind(X.out, Xij)
         }
       }
@@ -321,7 +317,7 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
         start.ind = end.ind+1
       }
       # Inflate interaction size
-      beta[ginds[start.ind:gs]] = sqrt(2)*beta[ginds[start.ind:gs]] #/sqrt(igs)
+      beta[ginds[start.ind:gs]] = beta[ginds[start.ind:gs]]/sqrt(igs)
     }
   }
 

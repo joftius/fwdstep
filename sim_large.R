@@ -8,7 +8,7 @@ source('tex_table.R')
 #design = 'ternary'
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
-noisecorr = .1
+noisecorr = 0
 
 nsim = 500
 n = 100

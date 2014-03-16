@@ -73,8 +73,8 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
     }
 
     if (design == 'gaussian') {
-      X = gaussian_design(n, groups, col.normalize = TRUE, corr = corr)
-      X.test = gaussian_design(n, groups, col.normalize = TRUE, corr = corr)
+      X = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
+      X.test = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
 
     } else {
       design_name = paste0(design, "_design")
@@ -91,8 +91,7 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
     data.test = generate_glinternet(X.test, groups)
     all.groups = data$all.groups
     X = data$X
-    X = frob_normalize(data$X, all.groups)
-    X.test = frob_normalize(data.test$X, all.groups)
+    X.test = data.test$X
 #    weights = sqrt(rle(all.groups)$lengths)
 #    weights = sqrt(sapply(rle(all.groups)$lengths - 1, function(x) max(1, x)))
     weights = rep(1, G)
@@ -126,7 +125,9 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
-
+    X = frob_normalize(X, all.groups)
+    X.test = frob_normalize(X.test, all.groups)
+    
     main1 = c(main1, abs(t(X[,1]) %*% Y.beta))
     z=t(X[,all.groups==61])%*%Y.beta
     int37 = c(int37, sqrt(sum(z^2)))

@@ -107,7 +107,11 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
-
+#    X = frob_normalize(X, groups)
+#    X.test = frob_normalize(X.test, groups)
+    X = col_normalize(X)
+    X.test = col_normalize(X.test)
+    
     # Null results
     results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps)
     P.mat[i, ] = results$p.vals

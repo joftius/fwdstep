@@ -7,15 +7,15 @@ source('fwd_glint_sim.R')
 
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
-noisecorr = .1
+noisecorr = 0
 
-nsim = 200
+nsim = 100
 n = 250
-num.nonzero = 6
+num.nonzero = 9
 k = num.nonzero
 max.steps = 12
-upper.coeff = 3
-lower.coeff = 2
+upper.coeff = 5
+lower.coeff = 3
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:20
 p = length(groups)
@@ -90,6 +90,9 @@ lower = lower.coeff*mult
 filename = paste0('../figs/', design, '_size2-3_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   filename = paste0(filename, '_corr', corr)
+}
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
 }
 filename = paste0(filename, '_glint.pdf')
 pdf(filename)

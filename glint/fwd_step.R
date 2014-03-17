@@ -97,21 +97,23 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0)
   c.vars = c()
   Ls = c()
 
-  Y.update = Y
+  Y.update = Y - mean(Y)
   X.update = X
 
   for (i in 1:max.steps) {
     output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p)
     active.set = output$active.set
-    imax = output$imax
+    imax = output$added
     grank = sum(groups == imax)
     eff.p = output$eff.p
     RSS = sum(Y.update^2)
     Y.update = output$Y.update
-    RSS = RSS - sum(Y.update^2)
+    RSSdrop = RSS - sum(Y.update^2)
+    chi.p = pchisq(RSSdrop, lower.tail=F, df=grank)
+    print(c(RSSdrop, round(grank), chi.p))
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
-    chi.pvals = c(chi.pvals, pchisq(RSS, lower.tail=F, df=grank))
+    chi.pvals = c(chi.pvals, chi.p)
     c.vars = c(c.vars, output$var)
     # tracking lambda_2
     Ls = c(Ls, output$test.output[1])

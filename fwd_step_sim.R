@@ -180,7 +180,8 @@ print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true
 
     
     xax <- 1:max.steps - 0.15
-    nxax <- xax + 0.3
+    nxax <- xax + 0.2
+    cxax = xax + 0.4
     plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", k-Oracle power: ", round(fwd.power, 3))
 
     plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2)
@@ -198,11 +199,11 @@ print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true
     points(xax, Pvals.point[1, ], col = "blue", pch = 24, cex = .5)
     points(xax, Pvals.point[2, ], col = "blue", pch = 25, cex = .5)
 
-    points(xax, Chivals, col="green")
-    arrows(xax, Chivals.bar[1, ], xax, Chivals.bar[2, ],
+    points(cxax, Chivals, col="green")
+    arrows(cxax, Chivals.bar[1, ], cxax, Chivals.bar[2, ],
            code = 3, angle = 90, length = 0, col = "green")
-    points(xax, Chivals.point[1, ], col = "green", pch = 24, cex = .5)
-    points(xax, Chivals.point[2, ], col = "green", pch = 25, cex = .5)
+    points(cxax, Chivals.point[1, ], col = "green", pch = 24, cex = .5)
+    points(cxax, Chivals.point[2, ], col = "green", pch = 25, cex = .5)
 
   }
 

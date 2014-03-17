@@ -5,18 +5,6 @@ source('../generate_data.R')
 #source('pred_and_estim.R') not for glinternet
 #source('fwd_step/coherence.R')
 
-## n=250
-## sigma=1
-## groups=1:20
-## num.nonzero=6
-## max.steps=12
-## lower=7
-## upper=9
-## nsim=5
-## design="gaussian"
-## corr=0
-## k=6
-
 # Note: glint version passes k here instead of beta
 fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsim,
   max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE, coherence = FALSE, plot = FALSE) {
@@ -121,13 +109,17 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
       Y = unwhitener %*% rnorm(n)
       Y.t = unwhitener %*% rnorm(n)
     }
+
     Y.noiseless = X %*% beta
+    mu.max = max(abs(Y.noiseless))
+    mu.lc = sum(abs(Y.noiseless)>upper)
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
+    X = col_normalize(X)
+    X.test = col_normalize(X.test)
     X = frob_normalize(X, all.groups)
-    X.test = frob_normalize(X.test, all.groups)
-    
+    X.test = frob_normalize(X.test, all.groups)    
     main1 = c(main1, abs(t(X[,1]) %*% Y.beta))
     z=t(X[,all.groups==61])%*%Y.beta
     int37 = c(int37, sqrt(sum(z^2)))
@@ -139,7 +131,7 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
 
     # Non-null results
     results.b = forward_group(X, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps)
-print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
+print(c(upper, lower, mu.max, mu.lc, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
     
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals

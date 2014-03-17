@@ -670,26 +670,37 @@ this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
 should be the case since $g$ maximizes the absolute value of this
 quantity), then the
 space is trivial and the desired orthogonal projection is the identity.
-Otherwise, if $X_g$ has $p_g > 1$ columns, the space $\vecsp_g$ will
-generally
-have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
-degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
-likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
-We proceed by forming the $n \times p_g$ matrix
-$X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
-on the first $r-1$ columns. For precise theorems showing that this will
-generally work, see \cite{outerp:indep}. Next we take the basis
-computed by Gram-Schmidt and form an $p \times r-1$ matrix, which we
-denote $V_g$, by appending 0's in the coordinates corresponding to all
-groups $h \neq g$ and to $p_g - r + 1$ columns in group $g$. With this
-we are ready to define the projection
+Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$ will
+generally have dimension $p_g-1$.
+% have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
+% degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
+% likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
+% We proceed by forming the $n \times p_g$ matrix
+% $X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
+% on the first $r-1$ columns. For precise theorems showing that this will
+% generally work, see \cite{outerp:indep}.
+We compute an orthonormal basis by Gram-Schmidt and form a
+$p \times p_g$ matrix, which we denote $V_g$, by appending 0's in the
+coordinates corresponding to all groups $h \neq g$ and to one column
+in group $g$ (since Gram-Schmidt only produces $p_g-1$ columns).
+With this we are ready to define the projection
 
 \begin{equation}
   \begin{aligned}
+    \label{eq:proj}
     P_g &= \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T \\
+   \end{aligned}
+\end{equation}
+and the conditional variance
+
+\begin{equation}
+  \begin{aligned}
+    \label{eq:cvar}
+    \sigma^2_g &= y^TX_gX_g^T(I-P_g)\Sigma X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
   \end{aligned}
 \end{equation}
-
+These simplify when $X_g$ is a single column, in which case $P_g = 0$
+and $\sigma^2_g = X_g^T\Sigma X_g^T$. 
 
 Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
 \begin{algorithm}
@@ -699,12 +710,13 @@ Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
     \REQUIRE Response $y$, design matrix $X$, index $g$ of next group to enter
     \ENSURE P-value for testing if $g$ and all other remaining groups are noise
     \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$, $r \gets \text{rank}(X_g)$
-    \IF{$X_g$ is a single column}
-    \STATE $P \gets 0$ is a $p \times p$ matrix
-    \STATE $\sigma^2_g \gets X_g^T \Sigma X_g$
-    \ELSE
-    \STATE Do that
-    \ENDIF
+%    \IF{$X_g$ is a single column}
+%    \STATE $P_g \gets 0$ is an $n \times n$ matrix
+%    \STATE $\sigma^2_g \gets X_g^T \Sigma X_g$
+%    \ELSE
+    \STATE Compute $P_g$, $\sigma^2_g$ from equations \ref{eq:proj} and
+      \ref{eq:cvar}
+%    \ENDIF
     \RETURN $A$
   \end{algorithmic}
 \end{algorithm}
@@ -899,10 +911,59 @@ indicating a signal with $k=6$ nonzero groups.}
 \todo Write section \\
 
 \subsection{Real data example}
-\todo Code simulation with HIVdb data \\
-\todo Write section \\
+\todo Sanity check my analysis \\
+\todo For rare mutations try binary wildtype/non-wt? \\
+\todo Finish writing section \\
 
+\cite{HIV} use genomic information to predict efficacy of antiretroviral
+drugs in treating HIV. Quantitative measurements of drug
+response/resistance were regressed on categorical covariates encoded
+the presence and type of certain genetic mutations. We attempt a similar
+analysis using forward stepwise, and report our P-value at each step.
+Categorical covariates are encoding as groups of binary variables using
+the full encoding, and weights are set to the square-root of the
+number of levels for that covariate. We perform forward stepwise once
+for each drug response, restricting to the subset of the data with
+no missing values and requiring all categorical variables to have 2 or
+greater observations in each level. 
 
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figs/HIV_PI.pdf}
+\caption{\small \it Results from PI dataset}
+\label{fig:HIVPI}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI.pdf}
+\caption{\small \it Results from NRTI dataset}
+\label{fig:HIVNRTI}
+\end{center}
+\end{figure}
+
+Results from two data sets are displayed in Figure~\ref{fig:HIVPI} and
+Figure~\ref{fig:HIVNRTI}. Each panel shows results for a different drug,
+with p-values plotted by step in forward stepwise. The solid black point
+is the last p-value to fall under the 0.1 threshold and points after it
+are colored red. If the \textit{last} stopping rule were used then the
+p-values for including variables are the black points, and the resulting
+models are shown in Tables 4 and 5. (\todo Fix this ref after re-running)
+
+%\begin{figure}
+%\begin{center}
+\input{../tables/HIV_PI.tex}
+%\label{tab:HIVPI}
+%\end{center}
+%\end{figure}
+
+%\begin{figure}
+%\begin{center}
+\input{../tables/HIV_NRTI.tex}
+%\label{tab:HIVNRTI}
+%\end{center}
+%\end{figure}
 
 \section{Discussion}
 \label{sec:discuss}

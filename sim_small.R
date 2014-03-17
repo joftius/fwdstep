@@ -7,17 +7,17 @@ source('tex_table.R')
 
 design = 'gaussian'
 corr = 0 # nonzero only supported for gaussian design
-noisecorr = .1
+noisecorr = 0
 
 nsim = 200
 n = 100
-num.nonzero = 5
+num.nonzero = 2
 k = num.nonzero
-max.steps = 10
-upper.coeff = 1.2
-lower.coeff = 1.1
+max.steps = 8
+upper.coeff = 0.8
+lower.coeff = 0.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
-groups = 1:50
+groups = 1:10
 p = length(groups)
 mult = sqrt(2*log(p))
 upper = upper.coeff*mult
@@ -42,9 +42,9 @@ output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design
 dev.off()
 
 
-groups = sort(c(rep(1:8, 5), 9:18))
-num.nonzero = 3
-max.steps = 9
+groups = sort(c(rep(1:8, 5), 9:10))
+num.nonzero = 2
+max.steps = 8
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p)) # or g?

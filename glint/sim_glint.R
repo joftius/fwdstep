@@ -6,16 +6,16 @@ source('fwd_glint_sim.R')
 
 
 design = 'gaussian'
-corr = 0 # nonzero only supported for gaussian design
-noisecorr = 0
+corr = .1 # nonzero only supported for gaussian design
+noisecorr = .1
 
-nsim = 100
-n = 250
+nsim = 200
+n = 400
 num.nonzero = 9
 k = num.nonzero
-max.steps = 12
-upper.coeff = 5
-lower.coeff = 3
+max.steps = 15
+upper.coeff = 2.5
+lower.coeff = 1.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:20
 p = length(groups)
@@ -79,7 +79,7 @@ dev.off()
 
 num.nonzero = 6
 k = 6
-max.steps = 12
+max.steps = 10
 groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
 p = length(groups)
 g = length(unique(groups))

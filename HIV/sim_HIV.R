@@ -1,0 +1,158 @@
+setwd('..')
+source('fwd_step.R')
+source('generate_data.R')
+source('fwd_step_sim.R')
+source('tex_table.R')
+
+PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+db="PI"
+data=PI
+resps = 4:9
+## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+## data=NRTI
+## db="NRTI"
+## resps = 4:10
+
+design = paste0("HIV_", db)
+corr = 0 # nonzero only supported for gaussian design
+noisecorr = 0
+nsim = 500
+num.nonzero = 5
+k = num.nonzero
+max.steps = 12
+upper.coeff = 1.8
+lower.coeff = 1.2
+
+# Clean data, restrict to cleaned subset
+nresps = length(resps)
+Z = data[,resps]
+
+clean_col = function(column) {
+  outcol = as.character(column)
+  outcol[column == '.'] = '-'
+  return(as.factor(outcol))
+}
+
+cnames = c()
+for (j in max(resps):ncol(data)) {
+      newcol = clean_col(data[,j])
+          if ((length(levels(newcol)) > 1) & (min(table(newcol)) >= 2)) {
+                    cnames = c(cnames, names(data)[j])
+                            Z = cbind(Z, newcol)
+                  }
+    }
+colnames(Z) = c(names(data)[resps], cnames)
+# Z should not be modified after this point
+
+fixed.X = matrix(0, nrow=nrow(Z))
+groups = c()
+g = 0
+for (j in (nresps+1):ncol(Z)) {
+  g = g + 1
+  submat = model.matrix(~ Z[,j] - 1)
+  colnames(submat) = paste0(names(Z)[j], levels(Z[,j]))
+  groups = c(groups, rep(g, ncol(submat)))
+  fixed.X = cbind(fixed.X, submat)
+}
+fixed.X = fixed.X[,-1]
+cat.groups = unique(groups)
+
+n = nrow(fixed.X)
+Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
+p = length(groups)
+mult = sqrt(2*log(p))
+upper = upper.coeff*mult
+lower = lower.coeff*mult
+
+if ((corr != 0) & (design != 'gaussian')) {
+  stop("nonzero only supported for gaussian design")
+}
+
+beta = beta_staircase(groups, num.nonzero, upper, lower)
+filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
+}
+filename = paste0(filename, ".pdf")
+pdf(filename)
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE, fixed.X = fixed.X, cat.groups = cat.groups)
+dev.off()
+
+ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  ps.fname = paste0(ps.fname, '_corr', corr)
+}
+if (noisecorr != 0) {
+  ps.fname = paste0(ps.fname, '_noisecorr', noisecorr)
+}
+ps.fname = paste0(ps.fname, ".pdf")
+m1 = output.l$m1
+#psr = t(apply(output.l$psr.mat, 1, cumsum)/m1)
+psr = output.l$psr.mat
+print(psr)
+l = nrow(psr)
+m = ncol(psr)
+for (j in 1:nrow(psr)) {
+    inds = which(psr[j,] >= 1)
+      if (length(inds) > 1) {
+            inds = inds[-1]
+                psr[j,inds] = psr[j,inds] + cumsum(rep(1/(3*m1), length(inds)))
+          }
+  }
+psr = psr + matrix(0.04*rnorm(l*m), nrow=l)
+pvals = output.l$signal.p
+plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
+pdf(ps.fname)
+plot(psr[1, ], pvals[1, ], pch = ".", cex = 2, xlim=c(-0.1, max(psr) + .1), ylim=c(-0.1, 1.1), xlab = "Proportion of signal recovered", ylab = "P-values", main = plot.main)
+for (j in 2:l) {
+    inds = which(psr[j,] <= 2)
+      points(psr[j, inds], pvals[j, inds], pch = ".", cex = 2)
+  }
+abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
+abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
+abline(v = 1, col = "gray")
+dev.off()
+
+stop("No")
+
+groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+num.nonzero = 5
+max.steps = 10
+p = length(groups)
+g = length(unique(groups))
+mult = sqrt(2*log(p)) # or log(g)?
+upper = upper.coeff*mult
+lower = lower.coeff*mult
+beta = beta_staircase(groups, num.nonzero, upper, lower)
+filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+if (corr != 0) {
+  filename = paste0(filename, '_corr', corr)
+}
+if (noisecorr != 0) {
+  filename = paste0(filename, '_noisecorr', noisecorr)
+}
+filename = paste0(filename, '.pdf')
+pdf(filename)
+output.g <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE, fixed.X = fixed.X)
+dev.off()
+
+
+
+
+caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."
+results.l = with(output.l, sim_select_stats(signal.p, active.set, true.step, m1))
+results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1))
+
+#rownames(results.l) = paste("(1)", rownames(results.l))
+rownames(results.g) = paste("(g)", rownames(results.g))
+
+file = paste0("tables/", design, "_n", n, "_p", p, "_k", k, "_lower", lower.coeff, "_upper", upper.coeff)
+if (corr != 0) {
+  file = paste0(file, "_corr", corr)
+}
+file = paste0(file, ".tex")
+
+tex_table(file, rbind(results.l, results.g), caption = caption)

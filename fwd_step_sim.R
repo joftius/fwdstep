@@ -6,9 +6,10 @@ source('pred_and_estim.R')
 source('fwd_step/coherence.R')
 
 
-fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
-  max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE,
-  rand.beta = FALSE, coherence = FALSE, plot = FALSE) {
+fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
+  alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE,
+  predictions = FALSE, rand.beta = FALSE, coherence = FALSE, plot = FALSE,
+  fixed.X=NULL, cat.groups = NULL) {
 
   # Initialize
   weights = sqrt(rle(groups)$lengths)
@@ -73,26 +74,29 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
     }
 
     # Construct design matrix
-    if (categorical == TRUE) {
-      X = categorical_design(n, groups, ortho.within = FALSE)
-      X.test = categorical_design(n, groups, ortho.within = FALSE)
+    if (length(dim(fixed.X)) == 2) {
+      X = fixed.X
+      # Do not use predictions yet-- need to split to training/test
+      X.test = X
     } else {
-
-      if (design == 'gaussian') {
-        X = gaussian_design(n, groups, corr = corr)
-        X.test = gaussian_design(n, groups, corr = corr)
-
+      if (categorical == TRUE) {
+        X = categorical_design(n, groups, ortho.within = FALSE)
+        X.test = categorical_design(n, groups, ortho.within = FALSE)
       } else {
-        design_name = paste0(design, "_design")
-        if (exists(design_name, mode = "function")) {
-          design_fun = get(design_name)
-          X = design_fun(n, groups)
-          X.test = design_fun(n, groups)
+        if (design == 'gaussian') {
+          X = gaussian_design(n, groups, corr = corr)
+          X.test = gaussian_design(n, groups, corr = corr)
         } else {
-          stop(paste("Misspecified design matrix:", design))
+          design_name = paste0(design, "_design")
+          if (exists(design_name, mode = "function")) {
+            design_fun = get(design_name)
+            X = design_fun(n, groups)
+            X.test = design_fun(n, groups)
+          } else {
+            stop(paste("Misspecified design matrix:", design))
+          }
         }
       }
-      
     }
 
     # Construct response
@@ -109,16 +113,18 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim,
     Y.test = Y.noiseless.test + Y.t
 #    X = frob_normalize(X, groups)
 #    X.test = frob_normalize(X.test, groups)
+#    Y = Y - mean(Y)
+#    Y.beta = Y.beta - mean(Y.beta)
     X = col_normalize(X)
     X.test = col_normalize(X.test)
-    
+
     # Null results
-    results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps)
+    results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups, weights, Sigma, max.steps = max.steps)
+    results.b = forward_group(X, Y.beta, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
 print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
     
     Chi.mat.b[i, ] = results.b$chi.pvals

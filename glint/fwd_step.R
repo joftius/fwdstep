@@ -31,6 +31,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   results = group_lasso_knot(X, Y, groups, weights, Sigma = Sigma, active.set = active.set)
   imax = results$i
   gmax = groups == imax
+  grank = results$k
   # Effective number of parameters
   new.eff.p = eff.p + sum(gmax)
 
@@ -39,7 +40,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   }
 
   # Also using group_lasso.R
-  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k)
+  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), grank)
   new.active.set = update_active_set(active.set, imax)
 
   # Form new residual
@@ -68,7 +69,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   # Renormalize
 #  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
   
-  return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project))
+  return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=grank))
 }
 
 
@@ -104,7 +105,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0)
     output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p)
     active.set = output$active.set
     imax = output$added
-    grank = sum(groups == imax)
+    grank = output$grank
     eff.p = output$eff.p
     RSS = sum(Y.update^2)
     Y.update = output$Y.update

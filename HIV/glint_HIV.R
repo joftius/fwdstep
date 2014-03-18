@@ -4,17 +4,17 @@ source('generate_data.R')
 source('stop_rules.R')
 source('tex_table.R')
 
-PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
-db="PI"
-data=PI
-resps = 4:9
-## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
-## data=NRTI
-## db="NRTI"
-## resps = 4:10
+## PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+## db="PI"
+## data=PI
+## resps = 4:9
+NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+data=NRTI
+db="NRTI"
+resps = 4:10
 
 nresps = length(resps)
-max.steps = 20
+max.steps = 18
 
 # Clean data, restrict to cleaned subset
 Z = data[,resps]
@@ -80,6 +80,7 @@ for (respind in 1:nresps) {
     gld = generate_glinternet(X, groups)
     glX = gld$X
     all.groups = gld$all.groups
+    int.groups = gld$int.groups
     glX = frob_normalize(glX, all.groups)
     G = max(all.groups)
     Gs = c(Gs, G)
@@ -100,9 +101,18 @@ for (respind in 1:nresps) {
     A.groups = A.set.full[1:A.ind]
     A.set = c()
     for (group in A.groups) {
+      if (group <= max(groups)) {
         gname = colnames(X[,which(groups==group)])[1]
         gname = substr(gname, 1, nchar(gname)-1)
-        A.set = c(A.set, gname)
+      } else {
+        mgs = main_effects_of(group, int.groups)
+        gname1 = colnames(X[,which(groups==mgs[1])])[1]
+        gname1 = substr(gname1, 1, nchar(gname1)-1)
+        gname2 = colnames(X[,which(groups==mgs[2])])[1]
+        gname2 = substr(gname2, 1, nchar(gname2)-1)
+        gname = paste0(gname1, "*", gname2)
+      }
+      A.set = c(A.set, gname)
     }
     A.sets[[colnames(Z)[respind]]] = A.set
 }

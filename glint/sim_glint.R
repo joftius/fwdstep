@@ -6,14 +6,14 @@ source('fwd_glint_sim.R')
 
 
 design = 'gaussian'
-corr = .1 # nonzero only supported for gaussian design
-noisecorr = .1
+corr = 0 # nonzero only supported for gaussian design
+noisecorr = 0
 
 nsim = 200
-n = 400
-num.nonzero = 9
+n = 200
+num.nonzero = 6
 k = num.nonzero
-max.steps = 15
+max.steps = 12
 upper.coeff = 2.5
 lower.coeff = 1.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr

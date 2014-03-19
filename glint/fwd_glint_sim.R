@@ -6,8 +6,8 @@ source('generate_data.R')
 #source('fwd_step/coherence.R')
 
 # Note: glint version passes k here instead of beta
-fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsim,
-  max.steps, alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE, coherence = FALSE, fixed.data = NULL, cat.groups = NULL) {
+fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, num.main, lower, upper, nsim,
+  max.steps, design = 'gaussian', corr = 0, categorical = FALSE, predictions = FALSE, coherence = FALSE, fixed.data = NULL, cat.groups = NULL, alpha = .1) {
 
   # Initialize
   p = length(groups)
@@ -48,9 +48,6 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
   start.time = as.numeric(Sys.time())
 
   ### Begin main loop ###
-  main1 = c()  
-  int37 = c()
-  
   for (i in 1:nsim) {
     # Monitoring completion time
     if (i %% 10 == 0) {
@@ -62,6 +59,7 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
 
     # Construct response
     if (length(names(fixed.data)) > 0) {
+      print("Using fixed design matrix")
       data = fixed.data
       # Do not use predictions yet-- need to split to training/test
       data.test = fixed.data
@@ -78,9 +76,9 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
         } else {
           stop(paste("Misspecified design matrix:", design))
         }
-        data = generate_glinternet(X, groups)
-        data.test = generate_glinternet(X.test, groups)    
       }
+      data = generate_glinternet(X, groups)
+      data.test = generate_glinternet(X.test, groups)    
     }
     X = data$X
     X.test = data.test$X
@@ -91,22 +89,20 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
     weights = rep(1, G)
     main.groups = data$main.groups
     int.groups = data$int.groups
-    beta.data = beta_glinternet(all.groups=all.groups, int.groups=int.groups, num.nonzero=k, upper=upper, lower=lower)
+    beta.data = beta_glinternet(all.groups, int.groups, num.nonzero=k, num.main=num.main, upper, lower, cat.groups = cat.groups)
     beta = beta.data$beta
+    all.active = beta.data$all.active
+    true.ints = beta.data$true.ints
     nz.betas = sapply(unique(all.groups), function(x) sqrt(sum(beta[all.groups==x]^2)))
     nz.betas = nz.betas[nz.betas != 0]
     max.beta = max(nz.betas)
     min.beta = min(nz.betas)
+    TRUE.ACT = beta.data$true.active
     true.active.groups = true_active_groups(all.groups, beta)
-    all.active = true.active.groups
-    true.ints = beta.data$true.ints
-    for (x in true.ints) {
-      all.active = c(all.active, main_effects_of(x, int.groups))
-    }
-    all.active = unname(sort(all.active))
+
     m=k/3
-    ptl.set = unique(all.groups)
-    r = length(ptl.set)
+#    ptl.set = unique(all.groups)
+#    r = length(ptl.set)
     
     if (ldimS <= 1) {
       Y = rnorm(n)*sqrt(Sigma)
@@ -120,25 +116,20 @@ fwd_glint_simulation = function(n, Sigma, groups, num.nonzero, lower, upper, nsi
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
+    Y.beta = Y.beta - mean(Y.beta)
 
-    print(sum(is.na(X)))
-    X = col_normalize(X)
+    #Xnormed = col_normalize(X)
     X.test = col_normalize(X.test)
-
-    print(c(dim(X), length(all.groups), sum(is.na(X))))
-    X = frob_normalize(X, all.groups)
-    #X.test = frob_normalize(X.test, all.groups)    
-    main1 = c(main1, abs(t(X[,1]) %*% Y.beta))
-    z=t(X[,all.groups==61])%*%Y.beta
-    int37 = c(int37, sqrt(sum(z^2)))
+    Xnormed = frob_normalize(X, all.groups)
+    X.test = frob_normalize(X.test, all.groups)    
 
     # Null results
-    results = forward_group(X, Y, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+    results = forward_group(Xnormed, Y, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+    results.b = forward_group(Xnormed, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
 print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
     
     Chi.mat.b[i, ] = results.b$chi.pvals
@@ -224,8 +215,7 @@ print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:num.nonzer
     chi.p = Chi.mat.b, active.set = AS.mat.b, true.step = recover.mat,
     psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power,
     int.fwd.power = int.fwd.power, ugsizes = ugsizes,
-    max.beta = max.beta, min.beta = min.beta,
-    main1=main1, int37=int37)
+    max.beta = max.beta, min.beta = min.beta)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

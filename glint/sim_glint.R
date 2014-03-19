@@ -11,13 +11,14 @@ main.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 400
-n = 400
+nsim = 20
+n = 500
 num.nonzero = 6
 k = num.nonzero
+num.main = 2
 max.steps = 10
-upper.coeff = 1.8
-lower.coeff = 1.2
+upper.coeff = 2.5
+lower.coeff = 1.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:20
 p = length(groups)
@@ -30,8 +31,6 @@ if ((corr != 0) & (design != 'gaussian')) {
   stop("nonzero only supported for gaussian design")
 }
 
-beta = beta_staircase(groups, num.nonzero, upper, lower)
-
 if (corr != 0) {
   fn.append = paste0(fn.append, '_corr', corr)
 }
@@ -42,11 +41,12 @@ fn.append = paste0(fn.append, '_glint')
 
 
 
-output.l <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr)
+output.l <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, num.main, lower, upper, nsim, max.steps, design = design, corr = corr)
 
 main.append = paste0("/", round(output.l$int.fwd.power, 2))
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append = fn.append, main.append = main.append))
+
 
 ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
@@ -84,7 +84,6 @@ dev.off()
 
 #stop("Not this time!")
 
-num.nonzero = 3
 k = num.nonzero
 max.steps = 10
 groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
@@ -94,7 +93,7 @@ mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
-output.g <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr)
+output.g <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, num.main, lower, upper, nsim, max.steps, design = design, corr = corr)
 
 with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append, main.append))
 

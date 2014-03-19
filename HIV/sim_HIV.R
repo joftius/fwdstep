@@ -3,6 +3,7 @@ source('fwd_step.R')
 source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
+source('plots.R')
 
 PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
 db="PI"
@@ -14,12 +15,13 @@ resps = 4:9
 ## resps = 4:10
 
 design = paste0("HIV_", db)
+fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
-nsim = 500
+nsim = 200
 num.nonzero = 5
 k = num.nonzero
-max.steps = 12
+max.steps = 10
 upper.coeff = 1.8
 lower.coeff = 1.2
 
@@ -60,7 +62,7 @@ cat.groups = unique(groups)
 n = nrow(fixed.X)
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 p = length(groups)
-mult = sqrt(2*log(p))
+mult = sqrt(2*log(g))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
@@ -69,17 +71,17 @@ if ((corr != 0) & (design != 'gaussian')) {
 }
 
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+
 if (corr != 0) {
-  filename = paste0(filename, '_corr', corr)
+  fn.append = paste0(fn.append, '_corr', corr)
 }
 if (noisecorr != 0) {
-  filename = paste0(filename, '_noisecorr', noisecorr)
+  fn.append = paste0(fn.append, '_noisecorr', noisecorr)
 }
-filename = paste0(filename, ".pdf")
-pdf(filename)
-output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE, fixed.X = fixed.X, cat.groups = cat.groups)
-dev.off()
+
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, fixed.X = fixed.X, cat.groups = cat.groups)
+
+with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 
 ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
@@ -116,35 +118,11 @@ abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
 abline(v = 1, col = "gray")
 dev.off()
 
-stop("No")
 
-groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
-num.nonzero = 5
-max.steps = 10
-p = length(groups)
-g = length(unique(groups))
-mult = sqrt(2*log(p)) # or log(g)?
-upper = upper.coeff*mult
-lower = lower.coeff*mult
-beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size5-10_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
-if (corr != 0) {
-  filename = paste0(filename, '_corr', corr)
-}
-if (noisecorr != 0) {
-  filename = paste0(filename, '_noisecorr', noisecorr)
-}
-filename = paste0(filename, '.pdf')
-pdf(filename)
-output.g <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE, fixed.X = fixed.X)
-dev.off()
-
-
-
+stop("no selection")
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."
 results.l = with(output.l, sim_select_stats(signal.p, active.set, true.step, m1))
-results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, m1))
 
 #rownames(results.l) = paste("(1)", rownames(results.l))
 rownames(results.g) = paste("(g)", rownames(results.g))

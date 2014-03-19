@@ -8,11 +8,13 @@ source('fwd_step/coherence.R')
 
 fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
   alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE,
-  predictions = FALSE, rand.beta = FALSE, coherence = FALSE, plot = FALSE,
+  predictions = FALSE, rand.beta = FALSE, coherence = FALSE,
   fixed.X=NULL, cat.groups = NULL) {
 
   # Initialize
-  weights = sqrt(rle(groups)$lengths)
+  gsizes = rle(groups)$lengths
+  ugsizes = sort(unique(gsizes))
+  weights = sqrt(gsizes)
   p = length(groups)
   g = length(unique(groups))
   true.active.groups = true_active_groups(groups, beta)
@@ -107,16 +109,22 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
       Y = unwhitener %*% rnorm(n)
       Y.t = unwhitener %*% rnorm(n)
     }
+    nz.betas = sapply(unique(groups), function(x) sqrt(sum(beta[groups==x]^2)))
+    nz.betas = nz.betas[nz.betas != 0]
+    max.beta = max(nz.betas)
+    min.beta = min(nz.betas)
     Y.noiseless = X %*% beta
+    mu.max = max(abs(Y.noiseless))
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
-#    X = frob_normalize(X, groups)
-#    X.test = frob_normalize(X.test, groups)
-#    Y = Y - mean(Y)
-#    Y.beta = Y.beta - mean(Y.beta)
     X = col_normalize(X)
     X.test = col_normalize(X.test)
+#    X = frob_normalize(X, groups)
+#    X.test = frob_normalize(X.test, groups)
+    Y = Y - mean(Y)
+    Y.beta = Y.beta - mean(Y.beta)
+
 
     # Null results
     results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
@@ -125,7 +133,7 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
 
     # Non-null results
     results.b = forward_group(X, Y.beta, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
-print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
+print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
     
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
@@ -168,52 +176,7 @@ print(c(upper, lower, length(intersect(results.b$active.set[1:num.nonzero], true
   # Convert sum to mean
   pred.errs = pred.errs / nsim
 
-  # Plotting
-  if (plot == TRUE) {
-    bar.quantiles <- c(.25, .75)
-    point.quantiles <- c(.05, .95)
-    null.Pvals <- colMeans(P.mat)
-    null.Pvals.bar <- apply(P.mat, 2, function(col) quantile(col, probs = bar.quantiles))
-    null.Pvals.point <- apply(P.mat, 2, function(col) quantile(col, probs = point.quantiles))
-
-    Pvals = colMeans(P.mat.b)
-    Pvals.bar <- apply(P.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
-    Pvals.point <- apply(P.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
-
-    Chivals = colMeans(Chi.mat.b)
-    Chivals.bar <- apply(Chi.mat.b, 2, function(col) quantile(col, probs = bar.quantiles))
-    Chivals.point <- apply(Chi.mat.b, 2, function(col) quantile(col, probs = point.quantiles))
-
-    
-    xax <- 1:max.steps - 0.15
-    nxax <- xax + 0.2
-    cxax = xax + 0.4
-    plot.main <- paste0("n: ", n, ", g: ", g, ", Signal: ", lower.coeff, "/", upper.coeff,  ", k-Oracle power: ", round(fwd.power, 3))
-
-    plot(xax, TrueStep, type = "l", main = plot.main, xlab = "Step", ylab = "", ylim = c(-.05,1.05), xlim = c(min(xax) - .2, max(nxax) + .2), lwd=2)
-    abline(v = num.nonzero, lty = "dotted")
-    
-    points(nxax, null.Pvals, col="orangered")
-    arrows(nxax, null.Pvals.bar[1, ], nxax, null.Pvals.bar[2, ],
-           code = 3, angle = 90, length = 0, col = "orangered")
-    points(nxax, null.Pvals.point[1, ], col = "orangered", pch = 24, cex = .5)
-    points(nxax, null.Pvals.point[2, ], col = "orangered", pch = 25, cex = .5)
-  
-    points(xax, Pvals, col="blue")
-    arrows(xax, Pvals.bar[1, ], xax, Pvals.bar[2, ],
-           code = 3, angle = 90, length = 0, col = "blue")
-    points(xax, Pvals.point[1, ], col = "blue", pch = 24, cex = .5)
-    points(xax, Pvals.point[2, ], col = "blue", pch = 25, cex = .5)
-
-    points(cxax, Chivals, col="green")
-    arrows(cxax, Chivals.bar[1, ], cxax, Chivals.bar[2, ],
-           code = 3, angle = 90, length = 0, col = "green")
-    points(cxax, Chivals.point[1, ], col = "green", pch = 24, cex = .5)
-    points(cxax, Chivals.point[2, ], col = "green", pch = 25, cex = .5)
-
-  }
-
-  outlist = list(null.p = P.mat, signal.p = P.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power)
+  outlist = list(TrueStep = TrueStep, null.p = P.mat, signal.p = P.mat.b, chi.p = Chi.mat.b, active.set = AS.mat.b, true.step = recover.mat, psr.mat = ps.recover.mat, m1 = num.nonzero, fwd.power = fwd.power, ugsizes = ugsizes, min.beta = min.beta, max.beta = max.beta)
 
   if (predictions) {
     outlist[["pred.errs"]] = pred.errs

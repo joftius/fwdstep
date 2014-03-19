@@ -3,13 +3,14 @@ source('fwd_step.R')
 source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
-
+source('plots.R')
 
 design = 'gaussian'
+fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 200
+nsim = 100
 n = 100
 num.nonzero = 2
 k = num.nonzero
@@ -19,6 +20,7 @@ lower.coeff = 0.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:10
 p = length(groups)
+g = length(unique(groups))
 mult = sqrt(2*log(p))
 upper = upper.coeff*mult
 lower = lower.coeff*mult
@@ -28,18 +30,19 @@ if ((corr != 0) & (design != 'gaussian')) {
 }
 
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+
 if (corr != 0) {
-  filename = paste0(filename, '_corr', corr)
+  fn.append = paste0(fn.append, '_corr', corr)
 }
 if (noisecorr != 0) {
-  filename = paste0(filename, '_noisecorr', noisecorr)
+  fn.append = paste0(fn.append, '_noisecorr', noisecorr)
 }
-filename = paste0(filename, '.pdf')
+
 print(c(upper, lower))
-pdf(filename)
-output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
-dev.off()
+
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE)
+
+with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 
 
 groups = sort(c(rep(1:8, 5), 9:10))
@@ -52,19 +55,13 @@ upper = upper.coeff*mult
 lower = lower.coeff*mult
 
 beta = beta_staircase(groups, num.nonzero, upper, lower)
-filename = paste0('figs/', design, '_size1-5_n', n, '_p', p, '_g', g, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
-if (corr != 0) {
-  filename = paste0(filename, '_corr', corr)
-}
-if (noisecorr != 0) {
-  filename = paste0(filename, '_noisecorr', noisecorr)
-}
-filename = paste0(filename, '.pdf')
+
 print(beta)
 print(c(upper, lower))
-pdf(filename)
-output.g <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, plot = TRUE)
-dev.off()
+
+output.g <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE)
+
+with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values. The naive stopping rule performs well."

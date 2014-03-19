@@ -46,20 +46,8 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   # Form new residual
   X.project = X
   Xgmax = X[, gmax]
-  Xgmax.regress = Xgmax
-  # If X[, gmax] is categorical, leave one column out
-
-  ########### Is this doing anything? Xgmax.regress isn't used ###########
-##   if (sum(gmax) > 1) {
-##     if (length(unique(rowSums(Xgmax == 0))) == 1) {
-## #      print("categorical variable")
-##       Xgmax.regress = Xgmax[ , -1]
-##     }
-##   }
-  Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-
+  Pgmax = Xgmax %*% ginv(Xgmax)
       
-####### This is necessary for p-value? ########
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
@@ -67,14 +55,12 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
       X.project[, group] = X[, group] - Pgmax %*% X[, group]
     }
   }
-  # Renormalize
-#  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
-
-  if ((is.element(imax, cat.groups)) & (ncol(Xgmax) > 1)) {
-    Xgmax.regress = Xgmax[ , -1]
-    Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
+  # If X[, gmax] is categorical, leave one column out  
+  if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
+    Xgmax = Xgmax[ , -1]
+    Pgmax = Xgmax %*% ginv(Xgmax)
   }
-  Y.resid = lm(Y ~ Xgmax.regress - 1)$residual
+  Y.resid = lm(Y ~ Xgmax - 1)$residual
   #Y.resid = Y - Pgmax %*% Y
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=kmax))

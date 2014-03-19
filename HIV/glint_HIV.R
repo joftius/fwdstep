@@ -4,14 +4,14 @@ source('generate_data.R')
 source('stop_rules.R')
 source('tex_table.R')
 
-## PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
-## db="PI"
-## data=PI
-## resps = 4:9
-NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
-data=NRTI
-db="NRTI"
-resps = 4:10
+PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+db="PI"
+data=PI
+resps = 4:9
+## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+## data=NRTI
+## db="NRTI"
+## resps = 4:10
 
 nresps = length(resps)
 max.steps = 18

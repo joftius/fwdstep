@@ -1,6 +1,6 @@
 
 library(MASS) # for ginv
-source('group_lasso.R')
+source('glint/group_lasso.R')
 
 # Add a group to the active set
 update_active_set = function(active.set, group) {
@@ -25,7 +25,7 @@ true_active_groups = function(groups, beta) {
 }
 
 # Compute which group to add to the active set and associated pvalue
-add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
+add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, cat.groups = NULL) {
   n = length(Y)
   # From group_lasso.R
   results = group_lasso_knot(X, Y, groups, weights, Sigma = Sigma, active.set = active.set)
@@ -46,19 +46,8 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
   # Form new residual
   X.project = X
   Xgmax = X[, gmax]
-  Xgmax.regress = Xgmax
-  # If X[, gmax] is categorical, leave one column out
-  ########### Is this doing anything? Xgmax.regress isn't used ###########
-##   if (sum(gmax) > 1) {
-##     if (length(unique(rowSums(Xgmax == 0))) == 1) {
-## #      print("categorical variable")
-##       Xgmax.regress = Xgmax[ , -1]
-##     }
-##   }
-  Pgmax = Xgmax.regress %*% ginv(Xgmax.regress)
-  Y.resid = Y - Pgmax %*% Y
-      
-####### This is necessary for p-value? ########
+  Pgmax = Xgmax %*% ginv(Xgmax)
+
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
@@ -66,15 +55,19 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0) {
       X.project[, group] = X[, group] - Pgmax %*% X[, group]
     }
   }
-  # Renormalize
-#  X.project = X.project %*% diag(1/sqrt(colSums(X.project^2)))
+  # If X[, gmax] is categorical, leave one column out
+##   if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
+##     Xgmax = Xgmax[ , -1]
+##     Pgmax = Xgmax %*% ginv(Xgmax)
+##   }
+  Y.resid = lm(Y ~ Xgmax - 1)$residual
+  
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=grank))
 }
 
-
 # Iterate add_group for max.steps
-forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0) {
+forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0, cat.groups = NULL) {
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
@@ -102,7 +95,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0)
   X.update = X
 
   for (i in 1:max.steps) {
-    output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p)
+    output = add_group(X.update, Y.update, groups, weights, Sigma, active.set, eff.p, cat.groups = cat.groups)
     active.set = output$active.set
     imax = output$added
     grank = output$grank
@@ -111,7 +104,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0)
     Y.update = output$Y.update
     RSSdrop = RSS - sum(Y.update^2)
     chi.p = pchisq(RSSdrop, lower.tail=F, df=grank)
-    print(c(RSSdrop, round(grank), chi.p))
+    #print(c(RSSdrop, round(grank), chi.p))
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
     chi.pvals = c(chi.pvals, chi.p)

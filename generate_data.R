@@ -16,7 +16,7 @@ true_active_groups = function(groups, beta) {
 }
 
 # Staircase signal
-beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.vars = NULL) {
+beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.groups = NULL) {
   # Generate a staircase-shaped signal vector
   # groups: vector of group indices in the form c(1,1,...,2,2,...)
   # num.nonzero: number of signal groups
@@ -42,7 +42,8 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   if (permute) {
     beta = sample(beta)
   }
-
+  
+  nz.groups = which(beta != 0)
   beta = beta[groups]
   nz.inds = beta != 0
 
@@ -51,29 +52,29 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
     beta = signs*beta
   }
 
-  
   # Normalize coeff across group for fair comparison with non-grouped vars
-  for (g in unique(groups)) {
+  for (g in nz.groups) {
     group = g == groups
     gs = sum(group)
     beta[group] = beta[group]/sqrt(gs)
-  }
+    bg.norm = sqrt(sum(beta[group]^2))
 
-  if (perturb) {
-    beta[nz.inds] = beta[nz.inds] + rnorm(sum(nz.inds)) * sqrt(1/10)
-    maxmod = max(abs(beta))
-    beta[nz.inds] = beta[nz.inds] * upper / maxmod
+    # Add small noise in each group, but keep upper and lower fixed
+    if (perturb) {
+      beta[group] = beta[group] + rnorm(gs) * sqrt(1/10)
+      bg.new.norm = sqrt(sum(beta[group]^2))
+      beta[group] = beta[group] * bg.norm / bg.new.norm
+    }
   }
 
   # Ensure coefs for categorical variables sum to 0
-  if (length(cat.vars) > 0) {
-    for (g in cat.vars) {
+  if (length(cat.groups) > 0) {
+    for (g in cat.groups) {
       gind = groups == g & nz.inds
       if (sum(gind) > 0) {
-        gmod = max(abs(beta[gind]))
-
+        gmod = sqrt(sum(beta[gind]^2))
         beta[gind] = beta[gind] - mean(beta[gind])
-        gnewmod = max(abs(beta[gind]))
+        gnewmod = sqrt(sum(beta[gind]^2))
 
         if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
         beta[gind] = beta[gind] * gmod / gnewmod
@@ -93,9 +94,10 @@ col_normalize = function(X) {
 # Normalize groups by Frobenius norm
 frob_normalize = function(X, groups) {
     X.out = X
-    for (g in 1:max(groups)) {
+    for (g in unique(groups)) {
         inds = groups == g
         frob.norm = sqrt(sum(X[,inds]^2))
+        print(frob.norm)
         if (frob.norm > 0)
             X.out[,inds] = X.out[,inds]/frob.norm
     }
@@ -213,7 +215,7 @@ derangement = function(inds) {
 # main.groups: groups of main effects (original variables)
 # all.groups: include main effects and their copies with interactions
 # int.groups: list, the [[g]]'th element contains all group indices that group g appears in
-generate_glinternet = function(X, groups) {
+generate_glinternet = function(X, groups, cat.groups = NULL) {
   X.out = X
   n = dim(X)[1]
   g.out = groups
@@ -222,26 +224,36 @@ generate_glinternet = function(X, groups) {
   inds.out = matrix(rep(0, gmax^2), nrow=gmax)
   gnew = gmax
   for (g in 1:(gmax-1)) {
+    ginds = which(groups == g)
+    gs = length(ginds)
+    Xg = X[, ginds]
+    Xgh = matrix(NA, nrow=n)
     for (h in (g+1):gmax) {
-      ginds = which(groups == g)
       hinds = which(groups == h)
-      gs = length(ginds)
+      Xh = X[, hinds]
       hs = length(hinds)
-      # Intercept term shrunk too much?
-#      X.out = cbind(X.out, rep(1/n,n)) 
-      X.out = cbind(X.out, X[, ginds]) #/sqrt(2))
-      X.out = cbind(X.out, X[, hinds]) #/sqrt(2))
+      gcont = FALSE
+      hcont = FALSE
+      if (!is.element(g, cat.groups)) {
+        Xgh = cbind(Xgh, Xg) #/sqrt(2))
+        gcont = TRUE
+      }
+      if (!is.element(h, cat.groups)) {
+        Xgh = cbind(Xgh, Xh) #/sqrt(2))
+        hcont = TRUE
+      }
       gnew = gnew + 1
       for (i in ginds) {
         for (j in hinds) {
-          Xij = X[, i] * X[, j]
-##           normij = sqrt(sum(Xij^2))
-##           if (normij > 0) {
-##             Xij = Xij/normij
-##           }
-          X.out = cbind(X.out, Xij)
+          Xij = Xg.t[, i] * Xh[, j]
+          Xgh = cbind(Xgh, Xij)
         }
       }
+      Xgh = Xgh[, -1]
+      if ((gcont) & (hcont)) {
+        Xgh = cbind(rep(1/n, n), Xgh)
+      }
+      X.out = cbind(X.out, Xgh)
       main.out = c(main.out, rep(g, gs), rep(h, hs), rep(0, gs*hs))
       g.out = c(g.out, rep(gnew, gs + hs + gs*hs))
       inds.out[g, h] = gnew
@@ -252,13 +264,12 @@ generate_glinternet = function(X, groups) {
   return(list(X=X.out, main.groups=groups, all.groups=g.out, int.groups=inds.out, main.inds=main.out))
 }
 
-
 # Signal vector generation for glinternet
 # convention: 1/3 of nonzero are only main effects, 2/3 have interactions
 # num.nonzero should be divisible by 3
 # Note: at most (5/3)*num.nonzero main effects and (2/3)*num.nz interactions
 # are included, but group sparsity still = num.nonzero
-beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, rand.sign=TRUE, perturb=TRUE) {
+beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups) {
   if (num.nonzero %% 3 != 0) stop("num.nonzero not divisible by 3")
   k = num.nonzero*(5/3)
   m = num.nonzero/3
@@ -310,6 +321,11 @@ beta_glinternet = function(all.groups, int.groups, num.nonzero, upper, lower, ra
       igs = gs - mgs
       ginds = which(group)
       start.ind = 1
+      # Check if both groups are continuous
+      if (length(intersect(mains.of.g, cat.groups)) == 0) {
+        # Don't add another coeff to the intercept
+        start.ind = 2
+      }
       for (h in mains.of.g) {
         hs = sum(h == all.groups)
         end.ind = start.ind + hs - 1

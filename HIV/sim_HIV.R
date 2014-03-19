@@ -19,9 +19,9 @@ fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 nsim = 200
-num.nonzero = 5
+num.nonzero = 6
 k = num.nonzero
-max.steps = 10
+max.steps = 12
 upper.coeff = 1.8
 lower.coeff = 1.2
 
@@ -46,6 +46,7 @@ for (j in max(resps):ncol(data)) {
 colnames(Z) = c(names(data)[resps], cnames)
 # Z should not be modified after this point
 
+  
 fixed.X = matrix(0, nrow=nrow(Z))
 groups = c()
 g = 0
@@ -58,6 +59,9 @@ for (j in (nresps+1):ncol(Z)) {
 }
 fixed.X = fixed.X[,-1]
 cat.groups = unique(groups)
+X.cat = Z[, (nresps+1):ncol(Z)]
+colnames(X.cat) = paste0("X", cat.groups)
+fixed.data = list(fixed.X=fixed.X, X.cat=X.cat)
 
 n = nrow(fixed.X)
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
@@ -79,7 +83,7 @@ if (noisecorr != 0) {
   fn.append = paste0(fn.append, '_noisecorr', noisecorr)
 }
 
-output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, fixed.X = fixed.X, cat.groups = cat.groups)
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, fixed.data = fixed.data, cat.groups = cat.groups)
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 

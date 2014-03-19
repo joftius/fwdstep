@@ -5,14 +5,14 @@ source('glint/fwd_glint_sim.R')
 #source('tex_table.R')
 source('plots.R')
 
-## PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
-## db="PI"
-## data=PI
-## resps = 4:9
-NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
-data=NRTI
-db="NRTI"
-resps = 4:10
+PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+db="PI"
+data=PI
+resps = 4:9
+## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+## data=NRTI
+## db="NRTI"
+## resps = 4:10
 
 design = paste0("HIV_", db)
 fn.append = ''
@@ -20,10 +20,11 @@ corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 nsim = 20
 num.nonzero = 3
+num.main = 1
 k = num.nonzero
 max.steps = 6
-upper.coeff = 1.8
-lower.coeff = 1.2
+upper.coeff = 20
+lower.coeff = 10
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)
@@ -85,9 +86,9 @@ if (noisecorr != 0) {
 }
 fn.append = paste0(fn.append, '_glint')
 
-output.l <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, lower, upper, nsim, max.steps, design = design, corr = corr, fixed.data = fixed.data, cat.groups = cat.groups)
+output.l <- fwd_glint_simulation(n, Sigma, groups, num.nonzero, num.main, lower, upper, nsim, max.steps, design = design, corr = corr, fixed.data = fixed.data, cat.groups = cat.groups)
 
-with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
+with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append = fn.append))
 
 ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {

@@ -9,7 +9,7 @@ source('fwd_step/coherence.R')
 fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
   alpha = .1, design = 'gaussian', corr = 0, categorical = FALSE,
   predictions = FALSE, rand.beta = FALSE, coherence = FALSE,
-  fixed.X=NULL, cat.groups = NULL) {
+  fixed.data=NULL, cat.groups = NULL) {
 
   # Initialize
   gsizes = rle(groups)$lengths
@@ -58,6 +58,9 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
 #    beta.mat = matrix(0, nrow=nsim, ncol=p)
 #  }
 
+  R.powdiff = c()
+  R.iwin = c()
+  R.rwin = c()
   ### Begin main loop ###
   for (i in 1:nsim) {
     # Monitoring completion time
@@ -69,31 +72,46 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
     }
 
     # Randomized signal
-    if (rand.beta == TRUE) {
-      beta = beta_staircase(groups, num.nonzero, upper, lower,
-        rand.sign = TRUE, permute = TRUE, perturb = TRUE)
+    if (rand.beta) {
+      if (categorical) {
+        beta = beta_staircase(groups, num.nonzero, upper, lower,
+          permute = TRUE, perturb = TRUE, cat.groups = unique(groups))
+      } else {
+        beta = beta_staircase(groups, num.nonzero, upper, lower,
+          rand.sign = TRUE, permute = TRUE, perturb = TRUE)
+      }
       true.active.groups = true_active_groups(groups, beta)
     }
 
     # Construct design matrix
-    if (length(dim(fixed.X)) == 2) {
-      X = fixed.X
+    if (length(fixed.data) > 0) {
+      X = fixed.data$fixed.X
+      X.cat = fixed.data$X.cat
       # Do not use predictions yet-- need to split to training/test
       X.test = X
     } else {
+      
       if (categorical == TRUE) {
-        X = categorical_design(n, groups, ortho.within = FALSE)
-        X.test = categorical_design(n, groups, ortho.within = FALSE)
+        catd = categorical_design(n, groups)
+        catd.test = categorical_design(n, groups)
+        X = catd$X
+        X.test = catd.test$X
+        X.cat = catd$X.cat
+        
       } else {
+        
         if (design == 'gaussian') {
           X = gaussian_design(n, groups, corr = corr)
           X.test = gaussian_design(n, groups, corr = corr)
+          
         } else {
           design_name = paste0(design, "_design")
+          
           if (exists(design_name, mode = "function")) {
             design_fun = get(design_name)
             X = design_fun(n, groups)
             X.test = design_fun(n, groups)
+            
           } else {
             stop(paste("Misspecified design matrix:", design))
           }
@@ -118,26 +136,58 @@ fwd_group_simulation = function(n, Sigma, groups, beta, nsim, max.steps,
     Y.noiseless.test = X.test %*% beta
     Y.beta = Y.noiseless + Y
     Y.test = Y.noiseless.test + Y.t
-    X = col_normalize(X)
-    X.test = col_normalize(X.test)
-#    X = frob_normalize(X, groups)
-#    X.test = frob_normalize(X.test, groups)
+#    Xnormed = col_normalize(X)
+#    X.test = col_normalize(X.test)
+    Xnormed = frob_normalize(X, groups)
+    X.test = frob_normalize(X.test, groups)
     Y = Y - mean(Y)
     Y.beta = Y.beta - mean(Y.beta)
 
-
     # Null results
-    results = forward_group(X, Y, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+    results = forward_group(Xnormed, Y, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
     P.mat[i, ] = results$p.vals
     AS.mat[i, ] = results$active.set
 
     # Non-null results
-    results.b = forward_group(X, Y.beta, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
-print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:num.nonzero], true.active.groups))/num.nonzero))
+    results.b = forward_group(Xnormed, Y.beta, groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+    rb.as = results.b$active.set
+    my.pow = length(intersect(rb.as[1:num.nonzero], true.active.groups))/num.nonzero
+    trace = c(upper, lower, mu.max, my.pow)
+    
+    if (length(cat.groups) > 0) {
+
+      null.fit = lm(Y.beta ~ 0, data=X.cat)
+      full.fit = lm(Y.beta ~ . -1, data=X.cat)
+      step.fit = step(null.fit, scope=list(lower=null.fit, upper=full.fit), direction = "forward", k = 0, steps = num.nonzero, trace = 0)
+      step.groups = gsub("X", "", names(step.fit$coefficients), fixed=TRUE)
+      step.groups = sapply(step.groups, function(s) substr(s, 1, nchar(s) - 1))
+      step.groups = as.numeric(unique(step.groups))
+      Rs.pow = length(intersect(step.groups, true.active.groups))/num.nonzero
+      trace = c(trace, Rs.pow)
+      R.powdiff = R.powdiff + my.pow - Rs.pow
+      R.iwin = c(R.iwin, my.pow > Rs.pow)
+      R.rwin = c(R.rwin, my.pow < Rs.pow)
+      
+    } else {
+      
+      df = data.frame(Xnormed)
+      null.fit = lm(Y.beta ~ 0, data=df)
+      full.fit = lm(Y.beta ~ . -1, data=df)
+      step.fit = step(null.fit, scope=list(lower=null.fit, upper=full.fit), direction = "forward", k = 0, steps = num.nonzero, trace = 0)
+      step.groups = as.numeric(gsub("X", "", names(step.fit$coefficients), fixed=TRUE))
+      Rs.pow = length(intersect(step.groups, true.active.groups))/num.nonzero
+      trace = c(trace, Rs.pow)
+      R.powdiff = R.powdiff + my.pow - Rs.pow
+      R.iwin = c(R.iwin, my.pow > Rs.pow)
+      R.rwin = c(R.rwin, my.pow < Rs.pow)
+      
+    }
+    
+    print(round(trace, 2))
     
     Chi.mat.b[i, ] = results.b$chi.pvals
     P.mat.b[i, ] = results.b$p.vals
-    rb.as = results.b$active.set
+
     AS.mat.b[i, ] = results.b$active.set
     recover.mat[i, ] = sapply(results.b$active.set, function(x)
                  is.element(x, true.active.groups))
@@ -185,6 +235,8 @@ print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:num.nonzer
   if (coherence) {
     outlist[["coherence"]] = mu.list
   }
+
+  print(c(sum(R.iwin), sum(R.rwin), R.powdiff/nsim))
   
   return(outlist)
 }

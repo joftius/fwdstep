@@ -55,11 +55,12 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
       X.project[, group] = X[, group] - Pgmax %*% X[, group]
     }
   }
-  # If X[, gmax] is categorical, leave one column out  
-  if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
-    Xgmax = Xgmax[ , -1]
-    Pgmax = Xgmax %*% ginv(Xgmax)
-  }
+  # If X[, gmax] is categorical, leave one column out
+  # Not necessary, Y already de-meaned
+##   if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
+##     Xgmax = Xgmax[ , -1]
+##     Pgmax = Xgmax %*% ginv(Xgmax)
+##   }
   Y.resid = lm(Y ~ Xgmax - 1)$residual
   #Y.resid = Y - Pgmax %*% Y
   

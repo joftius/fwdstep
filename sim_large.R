@@ -5,18 +5,20 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 source('plots.R')
 
+# Note: early stopping, only 1 sim
+
 design = 'gaussian'
 fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 100
+nsim = 400
 n = 100
 num.nonzero = 6
 k = num.nonzero
 max.steps = 12
-upper.coeff = 2
-lower.coeff = 1
+upper.coeff = 1.5
+lower.coeff = 1.2
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:200
 p = length(groups)
@@ -43,6 +45,10 @@ output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 
+stop("now")
+
+
+
 ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
 if (corr != 0) {
   ps.fname = paste0(ps.fname, '_corr', corr)
@@ -64,7 +70,7 @@ for (j in 1:nrow(psr)) {
                 psr[j,inds] = psr[j,inds] + cumsum(rep(1/(3*m1), length(inds)))
           }
   }
-psr = psr + matrix(0.04*rnorm(l*m), nrow=l)
+psr = psr + matrix(0.02*rnorm(l*m), nrow=l)
 pvals = output.l$signal.p
 plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
 pdf(ps.fname)

@@ -2,6 +2,8 @@
 # Functions to generate simulation data #
 #########################################
 
+library(gtools)
+
 SigmaSqrt = function(Sigma) {
   svdS = svd(Sigma)
   return(svdS$u %*% diag(sqrt(svdS$d)) %*% t(svdS$u))
@@ -162,31 +164,41 @@ orthogonal_design = function(n, groups) {
 
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
-categorical_design = function(n, groups, ortho.within = FALSE) {
+categorical_design = function(n, groups, col.normalize = FALSE) {
 
   if (min(rle(groups)$lengths) <= 1) {
     stop("Minimum number of levels must be at least 2")
   }
   p = length(groups)
   X = matrix(nrow=n, ncol=p)
+  X.cat = data.frame(ind=1:n)
 
   for (g in 1:max(groups)) {
     group = groups == g
     group.size = sum(group)
     cat.levels = NULL
+    dir.prior = rep(0, group.size)
+    # Sample from dirichlet prior
+    # Resample to prevent small probabilities
+    while (min(dir.prior) < group.size/n) {
+      dir.prior = rdirichlet(1, rep(1, group.size))
+    }
     # Resample until no levels are empty
     while (length(unique(cat.levels)) < group.size) {
-      cat.levels = sample(1:group.size, n, replace=TRUE)
+      cat.levels = sample(1:group.size, n,  replace=TRUE, prob = dir.prior)
     }
+    X.cat = cbind(X.cat, factor(cat.levels))
     X[ , group] = unname(model.matrix(~ factor(cat.levels) - 1)[ , 1:group.size])
 #    if (ortho.within == TRUE) {
 #      X[ , group] = X[ , group] %*% diag(1/sqrt(colSums(X[ , group])))
 #    }
-
   }
-
-  X = col_normalize(X)
-  return(X)
+  X.cat = X.cat[,-1]
+  names(X.cat) = paste0("X", 1:max(groups))
+  if (col.normalize) {
+    X = col_normalize(X)
+  }
+  return(list(X=X, X.cat=X.cat))
 }
 
 # Input: inds of main effects
@@ -353,7 +365,7 @@ beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.m
       s.int = sum(int.part)
       beta[main.part] = beta[main.part]/sqrt(s.main)
       # Inflate interaction terms to give them a chance
-      beta[int.part] = sqrt(3)*beta[int.part]/sqrt(s.int)
+      beta[int.part] = sqrt(10)*beta[int.part]/sqrt(s.int)
       bg.main.norm = sqrt(sum(beta[main.part]^2))
       bg.int.norm = sqrt(sum(beta[int.part]^2))
       

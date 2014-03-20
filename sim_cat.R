@@ -12,14 +12,14 @@ noisecorr = 0
 
 nsim = 400
 n = 100
-num.nonzero = 5
+num.nonzero = 4
 k = num.nonzero
 max.steps = 10
-upper.coeff = 3
-lower.coeff = 2
+upper.coeff = 5
+lower.coeff = 4
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
-#groups = sort(rep(1:20, 5))
-groups = sort(rep(1:20, 2))
+groups = sort(rep(1:20, 5))
+#groups = sort(rep(1:20, 2))
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p)/n)
@@ -41,8 +41,8 @@ print(warnings())
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 
-#groups = sort(c(rep(1:100, 4), rep(101:200, 2)))
-groups = sort(rep(1:30, 5))
+groups = sort(c(rep(1:100, 4), rep(101:200, 2)))
+#groups = sort(rep(1:30, 5))
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p)/n)

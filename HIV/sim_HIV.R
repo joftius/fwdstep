@@ -5,14 +5,14 @@ source('fwd_step_sim.R')
 source('tex_table.R')
 source('plots.R')
 
-## PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
-## db="PI"
-## data=PI
-## resps = 4:9
-NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
-data=NRTI
-db="NRTI"
-resps = 4:10
+PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+db="PI"
+data=PI
+resps = 4:9
+## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+## data=NRTI
+## db="NRTI"
+## resps = 4:10
 
 design = paste0("HIV_", db)
 fn.append = ''
@@ -22,8 +22,8 @@ nsim = 100
 num.nonzero = 4
 k = num.nonzero
 max.steps = 10
-upper.coeff = 5
-lower.coeff = 4
+upper.coeff = 10
+lower.coeff = 7
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)

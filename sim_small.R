@@ -10,15 +10,15 @@ fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 100
+nsim = 400
 n = 100
-num.nonzero = 2
+num.nonzero = 4
 k = num.nonzero
-max.steps = 8
-upper.coeff = 0.8
-lower.coeff = 0.5
+max.steps = 10
+upper.coeff = 1
+lower.coeff = 0.7
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
-groups = 1:20
+groups = 1:50
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p))
@@ -46,11 +46,11 @@ with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g
 
 
 groups = sort(c(rep(1:8, 5), 9:10))
-num.nonzero = 2
-max.steps = 8
+num.nonzero = 4
+max.steps = 10
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(g)) # or g?
+mult = sqrt(2*log(p)) # or g?
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 

@@ -9,21 +9,22 @@ source('plots.R')
 
 design = 'gaussian'
 fn.append = ''
-corr = 0 # nonzero only supported for gaussian design
-noisecorr = 0
+corr = .2 # nonzero only supported for gaussian design
+noisecorr = .1
 
 nsim = 400
 n = 100
-num.nonzero = 6
+num.nonzero = 5
 k = num.nonzero
-max.steps = 12
-upper.coeff = 1.5
-lower.coeff = 1.2
+max.steps = 10
+
+upper.coeff = 2
+lower.coeff = 1.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:200
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(p))
+mult = sqrt(2*log(p)/n)
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 
@@ -44,8 +45,6 @@ if (noisecorr != 0) {
 output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE)
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
-
-stop("now")
 
 
 
@@ -87,9 +86,11 @@ dev.off()
 groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
 num.nonzero = 5
 max.steps = 10
+upper.coeff = 2.5
+lower.coeff = 2
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(g)) 
+mult = sqrt(2*log(p)/n) 
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 beta = beta_staircase(groups, num.nonzero, upper, lower)

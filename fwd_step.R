@@ -46,22 +46,25 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   # Form new residual
   X.project = X
   Xgmax = X[, gmax]
-  Pgmax = Xgmax %*% ginv(Xgmax)
+  Y.resid = lm(Y ~ Xgmax - 1)$residual
+
+##   # If X[, gmax] is categorical, leave one column out
+##   # Not necessary, Y already de-meaned
+  if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
+    Xgmax = Xgmax[ , -1]
+  }
+##   Pgmax = Xgmax %*% ginv(Xgmax)
       
   # Project all other groups orthogonal to the one being added
   for (gind in 1:max(groups)) {
     if (gind != imax) {
       group = groups == gind
-      X.project[, group] = X[, group] - Pgmax %*% X[, group]
+      #X.project[, group] = X[, group] - Pgmax %*% X[, group]
+      X.project[, group] = lsfit(Xgmax, X[, group], intercept=FALSE)$residuals
     }
   }
-  # If X[, gmax] is categorical, leave one column out
-  # Not necessary, Y already de-meaned
-##   if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
-##     Xgmax = Xgmax[ , -1]
-##     Pgmax = Xgmax %*% ginv(Xgmax)
-##   }
-  Y.resid = lm(Y ~ Xgmax - 1)$residual
+
+
   #Y.resid = Y - Pgmax %*% Y
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=kmax))

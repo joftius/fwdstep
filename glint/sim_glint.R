@@ -11,14 +11,14 @@ main.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 40
+nsim = 50
 n = 200
 num.nonzero = 3
 k = num.nonzero
 num.main = 1
 max.steps = 10
-upper.coeff = 2.8
-lower.coeff = 1.8
+upper.coeff = 5
+lower.coeff = 3
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
 groups = 1:20
 p = length(groups)

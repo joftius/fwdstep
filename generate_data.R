@@ -18,7 +18,7 @@ true_active_groups = function(groups, beta) {
 }
 
 # Staircase signal
-beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.groups = NULL) {
+beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.groups = NULL, staircase=TRUE) {
   # Generate a staircase-shaped signal vector
   # groups: vector of group indices in the form c(1,1,...,2,2,...)
   # num.nonzero: number of signal groups
@@ -71,19 +71,26 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 
   # Ensure coefs for categorical variables sum to 0
   # Maybe I don't need to do this
-##   if (length(cat.groups) > 0) {
-##     for (g in cat.groups) {
-##       gind = groups == g && nz.inds
-##       if (sum(gind) > 0) {
-##         gmod = sqrt(sum(beta[gind]^2))
-##         beta[gind] = beta[gind] - mean(beta[gind])
-##         gnewmod = sqrt(sum(beta[gind]^2))
+  if (length(cat.groups) > 0) {
+    for (g in cat.groups) {
+      gind = groups == g & nz.inds
+      if (sum(gind) > 0) {
+        gmod = sqrt(sum(beta[gind]^2))
+        beta[gind] = beta[gind] - mean(beta[gind])
+        gnewmod = sqrt(sum(beta[gind]^2))
 
-##         if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
-##         beta[gind] = beta[gind] * gmod / gnewmod
-##       }
-##     }
-##   }
+        if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
+        beta[gind] = beta[gind] * gmod / gnewmod
+      }
+    }
+  }
+
+  if (!staircase) {
+    #beta[nz.inds] = rnorm(sum(nz.inds))
+    nnz = sum(nz.inds)
+    beta[nz.inds] = sample(c(-1, 1), nnz, replace = TRUE)
+    beta = beta/sqrt(nnz)
+  }
   return(beta)
 }
 
@@ -162,6 +169,10 @@ orthogonal_design = function(n, groups) {
   return(X)
 }
 
+
+cat_level_test = function(cat.levels) {
+  
+}
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
 categorical_design = function(n, groups, col.normalize = FALSE) {
@@ -176,15 +187,16 @@ categorical_design = function(n, groups, col.normalize = FALSE) {
   for (g in 1:max(groups)) {
     group = groups == g
     group.size = sum(group)
-    cat.levels = NULL
+    cat.levels = rep(0, n)
     dir.prior = rep(0, group.size)
     # Sample from dirichlet prior
     # Resample to prevent small probabilities
     while (min(dir.prior) < group.size/n) {
       dir.prior = rdirichlet(1, rep(1, group.size))
+      dir.prior = (dir.prior + rep(1/group.size, group.size))/2
     }
     # Resample until no levels are empty
-    while (length(unique(cat.levels)) < group.size) {
+    while ((min(table(cat.levels)) < 5) | (length(unique(cat.levels)) < group.size)) {
       cat.levels = sample(1:group.size, n,  replace=TRUE, prob = dir.prior)
     }
     X.cat = cbind(X.cat, factor(cat.levels))
@@ -365,7 +377,7 @@ beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.m
       s.int = sum(int.part)
       beta[main.part] = beta[main.part]/sqrt(s.main)
       # Inflate interaction terms to give them a chance
-      beta[int.part] = sqrt(10)*beta[int.part]/sqrt(s.int)
+      beta[int.part] = sqrt(50)*beta[int.part]/sqrt(s.int)
       bg.main.norm = sqrt(sum(beta[main.part]^2))
       bg.int.norm = sqrt(sum(beta[int.part]^2))
       

@@ -18,7 +18,7 @@ max.steps = 8
 upper.coeff = 0.8
 lower.coeff = 0.5
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
-groups = 1:10
+groups = 1:20
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(p))
@@ -50,7 +50,7 @@ num.nonzero = 2
 max.steps = 8
 p = length(groups)
 g = length(unique(groups))
-mult = sqrt(2*log(p)) # or g?
+mult = sqrt(2*log(g)) # or g?
 upper = upper.coeff*mult
 lower = lower.coeff*mult
 

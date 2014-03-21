@@ -9,8 +9,8 @@ source('plots.R')
 
 design = 'gaussian'
 fn.append = ''
-corr = .2 # nonzero only supported for gaussian design
-noisecorr = .1
+corr = 0 # nonzero only supported for gaussian design
+noisecorr = 0
 
 nsim = 400
 n = 100

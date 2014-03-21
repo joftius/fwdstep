@@ -4,26 +4,27 @@ source('generate_data.R')
 source('fwd_step_sim.R')
 source('tex_table.R')
 source('plots.R')
+library(plyr)
 
-PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
-db="PI"
-data=PI
-resps = 4:9
-## NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
-## data=NRTI
-## db="NRTI"
-## resps = 4:10
+## PI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/NRTI_DATA.txt", sep='\t', header=TRUE)
+## db="PI"
+## data=PI
+## resps = 4:9
+NRTI = read.table("http://hivdb.stanford.edu/pages/published_analysis/genophenoPNAS2006/DATA/PI_DATA.txt", sep = "\t", header = TRUE)
+data=NRTI
+db="NRTI"
+resps = 4:10
 
 design = paste0("HIV_", db)
-fn.append = ''
+fn.append = 'Pg'
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
-nsim = 100
+nsim = 200
 num.nonzero = 4
 k = num.nonzero
 max.steps = 10
-upper.coeff = 10
-lower.coeff = 7
+upper.coeff = 25
+lower.coeff = 21
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)
@@ -39,6 +40,7 @@ cnames = c()
 for (j in max(resps):ncol(data)) {
       newcol = clean_col(data[,j])
           if ((length(levels(newcol)) > 1) & (min(table(newcol)) >= 2)) {
+            newcol = mapvalues(newcol, from=levels(newcol), to=1:length(levels(newcol)))
                     cnames = c(cnames, names(data)[j])
                             Z = cbind(Z, newcol)
                   }
@@ -83,7 +85,7 @@ if (noisecorr != 0) {
   fn.append = paste0(fn.append, '_noisecorr', noisecorr)
 }
 
-output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, fixed.data = fixed.data, cat.groups = cat.groups)
+output.l <- fwd_group_simulation(n, Sigma, groups, beta, nsim, max.steps, design = design, corr = corr, rand.beta = TRUE, fixed.data = fixed.data, cat.groups = cat.groups, categorical = TRUE)
 
 with(output.l, step_plot(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append))
 

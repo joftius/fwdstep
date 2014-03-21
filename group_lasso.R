@@ -23,7 +23,8 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
   
   Ctheta = sum(a*b) / (norma*normb)
-  Ctheta = min(max(Ctheta, -1), 1)
+  # Why was this next line here?
+  #Ctheta = min(max(Ctheta, -1), 1)
   Stheta = sqrt(1-Ctheta^2)
   theta = acos(Ctheta)
   
@@ -49,25 +50,28 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
 }
 
-group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) {
+group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
 
   U = t(X) %*% Y
+  g.labels = unique(groups)
   g = length(weights)
   p = length(groups)
-  terms = matrix(0, g)
   # first, compute the terms that go into
   # computing the dual norm
-  for (i in 1:p) {
-    terms[groups[i]] = terms[groups[i]] + U[i]^2
-  }
-  
-  for (j in 1:g) {
-    if (is.element(j, active.set)) {
-      terms[j] = 0
-    } else {
-      terms[j] = sqrt(terms[j]) / weights[j]
-    }
-  }
+  terms = sapply(g.labels, function(x) sqrt(sum(U[groups==x]^2))/weights[x])
+  active.terms = sapply(g.labels, function(x) ifelse(is.element(x, active.set), 0, 1))
+  terms = terms*active.terms
+##   terms = matrix(0, g)  
+##   for (i in 1:p) {
+##     terms[groups[i]] = terms[groups[i]] + U[i]^2
+##   }
+##   for (j in 1:g) {
+##     if (is.element(j, active.set)) {
+##       terms[j] = 0
+##     } else {
+##       terms[j] = sqrt(terms[j]) / weights[j]
+##     }
+##   }
   imax = which.max(terms)
   L = terms[imax]
   if (L <= 0) {
@@ -101,19 +105,19 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma = NULL, active.set=0) 
     XV = X %*% V[,-ncol(V)]
     XV = cbind(XV, rep(0, nrow(XV)))
     XXy = Xmax %*% Uwhich
-    if (length(dim(Sigma)) == 0) {
-      SXV = XV
+    if (!is.matrix(Sigma)) {
+      SXV = Sigma*XV
       P = SXV %*% ginv(t(XV) %*% SXV) %*% t(XV)
       OP = diag(rep(1, ncol(P))) - P
-      OPS = OP
+      Hg = OP*Sigma
     } else {
       SXV = Sigma %*% XV
       P = SXV %*% ginv(t(XV) %*% SXV) %*% t(XV)
       OP = diag(rep(1, ncol(P))) - P
-      OPS = OP %*% Sigma
+      Hg = OP %*% Sigma
     }
-    Xeta = OPS %*% X %*% eta
-    conditional_variance = t(XXy) %*% OPS %*% XXy
+    Xeta = Hg %*% XXy / (wmax * sqrt(sum(Uwhich^2)))
+    conditional_variance = t(XXy) %*% Hg %*% XXy
     # diag() coerces 1x1 matrix to numeric
     conditional_variance = diag(conditional_variance) / (wmax^2*sum(Uwhich^2))
   } else {

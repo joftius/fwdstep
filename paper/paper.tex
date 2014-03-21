@@ -35,6 +35,7 @@
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
+\renewcommand{\algorithmiccomment}[1]{\# #1}
 
 \newcommand{\argmax}{\mathop{\mathrm{argmax}}}
 \newcommand{\argmin}{\mathop{\mathrm{argmin}}}
@@ -450,7 +451,9 @@ it does so under a wide range of conditions.
 For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
 various data sets with \textit{steps} equal to $k$ and the ``average
 power'' was calculated as the number of true variables in the active
-set after $k$ steps divided by $k$. Nonzero coefficients had magnitude
+set after $k$ steps divided by $k$. (\todo Make this consistent with
+$\gamma$ in simulations section)
+Nonzero coefficients had magnitude
 in a range of multiples of $\gamma := \sqrt{2\log(G)}$, e.g. in $[1.4
 \gamma, 1.6 \gamma]$. Results are shown in
 Figure~\ref{fig:fwdstepsim}. After computing the
@@ -682,44 +685,100 @@ generally have dimension $p_g-1$.
 % on the first $r-1$ columns. For precise theorems showing that this will
 % generally work, see \cite{outerp:indep}.
 We compute an orthonormal basis by Gram-Schmidt and form a
-$p \times p_g$ matrix, which we denote $V_g$, by appending 0's in the
-coordinates corresponding to all groups $h \neq g$ and to one column
-in group $g$ (since Gram-Schmidt only produces $p_g-1$ columns).
+$p_g \times p_g$ matrix, which we denote $V_g$, by appending one column
+%0's in the coordinates corresponding to all groups $h \neq g$ and to
+of zeroes (since Gram-Schmidt only produces $p_g-1$ columns).
 With this we are ready to define the projection
 
 \begin{equation}
   \begin{aligned}
     \label{eq:proj}
-    P_g &= \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T \\
+    P_g &= \Sigma X_gV_g (V_g^T X_g^T \Sigma X_g V_g)^\dagger V_g^TX_g^T \\
    \end{aligned}
 \end{equation}
-and the conditional variance
+Also define $H_g = (I-P_g)\Sigma$ and the conditional variance
 
 \begin{equation}
   \begin{aligned}
     \label{eq:cvar}
-    \sigma^2_g &= y^TX_gX_g^T(I-P_g)\Sigma X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
+    \sigma^2_g &= y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
   \end{aligned}
 \end{equation}
-These simplify when $X_g$ is a single column, in which case $P_g = 0$
-and $\sigma^2_g = X_g^T\Sigma X_g^T$. 
+These simplify when $X_g$ is a single column, in which case $P_g = 0$,
+$H_g = \Sigma$, and $\sigma^2_g = X_g^T\Sigma X_g^T/w_g^2$. We now
+describe how to compute our p-value in Algorithm~\ref{algo:pval}. Note
+that $F_{\chi^2_r}$ denotes the distribution function of a $\chi^2$
+random variable with $r$ degrees of freedom.
+%Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
 
-Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
 \begin{algorithm}
   \caption{Computing p-value}
   \label{algo:pval}
   \begin{algorithmic}[1]
-    \REQUIRE Response $y$, design matrix $X$, index $g$ of next group to enter
-    \ENSURE P-value for testing if $g$ and all other remaining groups are noise
+    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
+    \ENSURE Our p-value for the group $g$ entering the model.
+    \STATE Compute $H_g$ and $\sigma^2_g$
+    \IF{$X_g$ is a single column}
+    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
+    \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
+    \ELSE
+    \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
+    \STATE $H_g \gets (I - P_g)\Sigma$
+    \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
+    \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
+    \ENDIF
     \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$, $r \gets \text{rank}(X_g)$
-%    \IF{$X_g$ is a single column}
-%    \STATE $P_g \gets 0$ is an $n \times n$ matrix
-%    \STATE $\sigma^2_g \gets X_g^T \Sigma X_g$
-%    \ELSE
-    \STATE Compute $P_g$, $\sigma^2_g$ from equations \ref{eq:proj} and
-      \ref{eq:cvar}
-%    \ENDIF
-    \RETURN $A$
+%    \STATE \COMMENT{Compute the following two $p$-vectors}
+    \STATE $a \gets X^T(y - \lambda \tilde X_g)$
+    \STATE $b \gets X^T \tilde X_g$
+    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinFrac}(a,b) optimization subproblem
+    \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
+    \RETURN $u$
+  \end{algorithmic}
+\end{algorithm}
+
+We next describe the \textsc{LinFrac} subproblem and its solution. We
+gave the problem this name because it originated in the form
+\[
+\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
+{1 - u_g^TX_g^TX_hu_h}
+\]
+The solution we describe next is to a slightly different problem, and
+also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
+For details see Appendix~\ref{app:closedform} or \cite{tests:adaptive}.
+
+\begin{algorithm}
+  \caption{The \textsc{LinFrac} optimization subproblem}
+  \label{algo:linfrac}
+  \begin{algorithmic}[1]
+    \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
+%(we take $1e^{-10}$)
+    \ENSURE Solution pair $(v_-, v_+)$.
+    \FOR{$h$ in $A^c$}
+      \IF{$\norm{b_h}_2 == 0$ or $\norm{a_h}_2/\norm{b_h}_2 < \text{tol}$}
+        \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+      \ELSE
+        \STATE $\theta_c \gets a_h^Tb_h/(\norm{a_h}_2 \norm{b_h}_2)$
+        \STATE $\theta_s \gets \sqrt{1-\theta_c^2}$
+        \STATE $\theta \gets \arccos (\theta_c)$
+        \STATE $\phi_s \gets \theta_s \norm{b_h}_2 / w_h$
+        \IF{$\phi_s > 1$}
+          \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+        \ELSE
+          \STATE $\phi \gets \arcsin(\phi_s)$
+%          \STATE $\phi_2 \gets \pi - \phi_1$
+          \STATE $z_\pm \gets s_\pm \norm{a_h}_2 \cos(\phi) /(w_h - s_\pm \norm{b_h}_2 \cos(\theta - \phi))$ for $s_\pm = \pm 1$
+          \IF{$\norm{b_h}_2 < w_h$}
+            \STATE $(v_h^-, v_h^+) \gets (\max \{ z_+, z_- \}, \infty)$
+          \ELSE
+            \STATE $(v_h^-, v_h^+) \gets (\min \{ z_+, z_- \}, \max \{ z_+, z_- \})$
+          \ENDIF
+        \ENDIF
+      \ENDIF
+    \ENDFOR
+    \STATE $v^- \gets \min_h v_h^-$
+    \STATE $v^+ \gets \max_h v_h^+$
+    \RETURN $(v^-, v^+)$
   \end{algorithmic}
 \end{algorithm}
 
@@ -745,7 +804,8 @@ Section~\ref{sec:hiv}
 
 Since we are interested in variable selection we generate signals with
 nonzero coefficients on the scale of $\gamma := \sqrt{2 \log(p)/n}$.
-(\todo Cite some paper on support recovery?). Coefficients within a
+(\todo Check this scaling. \todo Cite some paper on support recovery?).
+Coefficients within a
 nonzero group have roughly the same magnitude, and the magnitudes for
 each nonzero group range from a lower limit times $\gamma$ to an upper
 limit times $\gamma$. In plots, the limits are listed next to ``beta:''
@@ -770,20 +830,19 @@ $\chi^2$ significance test.
 The points in these lines are the average p-value at that step, and
 the triangles above and below show the 95\% and 5\% quantiles.
 
-
 \begin{figure}[h]
 \begin{center}
-\subfigure[Gaussian design]{
-\label{fig:smallgauss}
+\subfigure[Gaussian with correlations]{
+\label{fig:gausscorr}
 \includegraphics[width=0.5\textwidth]{../figs/gaussian_n100_p200_g200_k5_lower1pt5_upper2_corr0pt2_noisecorr0pt1.pdf}}
 \hspace{-15pt}
-\subfigure[Categorical design]{
-\label{fig:smallcat}
-\includegraphics[width=0.5\textwidth]{../figs/categorical_n100_p100_g20_k4_lower4_upper5.pdf}}
+\subfigure[Gaussian with groups]{
+\label{fig:gaussgroups}
+\includegraphics[width=0.5\textwidth]{../figs/gaussian_n100_p200_g35_k5_lower2_upper2pt5.pdf}}
 \caption{\small \it The left panel shows results for Gaussian design
 matrices with equicorrelation $\rho=0.2$ and equicorrelated noise with
-correlation 0.1. The right panel shows results for categorical matrices
-with all categories having 5 levels.}
+correlation 0.1. The right panel shows results for an independent
+Gaussian design with groups of sizes 5 and 10.}
 \end{center}
 \end{figure}
 
@@ -794,32 +853,21 @@ with all categories having 5 levels.}
 
 \begin{figure}[h]
 \begin{center}
-\subfigure[Large Gaussian lasso]{
-\label{fig:largelasso}
-\includegraphics[width=0.5\textwidth]{../figs/gaussian_size5-10_n100_p200_g35_k10_lower1p8_upper1p9.pdf}}
+\subfigure[Real data categorical design]{
+\label{fig:hivnrti}
+\includegraphics[width=0.5\textwidth]{../figs/HIV_NRTI_n848_p48_g14_k4_lower21_upper25.pdf}}
 \hspace{-15pt}
-\subfigure[Large Gaussian group lasso]{
-\label{fig:largegrplasso}
-\includegraphics[width=0.5\textwidth]{../figs/gaussian_size5-10_n100_p200_g35_k10_lower1p8_upper1p9_corr0p1.pdf}}
-\caption{\small \it The left panel shows results of a simulation with
-  an independent Gaussian design matrix and a signal vector having
-  three groups with non-zero coefficients of sizes one, two, and
-  three, and seven groups of noise variables with sizes varying from
-  one to ten, for a total of 30 variables. For the right panel we
-  repeated this setup, but group sizes corresponded to levels of
-  categorical variables. The groups of size one were increased to two,
-so there are 10 categorical variables with a total of 32 levels.}
+\subfigure[Simulated categorical design]{
+\label{fig:gausscat}
+\includegraphics[width=0.5\textwidth]{../figs/categorical_n100_p100_g20_k4_lower4_upper5.pdf}}
+\caption{\small \it The left panel shows results for a categorical design
+taken from a real data set.
+The right panel shows results for categorical matrices with all categories having 5 levels.}
 \end{center}
 \end{figure}
 
 \input{../large_sim_selection.tex}
 
-The large simulation has 50 groups, 25 of size 1, 10 of size 5, 10 of
-size 10, and 5 of size 15. Signal vectors were supported on random
-choices of 10 of these groups (changing in each realization), with
-non-zero signal magnitude around $\sqrt{2\log p}$ where $p = 250$
-(roughly 3.3). The design matrix had 200 rows and the simulation
-performed 100 realizations.
 
 
 
@@ -1020,6 +1068,7 @@ get an exact p-value at every step. \\
 
 \appendix
 \section{Derivation of closed forms of statistic}
+\label{app:closedform}
 
 \todo Clean this section \\
 \todo Make $M=\lambda_2$ a special case corollary \\

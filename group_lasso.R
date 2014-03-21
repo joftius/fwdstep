@@ -14,7 +14,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   normb = sqrt(sum(b^2))
 
   if (normb == 0) {
-#    stop("Something is wrong, norm(b) can't be zero!")
+#    stop("Something is wrong, norm(b) shouldn't be zero!")
     return(c(0, Inf))
   }
   

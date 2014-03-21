@@ -131,12 +131,12 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 
 Forward stepwise regression is a classical model selection procedure
 that begins with an empty model and sequentially adds the best predictor
-variable in each step. Classical significance tests fail
-when a model
-has been selected this way and tend to be anti-conservative.
-In the lasso setting, \cite{significance:lasso} derived a novel test
-statistic along with a correct asymptotic distribution, making possible
-valid inferences after model selection.
+variable in each step. The usual $\chi^2$ and $F$-tests for significance
+fail when a model has been selected this way and tend to be
+anti-conservative unless they are computed on a held-out validation
+dataset. In the lasso setting, \cite{significance:lasso} derived
+a novel test statistic and its asymptotic null distribution, making
+possible valid inferences after model selection using the full data.
 \cite{tests:adaptive} modified and extended those results to the
 group lasso \citep{grouplasso} and other penalized regression
 problems, but only under the global null hypothesis.
@@ -199,7 +199,7 @@ Its popularity among researchers continues despite the fact that it
 invalidates inferences using the standard $\chi^2$ or $F$-tests.
 
 
-Some classical attempts to address this issue include Monte Carlo
+Some attempts to address this issue include Monte Carlo
 estimation of tables of adjusted $F$-statistic values \citep{mc:ftoenter},
 and permutation statistics \citep{permutation:stop}. Aside from the works
 this paper is based on, there have been other recent attempts to do
@@ -217,7 +217,7 @@ step, not only in the case of binary encoding for categorical
 variables but also for any grouping purpose. For example, groups of
 variables may be pre-designated factors such as expression
 measurements for all genes in a single functional pathway.
-To emphasize this we will use $g, h$ as indices rather than the usual
+To emphasize this we use $g, h$ as indices rather than the usual
 $i, j$ throughout. Since single variables can be considered groups of
 size 1, our general exposition includes non-grouped situations as a special
 case. Our variant of forward stepwise uses a different method than
@@ -262,12 +262,12 @@ y & = X \beta + \sigma \epsilon \\
 \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where $\epsilon$ is noise. Unless otherwise specified we assume
-i.i.d. Gaussian noise $\epsilon \sim N(0, I_{n \times n})$ and that
-$\sigma$ is known.
+where $\epsilon$ is noise. We assume Gaussian noise
+$\epsilon \sim N(0, \Sigma)$ with known covariance matrix $\Sigma$.
 
-We allow for the possibility $p > n$ in which case \eqref{eq:gmodel} is
-generically underdetermined. In such cases it still may be possible to
+
+The model \eqref{eq:gmodel} is underdetermined when $p > n$.
+In such cases it still may be possible to
 estimate $\beta$ well if it is sparse--that is, if it has few nonzero
 entries. In the rest of this paper we refer to variable groups $X_g$
 as noise groups if $\beta_g$ is a zero vector and as true or signal
@@ -279,7 +279,7 @@ Before we describe the forward stepwise procedure we require one last
 ingredient. To each group of variables we assign a weight $w_g$. These
 weights act like penalties or costs, so increasing $w_g$ makes it
 more difficult for the group $X_g$ to enter the model. The
-modeler can choose weights arbitrarily, but we will mostly use one
+modeler can choose weights arbitrarily, but we mostly use one
 particular choice, based on $p_g$, that we discuss later. With this we
 are ready to describe the forward stepwise procedure.
 
@@ -330,20 +330,22 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
     \STATE $A \gets \emptyset$, $A^c \gets \{ 1, \ldots, G\}$
     \FOR{$s=1$ to $steps$}
     \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$
-    \STATE $P \gets I - X_{g^*}X_{g^*}^\dagger$
+    \STATE $P_g \gets I_{n\times n} - X_{g^*}X_{g^*}^\dagger$
     \STATE $A \gets A \cup \{ g^* \}$, $A^c \gets A^c \backslash \{ g^* \}$
     \FORALL{$g \in A^c$}
-      \STATE $X_g \gets P X_g$
+      \STATE $X_g \gets P_g X_g$
     \ENDFOR
-    \STATE $r_s \gets P r_{s-1}$
+    \STATE $r_s \gets P_g r_{s-1}$
     \ENDFOR
     \RETURN $A$
   \end{algorithmic}
 \end{algorithm}
 
-In the common case where all groups are single variables this version
-coincides with the standard implementations of forward stepwise.
-We will now use forward stepwise to refer specifically to
+The active set $A$ contains variable groups chosen to be included in
+the model. Fitting $\hat \beta$ can be done by tracking the individual
+fits and projections, or by simply fitting a linear model on the submatrix
+of $X$ corresponding to $A$. 
+We now use forward stepwise to refer specifically to
 Algorithm~\ref{algo:fs} unless otherwise specified. Note that other
 implementations of forward stepwise use different criteria for choosing
 the next variable to add, such as the correlation with the residual.
@@ -534,7 +536,7 @@ test statistic $T_k \propto \lambda_k(\lambda_k - \lambda_{k+1})$ is
 asymptotically Exp(1). In the lasso case we know a lot about the knots
 and active set, but the group lasso picture is slightly more
 complicated. For the group lasso, $\hat \beta(\lambda)$ does not have
-piecewise linear components. To overcome this difficulty we will
+piecewise linear components. To overcome this difficulty we
 restrict our attention to the first group of variables to enter the
 active set since the analysis then follows almost exactly as for the
 lasso.
@@ -675,8 +677,8 @@ this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
 should be the case since $g$ maximizes the absolute value of this
 quantity), then the
 space is trivial and the desired orthogonal projection is the identity.
-Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$ will
-generally have dimension $p_g-1$.
+Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
+generally has dimension $p_g-1$.
 % have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
 % degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
 % likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
@@ -714,7 +716,7 @@ random variable with $r$ degrees of freedom.
 \begin{algorithm}
   \caption{Computing p-value}
   \label{algo:pval}
-  \begin{algorithmic}[1]
+  \begin{algorithmic}
     \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
     \ENSURE Our p-value for the group $g$ entering the model.
     \STATE Compute $H_g$ and $\sigma^2_g$
@@ -727,17 +729,18 @@ random variable with $r$ degrees of freedom.
     \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
     \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
     \ENDIF
-    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$, $r \gets \text{rank}(X_g)$
+    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
 %    \STATE \COMMENT{Compute the following two $p$-vectors}
     \STATE $a \gets X^T(y - \lambda \tilde X_g)$
     \STATE $b \gets X^T \tilde X_g$
-    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinFrac}(a,b) optimization subproblem
+    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
+    \STATE $r \gets \text{rank}(X_g)$
     \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
     \RETURN $u$
   \end{algorithmic}
 \end{algorithm}
 
-We next describe the \textsc{LinFrac} subproblem and its solution. We
+We next describe the \textsc{LinearFractional} subproblem and its solution. We
 gave the problem this name because it originated in the form
 \[
 \maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
@@ -748,9 +751,9 @@ also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
 For details see Appendix~\ref{app:closedform} or \cite{tests:adaptive}.
 
 \begin{algorithm}
-  \caption{The \textsc{LinFrac} optimization subproblem}
+  \caption{The \textsc{LinearFractional} optimization subproblem}
   \label{algo:linfrac}
-  \begin{algorithmic}[1]
+  \begin{algorithmic}
     \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
 %(we take $1e^{-10}$)
     \ENSURE Solution pair $(v_-, v_+)$.
@@ -903,8 +906,8 @@ $\tilde G = G + \binom{G}{2} = O(G^2)$ groups. We refer to the first
 $G$ of these as main effects or main effect groups, and the remaining
 as interaction groups. Finally, instead of fitting a
 model by group lasso, we use forward stepwise on the expanded design
-matrix. The overlapping groups still guarantee that our fitted model will
-satisfy the strong hierarchy condition. 
+matrix. The overlapping groups still guarantee that our fitted model
+satisfies the strong hierarchy condition. 
 
 %However, we must first modify our implementation of forward stepwise to prevent the possibility of including main effect groups after the main effects are already included in the model as part of an interaction group. To do this we compute the residual using the whole model in each step, rather than by subtracting the effect of the current group being included. For a set of group indices $A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the design matrix containing all the groups in $A$.
 % \begin{algorithm}
@@ -1004,7 +1007,7 @@ drugs in treating HIV. Quantitative measurements of drug
 response/resistance were regressed on categorical covariates encoded
 the presence and type of certain genetic mutations. We attempt a similar
 analysis using forward stepwise, and report our P-value at each step.
-Categorical covariates are encoding as groups of binary variables using
+Categorical covariates are encoded as groups of binary variables using
 the full encoding, and weights are set to the square-root of the
 number of levels for that covariate. We perform forward stepwise once
 for each drug response, restricting to the subset of the data with
@@ -1028,7 +1031,10 @@ greater observations in each level.
 \end{figure}
 
 Results from two data sets are displayed in Figure~\ref{fig:HIVPI} and
-Figure~\ref{fig:HIVNRTI}. Each panel shows results for a different drug,
+Figure~\ref{fig:HIVNRTI}. The PI data contains protease inhibitor
+resistance mutations, and the NRTI data contains nucleoside RT inhibitor
+resistance mutations.
+Each panel shows results for a different drug,
 with p-values plotted by step in forward stepwise. The solid black point
 is the last p-value to fall under the 0.1 threshold and points after it
 are colored red. If the \textit{last} stopping rule were used then the
@@ -1098,7 +1104,7 @@ b_h &= w_g w_h^{-1} X_h^T P_g y / \norm{X_g^T y} \\
 c_h &= a_h^T b_h / (\norm{a_h} \norm{b_h}) \\
 K_h   &= \{ x : \norm{x} = 1, b_h^Tx > w \}
 \end{align*}
-Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We will consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
+Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
 
 Now, if $a_h$ is in the polar cone of $K_h$ (and ruling out the probability zero case where $a_h^Tx = 0$ on the boundary of $K_h$), then the numerator $a_h^Tx < 0$ on $K_h$ so there is a finite positive infimum in the interior $K_h$. Similarly there is a finite positive supremum on the interior of $K_h^c$ (the numerator is negative near the boundary of $K_h$ by continuity).
 

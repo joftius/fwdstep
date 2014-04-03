@@ -68,6 +68,8 @@
 \newcommand{\vecsp}{\mathcal{L}}
 \newcommand{\gstar}{g^*}
 
+\newcommand{\jonathan}[1]{{\color{blue}  #1}}
+
 \begin{document}
 
 \begin{frontmatter}
@@ -142,7 +144,8 @@ group lasso \citep{grouplasso} and other penalized regression
 problems, but only under the global null hypothesis.
 One of the strengths of these test statistics is that they can be
 used for valid significance testing when computed on the same
-data used for model selection, eliminating the need for data splitting.
+data used for model selection, eliminating the need for data splitting or for situations in which
+data splitting is not appropriate.
 The present work iteratively applies the global null test
 of \cite{tests:adaptive} for each step in forward stepwise selection,
 and works out some of the details necessary for
@@ -154,10 +157,10 @@ regularization parameters chosen by cross-validation.
 
 In Section~\ref{sec:stepwise} we establish notation and describe the
 forward stepwise algorithm used in most of the paper.
-Section~\ref{sec:testing} briefly reviews
-the parts of \cite{significance:lasso} and \cite{tests:adaptive}
-relevant to our significance test, and describes the group lasso which
-we require for applying the test with grouped variables.
+Section~\ref{sec:testing}  reviews some recent work on
+post-selection inference: \cite{significance:lasso,tests:adaptive,lasso:fixed}
+relevant to our work here, and we describes a general framework
+for post-selection inference based on quadratic comparisons.
 Simulation results in Section~\ref{sec:simulations} show
 empirically that our method performs well in settings where forward
 stepwise itself performs well, and that
@@ -232,7 +235,7 @@ $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
 the number of individual variables or columns in group $g$.
 % Do we need to assume $p_g \ll n$ or $\text{rank}(X_g) = p_g$?
 When a group encodes a categorical variable as binary indicators for the
-levels of that variable, we use the full encoding with a column for every
+levels of that variable, by default we use the full encoding with a column for every
 level. Although this introduces collinearity, our method does not require
 the design matrix to have full rank.
 
@@ -246,7 +249,7 @@ by column-binding the $X_g$, that is
 X = \begin{pmatrix} X_1 & X_2 & \cdots & X_G  \end{pmatrix}
 \end{equation*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-We assume throughout that the individual columns of $X$ are scaled to
+For convenience, we assume throughout that the individual columns of $X$ are scaled to
 have unit 2-norm (we do not scale groups, this is accomplished later
 by weighting).
 With each group we associate the $p_g \times 1$ coefficient vector
@@ -257,13 +260,13 @@ response is
 \begin{equation}
 \begin{aligned}
 \label{eq:gmodel}
-y & = X \beta + \sigma \epsilon \\
+y | X& = X \beta + \sigma \epsilon \\
    & = \sum_{g=1}^G X_g \beta_g + \sigma \epsilon
 \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 where $\epsilon$ is noise. We assume Gaussian noise
-$\epsilon \sim N(0, \Sigma)$ with known covariance matrix $\Sigma$.
+$\epsilon | X \sim N(0, \Sigma)$ with known covariance matrix $\Sigma$.
 
 
 The model \eqref{eq:gmodel} is underdetermined when $p > n$.
@@ -321,6 +324,9 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
 % \label{algo:fs}
 % \end{algorithm}
 
+\jonathan{Is $r_0=0$ or $y$? Should be defined in the algorithm. I also put a $y$ in below which I'm not sure
+is correct or not. }
+
 \begin{algorithm}
   \caption{Forward stepwise variant with groups and weights}
   \label{algo:fs}
@@ -329,13 +335,13 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
     \ENSURE Ordered active set $A$ of variable groups included in the model at each step
     \STATE $A \gets \emptyset$, $A^c \gets \{ 1, \ldots, G\}$
     \FOR{$s=1$ to $steps$}
-    \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$
-    \STATE $P_g \gets I_{n\times n} - X_{g^*}X_{g^*}^\dagger$
+    \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T(y- r_{s-1})}_2 / w_g \}$
+    \STATE $P_{g^*} \gets I_{n\times n} - X_{g^*}X_{g^*}^\dagger$
     \STATE $A \gets A \cup \{ g^* \}$, $A^c \gets A^c \backslash \{ g^* \}$
-    \FORALL{$g \in A^c$}
-      \STATE $X_g \gets P_g X_g$
+    \FORALL{$h \in A^c$}
+      \STATE $X_h \gets P_{g^*} X_h$
     \ENDFOR
-    \STATE $r_s \gets P_g r_{s-1}$
+    \STATE $r_s \gets P_{g^*} r_{s-1}$
     \ENDFOR
     \RETURN $A$
   \end{algorithmic}
@@ -350,8 +356,9 @@ Algorithm~\ref{algo:fs} unless otherwise specified. Note that other
 implementations of forward stepwise use different criteria for choosing
 the next variable to add, such as the correlation with the residual.
 Since we do not renormalize the columns after projecting the covariates
-(lines 6 to 8 above), and since we have weights, we are not computing
-correlations unless the design matrix is orthogonal and all weights are 1.
+(lines 6 to 8 above), and since we have weights, we are generally not computing
+correlations unless the design matrix is orthogonal and all weights are 1. We could
+renormalize the columns, though we choose not to.
 There are advantages and disadvantages to both criteria which we do not
 discuss. Our choice was motivated by the group lasso result in
 \cite{tests:adaptive}, but we believe other criteria can be handled
@@ -362,7 +369,7 @@ with appropriate modifications.
 Among model selection procedures, forward stepwise is one which performs
 variable selection: from a potentially large set of variables it chooses
 a subset to include in the model. The most general form of variable
-selection is called subset selection, a procedure which searches among
+selection is  "best-subset" selection, a procedure which searches among
 all $2^G$ subsets of $G$ variable groups and picks the best model.
 This exhaustive search is computationally infeasible when $G$ is
 large, and when possible it still
@@ -450,10 +457,16 @@ it does so under a wide range of conditions.
 \end{center}
 \end{figure}
 
+\jonathan{Is average power the same as TPR (or, more correctly, TPP)?}
+
+
 For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
 various data sets with \textit{steps} equal to $k$ and the ``average
 power'' was calculated as the number of true variables in the active
-set after $k$ steps divided by $k$. (\todo Make this consistent with
+set after $k$ steps divided by $k$:
+$$
+\text{Power}_k = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
+$$ (\todo Make this consistent with
 $\gamma$ in simulations section)
 Nonzero coefficients had magnitude
 in a range of multiples of $\gamma := \sqrt{2\log(G)}$, e.g. in $[1.4
@@ -499,10 +512,8 @@ problems, and modified the test statistic to one with an exact finite
 sample distribution under the global null hypothesis.
 
 
-
-
-Writing $\hat \beta(\lambda)$ for the lasso solution for a fixed value of $\lambda$, we need
-the following facts summarized in \cite{significance:lasso} (ref Tibs2012?).
+Writing $\hat \beta(\lambda)$ for the lasso solution for a fixed value of $\lambda$, we recall
+the following facts summarized in \cite{significance:lasso,tibshirani_lasso_uniqueness}.
 
 \begin{itemize}
 
@@ -510,37 +521,33 @@ the following facts summarized in \cite{significance:lasso} (ref Tibs2012?).
     continuous function of $\lambda$. For the lasso path, the
     coordinates of $\hat \beta(\lambda)$ are piecewise linear with
     changes in slope occurring at a finite number of $\lambda$ values
-    referred to as \emph{knots}. The knots depend on the data and are
+    referred to as \emph{knots}. 
+    \item The knots depend on the data and are
     usually written in order $\lambda_1 \geq \lambda_2 \geq \cdots
-    \geq \lambda_r \geq 0$. We follow this convention. 
-
-  \item The \emph{active set} $A_k$ is a set of indices of variables
-    for which the corresponding coordinates of $\hat \beta(\lambda_k)$
-    are potentially nonzero. Any variable with index not in $A_k$ has
-    a zero coefficient in $\hat \beta(\lambda_k)$, but the converse is
-    not true. \todo{is this equicorrelation set?}
-  
-  \item Path algorithms for computing lasso solutions proceed by
-    fitting models at a grid of $\lambda$ values. The active set
-    changes whenever $\lambda$ crosses a knot, and predictor variables
-    can both enter and leave the active set. However, at the first two
-    knots $\lambda_1$ and $\lambda_2$ no variable can leave the active
-    set. So the first two knots correspond to the first two variables
-    entering the model. 
+    \geq \lambda_r \geq 0$. 
 
 \end{itemize}
 
-\cite{significance:lasso} prove that under the null hypothesis that $A_k$
-contains all the strong predictor variables, the distribution of a
-test statistic $T_k \propto \lambda_k(\lambda_k - \lambda_{k+1})$ is
-asymptotically Exp(1). In the lasso case we know a lot about the knots
-and active set, but the group lasso picture is slightly more
-complicated. For the group lasso, $\hat \beta(\lambda)$ does not have
-piecewise linear components. To overcome this difficulty we
-restrict our attention to the first group of variables to enter the
-active set since the analysis then follows almost exactly as for the
-lasso.
+The covariance test (assuming $X$'s columns are of length one and $\Sigma = \sigma^2 I$ is at the
+first step by
+\begin{equation}
+\label{eq:covtest}
+T_1 = \frac{\lambda_1(\lambda_1-\lambda_2)}{\sigma^2} \overset{n,p \to \infty}{\to} \text{Exp}(1).
+\end{equation}
+In \cite{tests:adaptive} it is pointed out 
+\begin{equation}
+\label{test:exact}
+\exp\left(- \frac{\lambda_1(\lambda_1-\lambda_2)}{\sigma^2} \right) \approx \frac{1 - \Phi(\lambda_1/\sigma)}{1 - \Phi(\lambda_2 / \sigma)} \overset{D}{=} \text{Unif}(0,1).
+\end{equation}
+Further, the above test statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
+{\em conditional} on which variable achieves $\lambda_1$ as well as its sign.
+The limiting results about later steps in \cite{significance:lasso} can (formally) be interpreted as
+recursively applying $T_1$ to the variables that had not previously been selected by LARS.
 
+In the setting of grouped variables, we use an analogous test statistic to
+the right hand side of \cite{test:exact}. The test statistic is presented as an example
+in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
+from the group LASSO.
 
 The \emph{group lasso estimator} is a solution to the following convex
 problem
@@ -560,6 +567,24 @@ across groups.  Note that this includes the usual lasso estimator as a
 special case when all of the groups are of size 1, since then the
 penalty term is the $L^1$-norm of $\beta$. 
 
+There is a largest value of $\lambda$ such that $\hat{\beta}_{\lambda}=0$ which corresponds to $\lambda_1$
+in the LASSO setting:
+\begin{equation}
+\label{eq:lammax}
+\lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 . 
+\end{equation}
+Formally, the value above is just the dual norm of the penalty
+$$
+{\cal P}(\beta) = \sum_{g=1}^G w_g \| \beta_g \|_2
+$$
+hence it can be expressed as
+\begin{equation}
+\label{eq:lammax}
+\lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 = \frac{1}{w_{g^*}}\eta_{g^*}^TX_{g^*}^Ty . 
+\end{equation}
+where $g^*$ is the group that achieves the max and 
+$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the $\ell_2$ unit vector that achieves $\|X_{g^*}^Ty\|_2$.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -573,55 +598,56 @@ coefficients within the groups.  For a survey on group lasso and
 related factor models see (ref???). \todo review some more literature
 and add a few more references here if they seem worthwhile. 
 
+\begin{figure}
+\begin{center}
+\resizebox{!}{3in}{\input{curved.pdf_tex}}
+\end{center}
+Selection conditioned on an arbitrary selection event.
+\end{figure}
+We are interested in inference after a selection procedure, say, $S$, for
+which the selection event is the intersection of a list of quadratic inequalities:
 
-Before considering the group lasso, we review some ingredients of the
-proof for the lasso. Let $J = \{ 1, 2, \ldots, p \}$ index variables
-and consider a stochastic process $f_{j,s} = sX_j^Ty$ defined on $T =
-J \times [ -1, 1 ]$. This stochastic process is simply a collection of
-linear combinations of $y$, hence it is Gaussian under the assumption
-of Gaussian errors. The \emph{Karush-Kuhn-Tuckher (KKT) conditions}
-(ref???) imply that $\lambda_1 = \max_j |X_j^Ty|$. By introducing the
-sign variable $s$, we can remove the absolute value and write
-$\lambda_1$ as the maximum of our Gaussian process 
-
-\begin{equation}
-\lambda_1 = \max_{(j,s)} f_{j,s}
-\end{equation}
-
-We have exhibited the first knot as the maximum of a Gaussian
-process. We can do this for the second knot by introducing a new
-process. Let $(j_1, s_1)$ be the maximizer so that $\lambda_1 =
-s_1X_{j_1}^Ty$, and define 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{equation}
+$$
 \begin{aligned}
-  f^{(j_1,s_1)}_{(j,s)} & = \frac{ sX_j^T y - s X_j^T X_{j_1} X_{j_1}^Ty  } { 1 -  ss_1 X_j^TX_{j_1}} \\
-  & = \frac{ sX_j^T(I-P_{j_1}) y }{ 1 -  s_1 X_{j_1}^T X_js}
+\{S(y)=s\} = \cap_{i \in I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
 \end{aligned}
-\end{equation}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where $P_j$ is the projection onto the subspace spanned by $X_j$. We
-can think of this as a ``residual process'' after regressing out the
-maximum. Write $M = \max_{j \neq j_1, s} f^{(j_1,s_1)}_{(j,s)}$, the
-maximum of this residual process. It can be shown from the KKT
-conditions that $M  = \lambda_2$. To summarize, we have represented
-the first two knots of the lasso solution path as the maxima of some
-natural Gaussian processes. Distributional facts about Gaussian
-processes now allow us to make conclusions about the distribution of
-functions of the knots. 
+$$
 
-\subsection{Group lasso}
-To extend this argument to the group lasso we need to define Gaussian
-processes that characterize the knots of the group lasso solution
-path.  
+The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
+assume they are symmetric.
 
-\todo Either use the simplified argument in the case of equal weights
-(equal group sizes), or finish adjusting the proof of $M = \lambda_2$
-to include the weights and use that version. The proof can go in an
-appendix. 
+If we consider forward stepwise with groups the selection procedure is just
+choosing the first group, $g^*$ and we have
+$$
+\{g^*(y)=g\} =  \cap_{h \neq g} \{y: y^T(X_hX_h^T/w_h^2 - X_gX_g^T/w_g^2)y \leq 0\}.
+$$
 
-\todo Modify write-up to match notation with \cite{tests:adaptive} and
-then paste it in here
+We want to slice through the selection event along a ray with direction $\eta$ that passes through $y$. 
+That is, we need to find
+$$
+\begin{aligned}
+\left\{t: S(y+t\eta)=s \right\} &= \cap_{i \in I(s)} \left\{t: (y+t\eta)^T Q_i (y+t\eta) + a_i^T(y+t\eta) \leq b_i\right\}. \\
+\end{aligned}
+$$
+
+For any given $i \in I(s)$ we see that
+$$
+\begin{aligned}
+\left\{t: (y+t\eta)^T Q_i (y+t\eta) + a_i^T(y+t\eta) \leq b_i\right\} &= \left\{t: t^2 \cdot \eta^TQ_i\eta + t \cdot(2 y^TQ_i\eta + a_i^T\eta) + y^TQ_iy + a_i^Ty - b_i \leq 0 \right\} \\
+&= \text{Intervals}(Q_i,a_i,b_i,y,\eta)
+\end{aligned}
+$$
+
+Each value of $\text{Intervals}(Q_i,a_i,b_i,y,\eta)$ above is one of:
+- $\emptyset$, in which case the selection event is also the $\emptyset$ (so this never occurs);
+- $(-\infty, L(Q_i,a_i,b_i,y,\eta)] \cap [U(Q_i,a_i,b_i,y,\eta), \infty)$ if $\eta^TQ_i\eta < 0$;
+- $[L(Q_i,a_i,b_i,y,\eta), U(Q_i,a_i,b_i,y,\eta)]$ if $\eta^TQ_i\eta > 0$;
+- $(-\infty, L(Q_i,a_i,b_i,y,\eta)]$ if $\eta^TQ_i\eta=0$ and $2 y^TQ_i\eta + a_i^T\eta > 0$;
+- $[U(Q_i,a_i,b_i,y,\eta), \infty)$ if $\eta^TQ_i\eta=0$ and $2 y^TQ_i\eta + a_i^T\eta < 0$;
+- $(-\infty,\infty)$ if $\eta^TQ_i\eta=0, 2 y^TQ_i\eta + a_i^T\eta = 0$ and $y^TQ_iy + a_i^Ty - b_i \leq 0$.
+
+
+
 
 \subsection{Relation to covariance test}
 

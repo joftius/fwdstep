@@ -27,9 +27,9 @@
 % put your definitions there:
 \startlocaldefs
 \usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{graphics,amssymb,color}
-\usepackage{graphicx,subfigure}
+\usepackage{algorithmic,amssymb}
+\usepackage{graphicx,xcolor}
+\usepackage{subfigure}
 %\usepackage[boxed]{algorithm2e}
 
 
@@ -495,7 +495,7 @@ single variable can be conducted by comparing the drop in residual
 sums of squares (RSS) to a $\chi^2_1$ distribution. Similarly, when
 adding a group of $k$ variables we can compare the drop in RSS to a
 $\chi^2_k$ random variable. This generally does not work when the
-group to be added has been chosen by a method that uses the data,
+group to be added has been chosen by a method that uses the data \cite{olshen:flevel},
 and in particular it fails for forward stepwise procedures adding
 the ``best'' (e.g. most highly correlated) predictor in each step. In
 that case, the test statistic (drop in RSS) does not match the
@@ -545,7 +545,7 @@ The limiting results about later steps in \cite{significance:lasso} can (formall
 recursively applying $T_1$ to the variables that had not previously been selected by LARS.
 
 In the setting of grouped variables, we use an analogous test statistic to
-the right hand side of \cite{test:exact}. The test statistic is presented as an example
+the right hand side of \eqref{test:exact}. The test statistic is presented as an example
 in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
 
@@ -589,65 +589,98 @@ $\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the $\ell_2$ unit vector that ac
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\todo Fix references below
-
-The group lasso estimator is discussed in (ref that guy's thesis) and
-(ref Yuan and Lin).  An important extension is the sparse group lasso
-(ref ???) which enforces sparsity in groups as well as sparsity of the
-coefficients within the groups.  For a survey on group lasso and
-related factor models see (ref???). \todo review some more literature
-and add a few more references here if they seem worthwhile. 
 
 \begin{figure}
+\label{fig:polytope}
 \begin{center}
-\resizebox{!}{3in}{\input{curved.pdf_tex}}
+\resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
 \end{center}
-Selection conditioned on an arbitrary selection event.
+A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
+of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
+active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
+can be written as a set of affine constraints.
 \end{figure}
-We are interested in inference after a selection procedure, say, $S$, for
-which the selection event is the intersection of a list of quadratic inequalities:
 
-$$
+\subsection{Selection events}
+
+The approach to post-selection inference described \cite{lasso:fixed}
+describes the selection event for the LASSO as a convex polytope stylized
+in Figure \ref{fig:polytope}. If all of our groups were of size 1, then
+the event that we observe a given set of variables
+in the forward stepwise path (with their signs as they enter) would also
+be described by a set of affine inequalities. This is described in more detail in \cite{exact:lars}.
+
+After selection, exact inference for a (randomly) chosen contrast $\eta(y)^T\mu$ of the mean vector
+$\mu$ is carried by considering the conditional distribution of 
+\begin{equation}
+y \sim N(\mu, \sigma^2 I) \bigl| Ay \leq b.
+\end{equation}
+See \cite{lasso:fixed,exact:lars} for further details.
+
+In the grouped variables setting, however, the event that $g^*(y)$, the first
+group chosen, is equal to some fixed group $g$ is generally not described by
+a set of affine constraints. The event can be described as
+\begin{equation}
+\label{eq:first:quadratic}
 \begin{aligned}
-\{S(y)=s\} = \cap_{i \in I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
+\{g^*(y)=g\} &= \{ \|X_g^Ty\|_2 /w_g \geq \|X_h^Ty\|_2 /w_h , \ \forall h \neq g\} \\
+&=  \{ y^T(X_g^TX_g)y / w_g - y^T(X_h^TX_h)y / w_h, \ \forall h \neq g\} \\
 \end{aligned}
-$$
+\end{equation}
+
+Hence, our selection event can be expressed as 
+the intersection of a list of quadratic inequalities. This non-affine selection event is stylized in Figure
+\ref{fig:curved}.
+In this section, we consider an arbitrary selection procedure
+$S$ that returns one of a set of possible outcomes $s \in {\cal S}$ by a set of quadratic inequalities.
+That is, for all possible outcomes $s \in {\cal S}$:
+\begin{equation}
+\label{eq:selection}
+\begin{aligned}
+\{S(y)=s\} = \cap_{i \neq I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
+\end{aligned}
+\end{equation}
 
 The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
 assume they are symmetric.
-
-If we consider forward stepwise with groups the selection procedure is just
-choosing the first group, $g^*$ and we have
+As in \cite{lasso:exact} we will be interested in some randomly chosen contrast
+$\eta(S(y))^T\mu$. In our grouped selection procedure, the procedure $S(y)=g^*(y)$
+and $\eta$ is typically 
 $$
-\{g^*(y)=g\} =  \cap_{h \neq g} \{y: y^T(X_hX_h^T/w_h^2 - X_gX_g^T/w_g^2)y \leq 0\}.
+\eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
 $$
 
-We want to slice through the selection event along a ray with direction $\eta$ that passes through $y$. 
+Having fixed $\eta$, we must slice through the selection event along a ray with direction $\eta$ that passes through $y$. 
 That is, we need to find
 $$
 \begin{aligned}
-\left\{t: S(y+t\eta)=s \right\} &= \cap_{i \in I(s)} \left\{t: (y+t\eta)^T Q_i (y+t\eta) + a_i^T(y+t\eta) \leq b_i\right\}. \\
+\left\{t: S(y+t \cdot \eta)=s \right\} &= \cap_{i \in I(s)} \left\{t: (y+t \cdot \eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}. \\
 \end{aligned}
 $$
 
-For any given $i \in I(s)$ we see that
+\begin{figure}
+\label{fig:curved}
+\begin{center}
+\resizebox{!}{3in}{\input{../figs/curved.pdf_edit_tex}}
+\end{center}
+A generic selection event, given by the intersection of a list
+of quadratic inequalities. \end{figure}
+
+The slice for any particular inequality is
 $$
 \begin{aligned}
-\left\{t: (y+t\eta)^T Q_i (y+t\eta) + a_i^T(y+t\eta) \leq b_i\right\} &= \left\{t: t^2 \cdot \eta^TQ_i\eta + t \cdot(2 y^TQ_i\eta + a_i^T\eta) + y^TQ_iy + a_i^Ty - b_i \leq 0 \right\} \\
-&= \text{Intervals}(Q_i,a_i,b_i,y,\eta)
+\lefteqn{
+\left\{t: (y+t\eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}} \\
+ & \qquad = \left\{t: t^2 \cdot \eta^TQ_i\eta + t \cdot(2 y^TQ_i\eta + a_i^T\eta) + y^TQ_iy + a_i^Ty - b_i \leq 0 \right\} \\
 \end{aligned}
 $$
-
-Each value of $\text{Intervals}(Q_i,a_i,b_i,y,\eta)$ above is one of:
-- $\emptyset$, in which case the selection event is also the $\emptyset$ (so this never occurs);
-- $(-\infty, L(Q_i,a_i,b_i,y,\eta)] \cap [U(Q_i,a_i,b_i,y,\eta), \infty)$ if $\eta^TQ_i\eta < 0$;
-- $[L(Q_i,a_i,b_i,y,\eta), U(Q_i,a_i,b_i,y,\eta)]$ if $\eta^TQ_i\eta > 0$;
-- $(-\infty, L(Q_i,a_i,b_i,y,\eta)]$ if $\eta^TQ_i\eta=0$ and $2 y^TQ_i\eta + a_i^T\eta > 0$;
-- $[U(Q_i,a_i,b_i,y,\eta), \infty)$ if $\eta^TQ_i\eta=0$ and $2 y^TQ_i\eta + a_i^T\eta < 0$;
-- $(-\infty,\infty)$ if $\eta^TQ_i\eta=0, 2 y^TQ_i\eta + a_i^T\eta = 0$ and $y^TQ_iy + a_i^Ty - b_i \leq 0$.
-
-
-
+This can be computed easily, and results in either the empty, a single interval (possibly infinite) or the union of 
+two disjoint infinite intervals. The intersection over all $I(s)$ is therefore easily computable.
+This yields an easily computable form for the slice
+\begin{equation}
+\label{eq:slice}
+\{g^*(y)=g, \eta(g^*(y))=\eta\}.
+\end{equation}
 
 \subsection{Relation to covariance test}
 
@@ -848,6 +881,7 @@ horizontal axes. The proportion of truly
 nonzero groups recovered in the first $k$ steps is denoted $k$-SP,
 where recall $k$ is the number of truly nonzero groups. 
 
+\jonathan{make the tick marks denoting the number of true groups larger -- can you not just shade the right hand part gray ? easy to do in python...}
 Finally, most of the plots below show the following information. The
 horizontal axis is the step index for forward stepwise. The dashed
 line shows the proportion of iterations where a truly nonzero variable

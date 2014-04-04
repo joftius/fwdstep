@@ -1,6 +1,6 @@
 %% Creator: Inkscape inkscape 0.48.2, www.inkscape.org
 %% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
-%% Accompanies image file 'curved.pdf' (pdf, eps, ps)
+%% Accompanies image file 'polytope.pdf' (pdf, eps, ps)
 %%
 %% To include the image in your LaTeX document, write
 %%   \input{<filename>.pdf_tex}
@@ -49,6 +49,6 @@
   \global\let\svgscale\undefined%
   \makeatother%
   \begin{picture}(1,1.02)%
-    \put(0,0){\includegraphics[width=\unitlength]{curved.pdf}}%
+    \put(0,0){\includegraphics[width=\unitlength]{../figs/polytope.pdf}}%
   \end{picture}%
 \endgroup%

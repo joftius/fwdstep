@@ -664,7 +664,7 @@ $$
 \resizebox{!}{3in}{\input{../figs/curved.pdf_edit_tex}}
 \end{center}
 A generic selection event, given by the intersection of a list
-of quadratic inequalities. \end{figure}
+of quadratic inequalities. Note that the event need not be simply connected. \end{figure}
 
 The slice for any particular inequality is
 $$
@@ -681,169 +681,227 @@ This yields an easily computable form for the slice
 \label{eq:slice}
 \{g^*(y)=g, \eta(g^*(y))=\eta\}.
 \end{equation}
+In the picture \eqref{eq:curved}, for every $\eta$, the slice \eqref{eq:slice} is a function
+of $P_{\eta}^{\perp}y$. This amounts to a proof of the following lemma.
 
-\subsection{Relation to covariance test}
-
-Consider the simple case for the first covariate to enter the model.
-In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
-\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
-
-This is Lemma 5 from \cite{significance:lasso}.
-
-\begin{itemize}
-
-  \item As in LTTT, $T = \lambda_1 (\lambda_1 - M)$ and $M = \lambda_2$
-  \item Convergence to the limiting Exp(1) distribution is too slow
-    \[
-      \frac{P(\chi_k / w_g \geq m + t/m)}{P(\chi_k / w_g \geq m)} \to e^{-t} \text{ as } m \to \infty
-    \]
-    (when the group achieving $\lambda_1$ is group $g$ and has rank $k$)
-  \item The limiting distribution only depends on $T$, but we also observe $M$
-  \item Let's just try the ratio (conditional $\chi_k$ tail probability) evaluated at $T$ and $M$ (it works better)
-  \item Going one step further, instead of using the approximation (see LTTT Proof of Lemma 5)
-    \[
-      \frac{M + \sqrt{M^2+4t}}{2} \approx M + \frac{t}{M}
-    \]
-    we can just use the left hand side
-  \item For $T = \lambda_1(\lambda_1 - M)$ the left hand side simplifies to $\lambda_1$
-  \item Now our p-value is
-    \[
-      \frac{P(\chi_k / w_g \geq \lambda_1)}{P(\chi_k / w_g \geq \lambda_2)}
-    \]   
-\end{itemize}
-
-
-\subsection{Exact p-value calculation}
-
-\todo Complete this section
-
-We now describe how to calculate our p-value, following the discussion of
-group lasso in \cite{tests:adaptive}. For the rest of this section let
-$g = \gstar$ be the index of
-the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
-%\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
-%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
-For a vector $u \in \real^p$, let $u_h$ denote the coordinates
-of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
-We can rearrange the columns of $X$ to group these adjacently, so that
-\[
-u^TX^T = \begin{pmatrix} u_1^T X_1^T & u_2^T X_2^T & \cdots & u_G^TX_G^T \end{pmatrix}
-\]
-One step of the calculation will be to find an orthonormal basis for the
-linear space $\vecsp_g = \{ u \in \real^p : u_g^T X_g^T y = 0, u_h = 0
-\text{ for all } h \neq g \}$ so that we can project orthogonally to
-this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
-should be the case since $g$ maximizes the absolute value of this
-quantity), then the
-space is trivial and the desired orthogonal projection is the identity.
-Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
-generally has dimension $p_g-1$.
-% have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
-% degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
-% likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
-% We proceed by forming the $n \times p_g$ matrix
-% $X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
-% on the first $r-1$ columns. For precise theorems showing that this will
-% generally work, see \cite{outerp:indep}.
-We compute an orthonormal basis by Gram-Schmidt and form a
-$p_g \times p_g$ matrix, which we denote $V_g$, by appending one column
-%0's in the coordinates corresponding to all groups $h \neq g$ and to
-of zeroes (since Gram-Schmidt only produces $p_g-1$ columns).
-With this we are ready to define the projection
-
+\begin{lemma}
+Suppose $S$ is a selection procedure, i.e. a map $S:\real^n \mapsto {\cal S}$
+such that for each $s \in S$ \eqref{eq:selection} holds 
+and we are given a matrix valued function $X_s \in \real^{n \times p(s)}$ of rank
+$k(s)$.
+Then, for every $\eta_s \in \real^{p(s)}$ with $\|\eta_s\|_2=1$, the
+slice
 \begin{equation}
-  \begin{aligned}
-    \label{eq:proj}
-    P_g &= \Sigma X_gV_g (V_g^T X_g^T \Sigma X_g V_g)^\dagger V_g^TX_g^T \\
-   \end{aligned}
+\label{eq:slice:general}
+\left\{t: S(y+t \cdot \eta_s)=s, \frac{X_s^Ty}{\|X_s^Ty\|_2}=\eta_s \right\}
 \end{equation}
-Also define $H_g = (I-P_g)\Sigma$ and the conditional variance
+can be described by
+a finite union of closed intervals whose endpoints are functions of 
+$(P_s^{\perp}y, (P_s- (X_s\eta_s)(X_s\eta_s)^T)y)$ where
+$P_s^{\perp}$ is projection on the orthogonal column space of $X_s$.
+Denote this set by $E(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y)$ and also define
+$$
+\begin{aligned}
+E_+(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y) &= \left\{y + t \cdot \eta_s: S(y+t \cdot \eta)=s, \frac{X_s^Ty}{\|X_s^Ty\|_2}=\eta_s \right\} \\
+\end{aligned}
+$$
+\end{lemma}
 
+In turn, this allows to derive a test statistic to test the hypothesis
+$H_{0,s}:X_s^T\mu=0$ conditional on $s$ being selected.
+\begin{lemma}
+\label{eq:test:dbn}
+Conditional on $H_{0,s} \cap E_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y)$
+the following equality holds in distribution
 \begin{equation}
-  \begin{aligned}
-    \label{eq:cvar}
-    \sigma^2_g &= y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
-  \end{aligned}
+\label{eq:chi:truncated}
+(X_s\eta_s)^Ty \overset{D}{=} \theta_s \chi_{k(s)} | (X_s\eta_s)^TE_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y) 
 \end{equation}
-These simplify when $X_g$ is a single column, in which case $P_g = 0$,
-$H_g = \Sigma$, and $\sigma^2_g = X_g^T\Sigma X_g^T/w_g^2$. We now
-describe how to compute our p-value in Algorithm~\ref{algo:pval}. Note
-that $F_{\chi^2_r}$ denotes the distribution function of a $\chi^2$
-random variable with $r$ degrees of freedom.
-%Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
+where the scale 
+$$
+\theta_s = \sigma \frac{y^TP_sy}{y^TX_sX_s^Ty}.
+$$
+\end{lemma}
 
-\begin{algorithm}
-  \caption{Computing p-value}
-  \label{algo:pval}
-  \begin{algorithmic}
-    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
-    \ENSURE Our p-value for the group $g$ entering the model.
-    \STATE Compute $H_g$ and $\sigma^2_g$
-    \IF{$X_g$ is a single column}
-    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
-    \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
-    \ELSE
-    \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
-    \STATE $H_g \gets (I - P_g)\Sigma$
-    \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
-    \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
-    \ENDIF
-    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
-%    \STATE \COMMENT{Compute the following two $p$-vectors}
-    \STATE $a \gets X^T(y - \lambda \tilde X_g)$
-    \STATE $b \gets X^T \tilde X_g$
-    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
-    \STATE $r \gets \text{rank}(X_g)$
-    \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
-    \RETURN $u$
-  \end{algorithmic}
-\end{algorithm}
+{\bf Proof:}
+For any $s$, decompose the distribution of $y$ as
+$$
+(Z^{\perp}_s,Z_s) = (P_s^{\perp}y, X_s^Ty).
+$$
+Under $H_{0,s}:X_s^T\mu=0$, the density of $Z_s$ can be written as
+$$
+(2 \pi \Sigma_s \sigma^2)^{-k(s)/2} \exp \left(-\frac{1}{2 \sigma^2} z^T\Sigma_s^{-1}z \right)
+$$
+with $\Sigma_s = X_s^TX_s$.
+Transforming to polar coordinates $(R,U)$ yields a density
+$$
+(2 \pi \Sigma_s \sigma^2)^{-k(s)/2} r^{k(s)-1} \exp \left(-\frac{r^2}{2 \sigma^2} u^T\Sigma_s^{-1}u \right), \qquad r \geq 0, \|u\|_2=1.
+$$
+Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{r(s)}$. The only thing to determine
+is the scale of the $\chi$, which must be $\sigma \|X_s\eta_s\|_2$.
 
-We next describe the \textsc{LinearFractional} subproblem and its solution. We
-gave the problem this name because it originated in the form
-\[
-\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
-{1 - u_g^TX_g^TX_hu_h}
-\]
-The solution we describe next is to a slightly different problem, and
-also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
-For details see Appendix~\ref{app:closedform} or \cite{tests:adaptive}.
-
-\begin{algorithm}
-  \caption{The \textsc{LinearFractional} optimization subproblem}
-  \label{algo:linfrac}
-  \begin{algorithmic}
-    \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
-%(we take $1e^{-10}$)
-    \ENSURE Solution pair $(v_-, v_+)$.
-    \FOR{$h$ in $A^c$}
-      \IF{$\norm{b_h}_2 == 0$ or $\norm{a_h}_2/\norm{b_h}_2 < \text{tol}$}
-        \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
-      \ELSE
-        \STATE $\theta_c \gets a_h^Tb_h/(\norm{a_h}_2 \norm{b_h}_2)$
-        \STATE $\theta_s \gets \sqrt{1-\theta_c^2}$
-        \STATE $\theta \gets \arccos (\theta_c)$
-        \STATE $\phi_s \gets \theta_s \norm{b_h}_2 / w_h$
-        \IF{$\phi_s > 1$}
-          \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
-        \ELSE
-          \STATE $\phi \gets \arcsin(\phi_s)$
-%          \STATE $\phi_2 \gets \pi - \phi_1$
-          \STATE $z_\pm \gets s_\pm \norm{a_h}_2 \cos(\phi) /(w_h - s_\pm \norm{b_h}_2 \cos(\theta - \phi))$ for $s_\pm = \pm 1$
-          \IF{$\norm{b_h}_2 < w_h$}
-            \STATE $(v_h^-, v_h^+) \gets (\max \{ z_+, z_- \}, \infty)$
-          \ELSE
-            \STATE $(v_h^-, v_h^+) \gets (\min \{ z_+, z_- \}, \max \{ z_+, z_- \})$
-          \ENDIF
-        \ENDIF
-      \ENDIF
-    \ENDFOR
-    \STATE $v^- \gets \min_h v_h^-$
-    \STATE $v^+ \gets \max_h v_h^+$
-    \RETURN $(v^-, v^+)$
-  \end{algorithmic}
-\end{algorithm}
-
+%\subsection{Relation to covariance test}
+%
+%Consider the simple case for the first covariate to enter the model.
+%In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
+%\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
+%
+%This is Lemma 5 from \cite{significance:lasso}.
+%
+%\begin{itemize}
+%
+%  \item As in LTTT, $T = \lambda_1 (\lambda_1 - M)$ and $M = \lambda_2$
+%  \item Convergence to the limiting Exp(1) distribution is too slow
+%    \[
+%      \frac{P(\chi_k / w_g \geq m + t/m)}{P(\chi_k / w_g \geq m)} \to e^{-t} \text{ as } m \to \infty
+%    \]
+%    (when the group achieving $\lambda_1$ is group $g$ and has rank $k$)
+%  \item The limiting distribution only depends on $T$, but we also observe $M$
+%  \item Let's just try the ratio (conditional $\chi_k$ tail probability) evaluated at $T$ and $M$ (it works better)
+%  \item Going one step further, instead of using the approximation (see LTTT Proof of Lemma 5)
+%    \[
+%      \frac{M + \sqrt{M^2+4t}}{2} \approx M + \frac{t}{M}
+%    \]
+%    we can just use the left hand side
+%  \item For $T = \lambda_1(\lambda_1 - M)$ the left hand side simplifies to $\lambda_1$
+%  \item Now our p-value is
+%    \[
+%      \frac{P(\chi_k / w_g \geq \lambda_1)}{P(\chi_k / w_g \geq \lambda_2)}
+%    \]   
+%\end{itemize}
+%
+%
+%\subsection{Exact p-value calculation}
+%
+%\todo Complete this section
+%
+%We now describe how to calculate our p-value, following the discussion of
+%group lasso in \cite{tests:adaptive}. For the rest of this section let
+%$g = \gstar$ be the index of
+%the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
+%%\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
+%%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
+%For a vector $u \in \real^p$, let $u_h$ denote the coordinates
+%of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
+%We can rearrange the columns of $X$ to group these adjacently, so that
+%\[
+%u^TX^T = \begin{pmatrix} u_1^T X_1^T & u_2^T X_2^T & \cdots & u_G^TX_G^T \end{pmatrix}
+%\]
+%One step of the calculation will be to find an orthonormal basis for the
+%linear space $\vecsp_g = \{ u \in \real^p : u_g^T X_g^T y = 0, u_h = 0
+%\text{ for all } h \neq g \}$ so that we can project orthogonally to
+%this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
+%should be the case since $g$ maximizes the absolute value of this
+%quantity), then the
+%space is trivial and the desired orthogonal projection is the identity.
+%Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
+%generally has dimension $p_g-1$.
+%% have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
+%% degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
+%% likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
+%% We proceed by forming the $n \times p_g$ matrix
+%% $X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
+%% on the first $r-1$ columns. For precise theorems showing that this will
+%% generally work, see \cite{outerp:indep}.
+%We compute an orthonormal basis by Gram-Schmidt and form a
+%$p_g \times p_g$ matrix, which we denote $V_g$, by appending one column
+%%0's in the coordinates corresponding to all groups $h \neq g$ and to
+%of zeroes (since Gram-Schmidt only produces $p_g-1$ columns).
+%With this we are ready to define the projection
+%
+%\begin{equation}
+%  \begin{aligned}
+%    \label{eq:proj}
+%    P_g &= \Sigma X_gV_g (V_g^T X_g^T \Sigma X_g V_g)^\dagger V_g^TX_g^T \\
+%   \end{aligned}
+%\end{equation}
+%Also define $H_g = (I-P_g)\Sigma$ and the conditional variance
+%
+%\begin{equation}
+%  \begin{aligned}
+%    \label{eq:cvar}
+%    \sigma^2_g &= y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
+%  \end{aligned}
+%\end{equation}
+%These simplify when $X_g$ is a single column, in which case $P_g = 0$,
+%$H_g = \Sigma$, and $\sigma^2_g = X_g^T\Sigma X_g^T/w_g^2$. We now
+%describe how to compute our p-value in Algorithm~\ref{algo:pval}. Note
+%that $F_{\chi^2_r}$ denotes the distribution function of a $\chi^2$
+%random variable with $r$ degrees of freedom.
+%%Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
+%
+%\begin{algorithm}
+%  \caption{Computing p-value}
+%  \label{algo:pval}
+%  \begin{algorithmic}
+%    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
+%    \ENSURE Our p-value for the group $g$ entering the model.
+%    \STATE Compute $H_g$ and $\sigma^2_g$
+%    \IF{$X_g$ is a single column}
+%    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
+%    \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
+%    \ELSE
+%    \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
+%    \STATE $H_g \gets (I - P_g)\Sigma$
+%    \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
+%    \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
+%    \ENDIF
+%    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
+%%    \STATE \COMMENT{Compute the following two $p$-vectors}
+%    \STATE $a \gets X^T(y - \lambda \tilde X_g)$
+%    \STATE $b \gets X^T \tilde X_g$
+%    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
+%    \STATE $r \gets \text{rank}(X_g)$
+%    \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
+%    \RETURN $u$
+%  \end{algorithmic}
+%\end{algorithm}
+%
+%We next describe the \textsc{LinearFractional} subproblem and its solution. We
+%gave the problem this name because it originated in the form
+%\[
+%\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
+%{1 - u_g^TX_g^TX_hu_h}
+%\]
+%The solution we describe next is to a slightly different problem, and
+%also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
+%For details see Appendix~\ref{app:closedform} or \cite{tests:adaptive}.
+%
+%\begin{algorithm}
+%  \caption{The \textsc{LinearFractional} optimization subproblem}
+%  \label{algo:linfrac}
+%  \begin{algorithmic}
+%    \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
+%%(we take $1e^{-10}$)
+%    \ENSURE Solution pair $(v_-, v_+)$.
+%    \FOR{$h$ in $A^c$}
+%      \IF{$\norm{b_h}_2 == 0$ or $\norm{a_h}_2/\norm{b_h}_2 < \text{tol}$}
+%        \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+%      \ELSE
+%        \STATE $\theta_c \gets a_h^Tb_h/(\norm{a_h}_2 \norm{b_h}_2)$
+%        \STATE $\theta_s \gets \sqrt{1-\theta_c^2}$
+%        \STATE $\theta \gets \arccos (\theta_c)$
+%        \STATE $\phi_s \gets \theta_s \norm{b_h}_2 / w_h$
+%        \IF{$\phi_s > 1$}
+%          \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+%        \ELSE
+%          \STATE $\phi \gets \arcsin(\phi_s)$
+%%          \STATE $\phi_2 \gets \pi - \phi_1$
+%          \STATE $z_\pm \gets s_\pm \norm{a_h}_2 \cos(\phi) /(w_h - s_\pm \norm{b_h}_2 \cos(\theta - \phi))$ for $s_\pm = \pm 1$
+%          \IF{$\norm{b_h}_2 < w_h$}
+%            \STATE $(v_h^-, v_h^+) \gets (\max \{ z_+, z_- \}, \infty)$
+%          \ELSE
+%            \STATE $(v_h^-, v_h^+) \gets (\min \{ z_+, z_- \}, \max \{ z_+, z_- \})$
+%          \ENDIF
+%        \ENDIF
+%      \ENDIF
+%    \ENDFOR
+%    \STATE $v^- \gets \min_h v_h^-$
+%    \STATE $v^+ \gets \max_h v_h^+$
+%    \RETURN $(v^-, v^+)$
+%  \end{algorithmic}
+%\end{algorithm}
+%
 
 
 

@@ -1,6 +1,6 @@
 
 library(MASS) # for ginv
-source('glint/group_lasso.R')
+source('gamsel/group_lasso.R')
 
 # Add a group to the active set
 update_active_set = function(active.set, group) {

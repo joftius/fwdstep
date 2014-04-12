@@ -40,7 +40,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   }
 
   # Also using group_lasso.R
-  p.value = pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), kmax)
+  p.value = pvalue(results$L, results$lower_bound, results$upper_bound, sqrt(results$var), kmax)
   new.active.set = update_active_set(active.set, imax)
   inactive.set = setdiff(unique(groups), new.active.set)
 

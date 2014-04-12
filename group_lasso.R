@@ -132,8 +132,8 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
   a = U - C_X * L
   b = C_X
   
-  Vplus = c()
-  Vminus = c()
+  V_lower = c()
+  V_upper = c()
   nm.a = c()
   nm.b = c()
   nm.labels = setdiff(c(1:g), c(active.set, imax))
@@ -143,45 +143,45 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     nm.a = c(nm.a, sqrt(sum(a[group]^2)))
     nm.b = c(nm.b, sqrt(sum(b[group]^2)))
     tf = trignometric_form(a[group], b[group], weight)
-    Vplus = c(Vplus, tf[1])
-    Vminus = c(Vminus, tf[2])
+    V_lower = c(V_lower, tf[1])
+    V_upper = c(V_upper, tf[2])
   }
 #  print(rbind(nm.labels, nm.a, nm.b))
   
-  if (length(Vplus) >= 1) {
-    Vplus = Vplus[!is.nan(Vplus)]
-    Vminus = Vminus[!is.nan(Vminus)]
-    Mplus = max(Vplus)
-    Mminus = min(Vminus)
+  if (length(V_lower) >= 1) {
+    V_lower = V_lower[!is.nan(V_lower)]
+    V_upper = V_upper[!is.nan(V_upper)]
+    lower_bound = max(V_lower)
+    upper_bound = min(V_upper)
   } else {
-    Mplus = 0
-    Mminus = Inf
+    lower_bound = 0
+    upper_bound = Inf
   }
-  return(list(L=L, Mplus=Mplus, Mminus=Mminus, var=conditional_variance, k=kmaxrank, i=imax))
+  return(list(L=L, lower_bound=lower_bound, upper_bound=upper_bound, var=conditional_variance, k=kmaxrank, i=imax))
 }
 
 # why using (sd*sigma) ???
-pvalue <- function(L, Mplus, Mminus, sd, k) {
-  first.term = pchisq((Mminus/sd)^2, k, lower.tail=TRUE)
+pvalue <- function(L, lower_bound, upper_bound, sd, k) {
+  first.term = pchisq((upper_bound/sd)^2, k, lower.tail=TRUE)
   if (first.term == 1) {
     num = pchisq((L/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
-    den = pchisq((Mplus/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
+    den = pchisq((lower_bound/sd)^2, k, lower.tail=FALSE, log.p=TRUE)
     value = exp(num - den)
   } else {
-    #print(c(Mminus, first.term, L/(sd*sigma)^2, Mplus/(sd*sigma)^2))
+    #print(c(upper_bound, first.term, L/(sd*sigma)^2, lower_bound/(sd*sigma)^2))
     num = first.term - pchisq((L/sd)^2, k, lower.tail=TRUE)
-    den = first.term - pchisq((Mplus/sd)^2, k, lower.tail=TRUE)
+    den = first.term - pchisq((lower_bound/sd)^2, k, lower.tail=TRUE)
     value = num/den
-    #print(paste("Mminus, first.term, value:", Mminus, first.term, value))
+    #print(paste("upper_bound, first.term, value:", upper_bound, first.term, value))
   }
   return(value)
 }
 
 
 
-q_0 <- function(M, Mminus, k, nsim=100) {
+q_0 <- function(M, upper_bound, k, nsim=100) {
   Z = abs(rnorm(nsim))
-  keep = Z < (Mminus - M)
+  keep = Z < (upper_bound - M)
   proportion = mean(keep)
   Z = Z[keep]
   exponent = - M*Z - M^2/2.
@@ -194,22 +194,22 @@ q_0 <- function(M, Mminus, k, nsim=100) {
   return(list(E=mean(exp(exponent - C)) * proportion, C=C))
 }
 
-Q_0 = function(L, Mplus, Mminus, H, nsim=100) {
+Q_0 = function(L, lower_bound, upper_bound, H, nsim=100) {
   
-  result1 = q_0(L, Mminus, H, nsim=nsim)
-  result2 = q_0(Mplus, Mminus, H, nsim=nsim)
+  result1 = q_0(L, upper_bound, H, nsim=nsim)
+  result2 = q_0(lower_bound, upper_bound, H, nsim=nsim)
   
   return(exp(result1$C-result2$C) * result1$E / result2$E)
 }
 
 
-pvalue_MC <- function(L, Mplus, Mminus, sd, k, sigma=1, nsim=50000) {
+pvalue_MC <- function(L, lower_bound, upper_bound, sd, k, sigma=1, nsim=50000) {
   sd = sd * sigma
   if (k > 1) {
-    return(Q_0(L / sd, Mplus / sd, Mminus / sd, k, nsim=nsim))
+    return(Q_0(L / sd, lower_bound / sd, upper_bound / sd, k, nsim=nsim))
   }
   else {
-    return(Q_0(L / sd, Mplus / sd, Mminus / sd, 1, nsim=nsim))
+    return(Q_0(L / sd, lower_bound / sd, upper_bound / sd, 1, nsim=nsim))
   }
 }
 

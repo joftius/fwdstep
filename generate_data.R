@@ -2,7 +2,7 @@
 # Functions to generate simulation data #
 #########################################
 
-library(gtools)
+#library(gtools)
 
 SigmaSqrt = function(Sigma) {
   svdS = svd(Sigma)
@@ -15,6 +15,23 @@ true_active_groups = function(groups, beta) {
   beta.ind = aggregate(beta, by=list(groups), FUN = function(beta.coords) any(beta.coords != 0))
   active.groups = beta.ind$Group.1[which(beta.ind$x == TRUE)]
   return(active.groups)
+}
+
+# An approximation to start group lasso packages
+lambda_max = function(X, Y, groups) {
+  z = t(X) %*% Y
+  return(max(aggregate(z, by=list(groups), FUN=function(x) sqrt(sum(x^2)) )$V1))
+}
+
+# Interfacing with grplasso package
+grplasso_as = function(grplasso.fit, all.groups) {
+  inds = which(grplasso.fit$coefficients != 0)
+  return(unique(all.groups[inds]))
+}
+
+# active = true.active set, as = selected active set
+ave_pow= function(num.nonzero, active, as) {
+  return(length(intersect(active, as[1:num.nonzero]))/num.nonzero)
 }
 
 # Staircase signal
@@ -96,9 +113,15 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
 
 # Normalize columns by 2-norm
 col_normalize = function(X) {
-  norms = sqrt(colSums(X^2))
-  norms = ifelse(norms == 0, 1, norms)
-  return(t(t(X) / norms))
+  if (is.matrix(X)) {
+    norms = sqrt(colSums(X^2))
+    norms = ifelse(norms == 0, 1, norms)
+    return(t(t(X) / norms))
+  } else {
+    norm = sqrt(sum(X^2))
+    norm = ifelse(norm == 0, 1, norm)
+    return(X/norm)
+  }
 }
 
 # Normalize groups by Frobenius norm
@@ -298,7 +321,7 @@ generate_glinternet = function(X, groups, cat.groups = NULL) {
 # num.nonzero should be divisible by 3
 # Note: at most (5/3)*num.nonzero main effects and (2/3)*num.nz interactions
 # are included, but group sparsity still = num.nonzero
-beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.main, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups) {
+beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.main, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups = NULL) {
 
   num.ints = num.nonzero - num.main
   if (num.ints < 0) {

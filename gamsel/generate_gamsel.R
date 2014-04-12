@@ -22,7 +22,7 @@ source('generate_data.R')
 # all.groups: include main effects and their copies with interactions
 # int.groups: list, the [[g]]'th element contains all group indices that group g appears in
 
-generate_gamsel = function(X, groups, degrees = 3) {
+generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE) {
   group.labels = unique(groups)
   G = length(group.labels)
   gmax = max(group.labels)
@@ -49,13 +49,16 @@ generate_gamsel = function(X, groups, degrees = 3) {
     if (sum(col) > 1) {
       stop("Currently only supports groups of size 1")
     }
-    spline.basis = bs(X[ ,col], degree = degree)
+    spline.basis = bs(col_normalize(X[ ,col]), degree = degree)
     X.out = cbind(X.out, X[, col])
     X.out = cbind(X.out, spline.basis)
     all.groups = c(all.groups, rep(gnew, 1+ncol(spline.basis)))
   }
   
   colnames(X.out) = NULL
+  if (col.normalize) {
+    X.out = col_normalize(X.out)
+  }
   return(list(X=X.out, all.groups=all.groups, spline.groups=spline.groups, linear.groups=linear.groups))
 }
 
@@ -138,7 +141,7 @@ beta_gamsel = function(groups, all.groups, spline.groups, num.nonzero, num.linea
       s.linear = 1
       spline.part = which(group)[-1]
       s.spline = length(spline.part)
-      beta[spline.part] = sqrt(3)*beta[spline.part]/sqrt(length(spline.part))
+      beta[spline.part] = 5*beta[spline.part]/sqrt(length(spline.part))
       bg.linear.norm = sqrt(sum(beta[linear.part]^2))
       bg.spline.norm = sqrt(sum(beta[spline.part]^2))
       

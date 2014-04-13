@@ -26,12 +26,12 @@ main = function() {
     Y.beta = X %*% beta + Y
 
     results = group_lasso_knot(X, Y, groups, weights)
-    P = c(P, pvalue(results$L, results$Mplus, results$Mminus, sqrt(results$var), results$k, sigma=sigma))
+    P = c(P, pvalue(results$L, results$lower_bound, results$upper_bound, sqrt(results$var), results$k, sigma=sigma))
 
     results.b = group_lasso_knot(X, Y.beta, groups, weights)
     group = groups == results.b$i
     signal.achieves = c(signal.achieves, any(beta[group] != 0))
-    P.beta = c(P.beta, pvalue(results.b$L, results.b$Mplus, results.b$Mminus, sqrt(results.b$var), results.b$k, sigma=sigma))
+    P.beta = c(P.beta, pvalue(results.b$L, results.b$lower_bound, results.b$upper_bound, sqrt(results.b$var), results.b$k, sigma=sigma))
   }
 
   P.small = P.beta <= 0.1
@@ -63,7 +63,7 @@ main_MC = function() {
     groups = c(1,1,2,2,2,3,3,4,4,5)
     weights = c(2,2.5,2,2,1.4)
     results = group_lasso_knot(X, Y, groups, weights)
-    P = c(P, pvalue_MC(results$L, results$Mplus, results$Mminus,
+    P = c(P, pvalue_MC(results$L, results$lower_bound, results$upper_bound,
       sqrt(results$var), results$k, sigma=sigma))
   }
   qqplot(runif(nsim), P)

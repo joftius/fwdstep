@@ -67,12 +67,18 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
 }
 
 # Iterate add_group for max.steps
-forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0, cat.groups = NULL) {
+forward_group = function(X, Y, groups, weights = 1, Sigma = NULL, max.steps = 0, cat.groups = NULL) {
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
-  if ((length(weights) == 1) & (weights[1] == 0)) {
-    weights = sqrt(group.sizes)
+  if (length(weights) == 1) {
+      if (weights == 0) {
+          weights = sqrt(group.sizes)
+      } else if (weights == 1)  {
+          weights = rep(1, length(group.sizes))
+      } else {
+          stop("Misspecified weights")
+      }
   }
 
   # Estimate sigma instead?

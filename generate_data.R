@@ -321,23 +321,23 @@ generate_glinternet = function(X, groups, cat.groups = NULL) {
 # num.nonzero should be divisible by 3
 # Note: at most (5/3)*num.nonzero main effects and (2/3)*num.nz interactions
 # are included, but group sparsity still = num.nonzero
-beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.main, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups = NULL) {
+beta_glinternet = function(groups, all.groups, int.groups, num.nonzero, num.main, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups = NULL) {
 
+  main.group.labels = unique(groups)
+  main.inds = 1:length(groups)
   num.ints = num.nonzero - num.main
   if (num.ints < 0) {
     stop("At least 1 nonzero interaction is required")
   }
 
   p = dim(int.groups)[1]
-  main.groups = 1:p
-  nz.mains = sample(main.groups, num.main, replace=FALSE)
+  nz.mains = sample(main.group.labels, num.main, replace=FALSE)
   nz.main.inds = sapply(all.groups, function(x) is.element(x, nz.mains))
-  remaining.mains = setdiff(main.groups, nz.mains)
+  remaining.mains = setdiff(main.group.labels, nz.mains)
   
   if (length(remaining.mains)/2 < num.ints) {
     stop("Not enough main effects to form desired number of interactions")
   }
-  
   int.mains = sample(remaining.mains, 2*num.ints, replace=FALSE)
 
   nz.ints = c()
@@ -358,7 +358,7 @@ beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.m
   nz.groups = sort(c(nz.mains, nz.ints))
   nz.inds = as.logical(nz.main.inds + nz.int.inds)
   if (length(nz.groups) != num.nonzero) {
-    stop("Incorrent number of nonzero groups")
+    stop("Incorrent number of nonzero groups, don't know why")
   }
   
   magnitudes = sample(seq(from=upper, to=lower, length=num.nonzero))
@@ -366,7 +366,7 @@ beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.m
 
   for (i in 1:num.nonzero) {
     ind.i = all.groups == nz.groups[i]
-    beta[ind.i & nz.inds] = magnitudes[i]
+    beta[ind.i] = magnitudes[i]
   }
 #  beta[nz.inds] = magnitudes
   
@@ -400,7 +400,7 @@ beta_glinternet = function(all.groups, int.groups, main.inds, num.nonzero, num.m
       s.int = sum(int.part)
       beta[main.part] = beta[main.part]/sqrt(s.main)
       # Inflate interaction terms to give them a chance
-      beta[int.part] = sqrt(50)*beta[int.part]/sqrt(s.int)
+      beta[int.part] = sqrt(2)*beta[int.part]/sqrt(s.int)
       bg.main.norm = sqrt(sum(beta[main.part]^2))
       bg.int.norm = sqrt(sum(beta[int.part]^2))
       

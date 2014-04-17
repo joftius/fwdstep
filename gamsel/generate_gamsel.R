@@ -141,7 +141,7 @@ beta_gamsel = function(groups, all.groups, spline.groups, num.nonzero, num.linea
       s.linear = 1
       spline.part = which(group)[-1]
       s.spline = length(spline.part)
-      beta[spline.part] = 5*beta[spline.part]/sqrt(length(spline.part))
+      beta[spline.part] = sqrt(2)*beta[spline.part]/sqrt(length(spline.part))
       bg.linear.norm = sqrt(sum(beta[linear.part]^2))
       bg.spline.norm = sqrt(sum(beta[spline.part]^2))
       

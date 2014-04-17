@@ -24,14 +24,14 @@ lambda_max = function(X, Y, groups) {
 }
 
 # Interfacing with grplasso package
-grplasso_as = function(grplasso.fit, all.groups) {
-  inds = which(grplasso.fit$coefficients != 0)
+grplasso_as = function(grplasso.fit, all.groups, tol=1e-10) {
+  inds = which(abs(grplasso.fit$coefficients) > tol)
   return(unique(all.groups[inds]))
 }
 
 # active = true.active set, as = selected active set
 ave_pow= function(num.nonzero, active, as) {
-  return(length(intersect(active, as[1:num.nonzero]))/num.nonzero)
+  return(length(intersect(active, as))/num.nonzero)
 }
 
 # Staircase signal

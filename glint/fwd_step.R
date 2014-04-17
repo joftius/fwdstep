@@ -116,7 +116,7 @@ forward_group = function(X, Y, groups, weights = 1, Sigma = NULL, max.steps = 0,
     chi.pvals = c(chi.pvals, chi.p)
     c.vars = c(c.vars, output$var)
     # tracking lambda_2
-    Ls = c(Ls, output$test.output[1])
+    Ls = c(Ls, output$test.output[[1]])
 
     # Some overfitting considerations
     if ((eff.p >= n - max(group.sizes)) & (i < max.steps)) {

@@ -5,22 +5,22 @@ source('gamsel/fwd_gamsel_sim.R')
 #source('tex_table.R')
 source('plots.R')
 
-design = 'gaussian'
+design = 'uniform'
 fn.append = ''
 main.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
-nsim = 50
-n = 100
-num.nonzero = 5
+nsim = 100
+n = 80
+num.nonzero = 4
 k = num.nonzero
 num.linear = 2
 max.steps = 10
-upper.coeff = 10
-lower.coeff = 7
+upper.coeff = 3
+lower.coeff = 2
 Sigma = (1-noisecorr)*diag(rep(1,n)) + noisecorr
-groups = 1:25
+groups = 1:200
 p = length(groups)
 g = length(unique(groups))
 mult = sqrt(2*log(g))

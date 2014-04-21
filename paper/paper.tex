@@ -528,8 +528,7 @@ the following facts summarized in \cite{significance:lasso,tibshirani_lasso_uniq
 
 \end{itemize}
 
-The covariance test (assuming $X$'s columns are of length one and $\Sigma = \sigma^2 I$ is at the
-first step by
+The covariance test (assuming groups of size one and $\Sigma = \sigma^2 I$ is given at the first step by
 \begin{equation}
 \label{eq:covtest}
 T_1 = \frac{\lambda_1(\lambda_1-\lambda_2)}{\sigma^2} \overset{n,p \to \infty}{\to} \text{Exp}(1).
@@ -549,41 +548,59 @@ the right hand side of \eqref{test:exact}. The test statistic is presented as an
 in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
 
-The \emph{group lasso estimator} is a solution to the following convex
-problem
+The \emph{group lasso estimator} is a solution to the following penalized
+least-squares convex optimization problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
 \begin{aligned}
 \label{eq:gsoln}
 \displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
-   \lambda \sum_{g=1}^G w_g \| \beta_g \|_2
+   \lambda {\cal P}(\beta) \\
 \end{aligned}
+\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+with the group penalty
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{equation}
+  \begin{aligned}
+  \label{eq:gpen}
+    {\cal P}(\beta)&= \sum_{g=1}^G w_g \| \beta_g \|_2 \\
+  \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The parameter $\lambda \geq 0$ enforces sparsity in groups: for large
 $\lambda$ most of the $\beta_g$ will be zero vectors. The weights
 $w_g$ are usually taken to be $\sqrt {p_g}$ to normalize the penalty
-across groups.  Note that this includes the usual lasso estimator as a
+across groups with different sizes.  Note that this includes the usual lasso estimator as a
 special case when all of the groups are of size 1, since then the
-penalty term is the $L^1$-norm of $\beta$. 
+penalty term is the $L^1$-norm of $\beta$. The solution path of the group
+lasso has similar properties to the lasso case, however it is not
+generally piecewise linear.
 
-There is a largest value of $\lambda$ such that $\hat{\beta}_{\lambda}=0$ which corresponds to $\lambda_1$
-in the LASSO setting:
+For sufficiently large $\lambda$ the solution to~\eqref{eq:gsoln} is forced
+to be zero. The smallest such $\lambda$ is denoted
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{equation}
+  \begin{aligned}
+   \lambda_1 &= \inf \{ \lambda \geq 0 : \hat \beta_{\lambda'} = 0 \text{ for all } \lambda' > \lambda \} \\
+  \end{aligned}
+\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In the LASSO setting this is explicitly computable by
 \begin{equation}
 \label{eq:lammax}
 \lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 . 
 \end{equation}
-Formally, the value above is just the dual norm of the penalty
-$$
-{\cal P}(\beta) = \sum_{g=1}^G w_g \| \beta_g \|_2
-$$
+The value above is also the dual norm of the penalty~\eqref{eq:gpen}
 hence it can be expressed as
 \begin{equation}
 \label{eq:lammax}
-\lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 = \frac{1}{w_{g^*}}\eta_{g^*}^TX_{g^*}^Ty . 
+\lambda_1^{\text{group}}
+% = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2
+ = \frac{1}{w_{g^*}}\eta_{g^*}^TX_{g^*}^Ty . 
 \end{equation}
 where $g^*$ is the group that achieves the max and 
-$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the $\ell_2$ unit vector that achieves $\|X_{g^*}^Ty\|_2$.
+$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves $\|X_{g^*}^Ty\|_2$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%

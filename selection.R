@@ -11,7 +11,7 @@ source('stop_rules.R')
 # write a function taking  these inputs and calculating:
 # Rob/Alex/Max/Stefan show FDR, V, R, and average power (fraction of non-null rejected)
 
-selection_stats = function(p.list, active.set, true.step, m1, stop.rule, alpha = .1) {
+selection_stats = function(p.list, active.set, true.step, k, stop.rule, alpha = .1) {
   rule_name = paste("stop_", stop.rule, sep = "")
   if (exists(rule_name, mode = "function")) {
     stop_fun = get(rule_name)
@@ -35,19 +35,19 @@ selection_stats = function(p.list, active.set, true.step, m1, stop.rule, alpha =
   R = stop.ind
   V = R - S
   Fdp = V/max(1, R)
-  Power = S/max(1, m1)
+  Power = S/max(1, k)
   return(c(Fdp, R, S, V, Power))
 }
 
 # names = null.p, signal.p, active.set, true.set
-sim_select_stats = function(p.lists, active.sets, true.steps, m1, alpha = .1) {
+sim_select_stats = function(p.lists, active.sets, true.steps, k, alpha = .1) {
   first.mat = matrix(0, nrow = nrow(p.lists), ncol = 5)
   forward.mat = first.mat
   last.mat = first.mat
   for (i in 1:nrow(p.lists)) {
-    first.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "first", alpha)
-    forward.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "forward", alpha)
-    last.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], m1, stop.rule = "last", alpha)
+    first.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], k, stop.rule = "first", alpha)
+    forward.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], k, stop.rule = "forward", alpha)
+    last.mat[i, ] = selection_stats(p.lists[i, ], active.sets[i, ], true.steps[i, ], k, stop.rule = "last", alpha)
   }
   first = colMeans(first.mat)
   forward = colMeans(forward.mat)

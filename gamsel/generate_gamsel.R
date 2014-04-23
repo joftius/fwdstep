@@ -22,7 +22,7 @@ source('generate_data.R')
 # all.groups: include main effects and their copies with interactions
 # int.groups: list, the [[g]]'th element contains all group indices that group g appears in
 
-generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE) {
+generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE, ...) {
   group.labels = unique(groups)
   G = length(group.labels)
   gmax = max(group.labels)
@@ -35,15 +35,15 @@ generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE) {
   X.out = X
   n = nrow(X)
   all.groups = groups
-  spline.groups = c()
+  spline.groups = list()
   linear.groups = list()
   gnew = gmax
 
   for (g in 1:G) {
-    group = unique(groups)[g]
+    group = group.labels[g]
     degree = degrees[g]
     gnew = gnew + 1
-    spline.groups[group] = gnew
+    spline.groups[[group]] = gnew
     linear.groups[[gnew]] = group
     col = groups == group
     if (sum(col) > 1) {
@@ -60,12 +60,14 @@ generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE) {
   if (col.normalize) {
     X.out = col_normalize(X.out)
   }
-  return(list(X=X.out, all.groups=all.groups, spline.groups=spline.groups, linear.groups=linear.groups))
+  return(list(X=X.out, all.groups=all.groups, special.groups=spline.groups, default.groups=linear.groups))
 }
 
 # Signal vector generation for gamsel
-beta_gamsel = function(groups, all.groups, spline.groups, num.nonzero, num.linear, upper, lower, rand.sign=TRUE, perturb=TRUE) {
+beta_gamsel = function(groups, all.groups, special.groups, num.nonzero, num.default, upper, lower, rand.sign=TRUE, perturb=TRUE, ...) {
 
+  num.linear = num.default
+  spline.groups = special.groups
   main.group.labels = unique(groups)
   all.group.labels = unique(all.groups)
   num.spline = num.nonzero - num.linear
@@ -86,7 +88,7 @@ beta_gamsel = function(groups, all.groups, spline.groups, num.nonzero, num.linea
   nz.spline.inds = rep(FALSE, length(all.groups))
 
   for (i in 1:num.spline) {
-    this.spline = spline.groups[spline.mains[i]]
+    this.spline = spline.groups[[spline.mains[i]]]
     nz.spline = c(nz.spline, this.spline)
     this.spline.inds = which(this.spline == all.groups)
     nz.spline.inds[this.spline.inds] = TRUE
@@ -159,5 +161,13 @@ beta_gamsel = function(groups, all.groups, spline.groups, num.nonzero, num.linea
     }
   }
 
-  return(list(beta=beta, true.splines=nz.spline, true.linear = nz.linear, true.active = nz.groups, all.active = all.active))
+  return(list(beta=beta, true.special=nz.spline, true.default = nz.linear, true.active = nz.groups, all.active = all.active))
+}
+
+gamsel_special_group_of = function(g, special.groups) {
+    return(special.groups[[g]])
+}
+
+gamsel_default_group_of = function(g, default.groups) {
+    return(default.groups[[g]])
 }

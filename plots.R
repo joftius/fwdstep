@@ -1,12 +1,13 @@
 
 
-step_plot = function(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, fn.append = "", main.append = "") {
+step_plot = function(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, filename,  main.append = "") {
 
     gmaxmin = paste0(c(max(ugsizes), min(ugsizes)), collapse="/")
-    filename = paste0('figs/', design, "_n", n, '_p', p, '_g', g,
-        '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
-    filename = paste0(filename, fn.append)
-    filename = paste0(gsub(".", "pt", filename, fixed=TRUE), ".pdf")
+    #filename = paste0('figs/', design, "_n", n, '_p', p, '_g', g,
+    #    '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+    #filename = paste0(filename, fn.append)
+    #filename = paste0(gsub(".", "pt", filename, fixed=TRUE), ".pdf")
+    filename = paste0("figs/", filename, ".pdf")
 
     bar.quantiles <- c(.25, .75)
     point.quantiles <- c(.05, .95)

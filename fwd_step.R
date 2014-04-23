@@ -47,20 +47,12 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   # Form new residual
   X.project = X
   Xgmax = X[, gmax]
-
-##   Y.resid = lm(Y ~ Xgmax - 1)$residual
-##   # If X[, gmax] is categorical, leave one column out
-##   # Not necessary, Y already de-meaned
-##   if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
-##     Xgmax = Xgmax[ , -1]
-##   }
   Pgmax = Xgmax %*% ginv(Xgmax)
       
   # Project all other groups orthogonal to the one being added
   for (gind in inactive.set) {
     group = groups == gind
     X.project[, group] = X[, group] - Pgmax %*% X[, group]
-    #X.project[, group] = lsfit(Xgmax, X[, group], intercept=FALSE)$residuals
   }
 
   Y.resid = Y - Pgmax %*% Y
@@ -68,17 +60,22 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=kmax))
 }
 
-
 # Iterate add_group for max.steps
 forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0, cat.groups = NULL) {
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
-  if ((length(weights) == 1) & (weights[1] == 0)) {
-    weights = sqrt(group.sizes)
+  if (length(weights) == 1) {
+      print(weights)
+      if (weights == 0) {
+          weights = sqrt(group.sizes)
+      } else if (weights == 1)  {
+          weights = rep(1, length(group.sizes))
+      } else {
+          stop("Misspecified weights")
+      }
   }
 
-  # Estimate sigma instead?
   if (length(dim(Sigma)) == 0) {
     stop("Sigma needed here. Maybe try identity?")
   }
@@ -107,13 +104,11 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
     Y.update = output$Y.update
     RSSdrop = RSS - sum(Y.update^2)
     chi.p = pchisq(RSSdrop, lower.tail=F, df=grank)
-    #print(c(RSSdrop, round(grank), chi.p))
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
     chi.pvals = c(chi.pvals, chi.p)
     c.vars = c(c.vars, output$var)
-    # tracking lambda_2
-    Ls = c(Ls, output$test.output[1])
+    Ls = c(Ls, output$test.output[[1]])
 
     # Some overfitting considerations
     if ((eff.p >= n - max(group.sizes)) & (i < max.steps)) {

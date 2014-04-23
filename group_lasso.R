@@ -61,17 +61,6 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
   terms = sapply(g.labels, function(x) sqrt(sum(U[groups==x]^2))/weights[x])
   active.terms = sapply(g.labels, function(x) ifelse(is.element(x, active.set), 0, 1))
   terms = terms*active.terms
-##   terms = matrix(0, g)  
-##   for (i in 1:p) {
-##     terms[groups[i]] = terms[groups[i]] + U[i]^2
-##   }
-##   for (j in 1:g) {
-##     if (is.element(j, active.set)) {
-##       terms[j] = 0
-##     } else {
-##       terms[j] = sqrt(terms[j]) / weights[j]
-##     }
-##   }
   imax = which.max(terms)
   L = terms[imax]
   if (L <= 0) {

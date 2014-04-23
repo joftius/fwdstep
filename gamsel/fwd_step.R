@@ -55,13 +55,8 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
       X.project[, group] = X[, group] - Pgmax %*% X[, group]
     }
   }
-  # If X[, gmax] is categorical, leave one column out
-##   if ((is.element(imax, cat.groups)) & (is.matrix(Xgmax))) {
-##     Xgmax = Xgmax[ , -1]
-##     Pgmax = Xgmax %*% ginv(Xgmax)
-##   }
+
   Y.resid = lm(Y ~ Xgmax - 1)$residual
-  
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=grank))
 }
@@ -81,7 +76,6 @@ forward_group = function(X, Y, groups, weights = 1, Sigma = NULL, max.steps = 0,
       }
   }
 
-  # Estimate sigma instead?
   if (length(dim(Sigma)) == 0) {
     stop("Sigma needed here. Maybe try identity?")
   }
@@ -110,12 +104,10 @@ forward_group = function(X, Y, groups, weights = 1, Sigma = NULL, max.steps = 0,
     Y.update = output$Y.update
     RSSdrop = RSS - sum(Y.update^2)
     chi.p = pchisq(RSSdrop, lower.tail=F, df=grank)
-    #print(c(RSSdrop, round(grank), chi.p))
     X.update = output$X.update
     p.vals = c(p.vals, output$p.value)
     chi.pvals = c(chi.pvals, chi.p)
     c.vars = c(c.vars, output$var)
-    # tracking lambda_2
     Ls = c(Ls, output$test.output[[1]])
 
     # Some overfitting considerations

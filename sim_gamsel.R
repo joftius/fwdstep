@@ -3,16 +3,16 @@ source('tex_table.R')
 source('plots.R')
 
 nsim = 100
-type = 'default'
-design = 'gaussian'
+type = 'gamsel'
+design = 'uniform'
 estimation = TRUE
-n = 100
-#groups = 1:200
+n = 200
 groups = 1:50
+
 k = 5
-upper = 2
-lower = 1.5
-max.steps = 20
+upper = 5
+lower = 4
+max.steps = 12
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
@@ -29,7 +29,8 @@ output = run_simulation(
     max.steps = max.steps,
     estimation = estimation, verbose = TRUE)
 
-with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
+special.power = paste0("(", output$special.fwd.power, ")")
+with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append = special.power))
 
 ## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
 ## if (corr != 0) {
@@ -66,39 +67,16 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## abline(v = 1, col = "gray")
 ## dev.off()
 
-upper = 3
-lower = 2
-#groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
-groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
-max.steps = 12
-
-output.g = run_simulation(
-    nsim = nsim,
-    type = type,
-    design = design,
-    n = n, groups = groups, k = k,
-    upper = upper, lower = lower,
-    max.steps = max.steps,
-    estimation = estimation, verbose = TRUE)
-
-with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values."
 results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k))
-results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k))
-
-#rownames(results.l) = paste("(1)", rownames(results.l))
-rownames(results.g) = paste("(g)", rownames(results.g))
 
 file = paste0("tables/", output$filename, ".tex")
-
-tex_table(file, rbind(results.l, results.g), caption = caption)
+tex_table(file, results.l, caption = caption)
 
 if (estimation) {
     file = paste0("tables/", output$filename, "_estimation.tex")
     est.err = output$estimation
-    est.err.g = output.g$estimation
-    rownames(est.err.g) = paste("(g)", rownames(est.err.g))
     tex_table(file, rbind(est.err, est.err.g),
               caption = "Prediction and estimation errors")
 }

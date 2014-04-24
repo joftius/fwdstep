@@ -1,6 +1,6 @@
-source('generate_data.R')
-source('fwd_step.R')
-source('selection.R')
+source("generate_data.R")
+source("fwd_step.R")
+source("selection.R")
 
 # Main simulation function
 # Saves output in data/
@@ -18,6 +18,7 @@ run_simulation = function(
     cat.groups = NULL,
     alpha = 0.1,
     noisecorr = 0,
+    estimation=FALSE,
     save=TRUE,
     verbose=FALSE,
     ...) {
@@ -25,15 +26,25 @@ run_simulation = function(
     # Load additional files if necessary
     if (type == "glint") {
         # TODO: move glint functions from generate_data.R
-        source('glint/generate_glint.R')
+        source("glint/generate_glint.R")
     } else if (type == "gamsel") {
-        source('gamsel/generate_gamsel.R')
+        source("gamsel/generate_gamsel.R")
+    }
+    if (estimation) {
+#        if (type != "default") {
+#            stop("Estimation error in non-default settings not supported")
+#        } else {
+            source("estimation.R")
+#        }
     }
 
     p = length(groups)
     group.labels = unique(groups)
     g = length(group.labels)
     G = g
+    mult = sqrt(2*log(G)/n)
+    upper.scaled = upper * mult
+    lower.scaled = lower * mult
     ugsizes = sort(unique(rle(groups)$lengths))
     if (g != p) {
         gmaxmin = paste0(c(min(ugsizes), max(ugsizes)), collapse="-")
@@ -52,6 +63,7 @@ run_simulation = function(
         Sigma = diag(rep(sigma2, n))
     }
 
+    # Initialize storage
     P.mat = matrix(nrow=nsim, ncol=max.steps)
     AS.mat = P.mat
     P.mat.b = P.mat
@@ -61,6 +73,7 @@ run_simulation = function(
     special.recover.mat = P.mat
     ez.recover.mat = P.mat
     ps.recover.mat = P.mat
+    estimation.errs = matrix(0, nrow=3, ncol=3)
     start.time = as.numeric(Sys.time())
 
     ### Begin main loop ###
@@ -81,13 +94,19 @@ run_simulation = function(
             # Generate beta here
             
             
-        } else if (design == 'gaussian') {
+        } else if (design == "gaussian") {
             Z = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
+            if (estimation) {
+                Z.test = gaussian_design(n, groups, col.normalize = FALSE, corr = corr)
+            }
         } else {
             design_name = paste0(design, "_design")
             if (exists(design_name, mode = "function")) {
                 design_fun = get(design_name)
                 Z = design_fun(n, groups)
+                if (estimation) {
+                    Z.test = design_fun(n, groups, col.normalize = FALSE, corr = corr)
+                }   
             } else {
                 stop(paste("Misspecified design matrix:", design))
             }
@@ -96,8 +115,11 @@ run_simulation = function(
         # Construct glint/gamsel design if necessary
         if (type == "default") {
             X = Z
+            if (estimation) {
+                X.test = Z.test
+            }
             all.groups = groups
-            b.data = beta_staircase(groups, k, upper, lower, cat.groups=cat.groups)
+            b.data = beta_staircase(groups, k, upper.scaled, lower.scaled, cat.groups=cat.groups)
             group.sizes = rle(groups)$lengths
             weights = sqrt(group.sizes)
             
@@ -109,11 +131,18 @@ run_simulation = function(
                 generate_fun = get(generate_name)
                 data = generate_fun(X=Z, groups=groups, cat.groups=cat.groups, ...)
                 X = data$X
+                if (estimation) {
+                    data.test = generate_fun(X=Z.test, groups=groups, cat.groups=cat.groups, ...)
+                    X.test = data.test$X
+                }
                 all.groups = data$all.groups
                 special.groups = data$special.groups
                 default.groups = data$default.groups
                 G = length(unique(all.groups))
-                # Frobenius normalized, don't need weights
+                mult = sqrt(2*log(G)/n)
+                upper.scaled = upper * mult
+                lower.scaled = lower * mult
+                # Frobenius normalized, do not need weights
                 weights = rep(1, G)
                     
             } else {
@@ -127,13 +156,16 @@ run_simulation = function(
             # Generate special coefficient vector
             beta_name = paste0("beta_", type)
             beta_fun = get(beta_name)
-            b.data = beta_fun(groups, all.groups, special.groups, k=k, num.default=k0, upper=upper, lower=lower, cat.groups=cat.groups)
+            b.data = beta_fun(groups, all.groups, special.groups, k=k, num.default=k0, upper=upper.scaled, lower=lower.scaled, cat.groups=cat.groups)
             # Special active set for glint/gamsel
             true.special = b.data$true.special
                 
         } 
 
         Xnormed = frob_normalize(X, all.groups)
+        if (estimation) {
+            Xnormed.test = frob_normalize(X.test, all.groups)
+        }
         beta = b.data$beta
         all.active = b.data$all.active
         true.active = b.data$true.active
@@ -145,20 +177,31 @@ run_simulation = function(
         
         if (ldimS > 1) {
             noise = unwhitener %*% rnorm(n)
+            if (estimation) {
+                noise.test = unwhitener %*% rnorm(n)
+            }
         } else if (ldimS == 0) {
             noise = rnorm(n)*sqrt(sigma2)
+            if (estimation) {
+                noise.test = rnorm(n)*sqrt(sigma2)
+            }
         } else {
             stop(paste("Misspecified Sigma:", ldimS))
         }
         Y.noiseless = X %*% beta
         mu.max = max(abs(Y.noiseless))
         Y.beta = Y.noiseless + noise
-        
 #####################################################
         # De-mean before passing to solvers #
-        Y.beta = Y.beta - mean(Y.beta)      #
+        Y.beta = Y.beta - mean(Y.beta)
         # Do we really want to do this?     #
 #####################################################
+        
+        if (estimation) {
+            Y.noiseless.test = X.test %*% beta
+            Y.beta.test = Y.noiseless.test + noise.test
+            Y.beta.test = Y.beta.test - mean(Y.beta.test)
+        }
         
         # Null results
         results = forward_group(Xnormed, noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
@@ -171,16 +214,30 @@ run_simulation = function(
         if (verbose) {
             print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:k], true.active))/k))
         }
-        
+
+        # Track results
         Chi.mat.b[i, ] = results.b$chi.pvals
         P.mat.b[i, ] = results.b$p.vals
         rb.as = results.b$active.set
         recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.active))
         ez.recover.mat[i,] = sapply(rb.as, function(x) is.element(x, all.active))
         AS.mat.b[i, ] = rb.as
+
+        # Track estimation results
+        if (estimation) {
+            stop.rules = c("first", "forward", "last")
+            estimation.errs = estimation.errs + estimation_stats(
+                p.list = results$p.vals,
+                active.set = rb.as, X = Xnormed, Y = Y.beta,
+                groups = all.groups, beta = beta,
+                X.test = Xnormed.test, Y.test = Y.beta.test, alpha = alpha)
+        }
+
         if (type != "default") {
             special.recover.mat[i,] = sapply(rb.as, function(x) is.element(x, true.special))
         }
+
+        # Track proportion of signal recovered
         already.counted = c()
         cg = 1
         for (ag in rb.as) {
@@ -202,7 +259,8 @@ run_simulation = function(
         }
     }
     # End main simulation loop
-    
+
+    # Summarize some results
     ez.TrueStep = colMeans(ez.recover.mat)
     ez.num.recovered.groups = rowSums(ez.recover.mat[, 1:k])
     TrueStep = colMeans(recover.mat)
@@ -212,6 +270,7 @@ run_simulation = function(
         special.fwd.power = mean(num.recovered.special) / length(true.special)
     }
     fwd.power = mean(num.recovered.groups) / k
+    estimation.errs = estimation.errs / nsim
     
     out.mats = data.frame(iter=1:nsim, null = (P.mat), signal = (P.mat.b), chi = (Chi.mat.b), true.step = (recover.mat), prop.signal = (ps.recover.mat))
     outlist = list(
@@ -231,6 +290,9 @@ run_simulation = function(
     if (type != "default") {
         outlist$special.fwd.power = special.fwd.power
     }
+    if (estimation) {
+        outlist$estimation = estimation.errs
+    }
 
     if (save) {
         filename = paste0(type, "_", design, "_nsim", nsim,
@@ -249,7 +311,8 @@ run_simulation = function(
         if (noisecorr != 0) {
             filename = paste0(filename, "_noisecorr", noisecorr)
         }
-        
+
+        filename = gsub(".", "pt", filename, fixed=TRUE)
         write.csv(out.mats, file = paste0("data/", filename, ".csv"), row.names = FALSE)
         outlist$filename = filename
     }

@@ -64,13 +64,13 @@ generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE, ...) {
 }
 
 # Signal vector generation for gamsel
-beta_gamsel = function(groups, all.groups, special.groups, num.nonzero, num.default, upper, lower, rand.sign=TRUE, perturb=TRUE, ...) {
+beta_gamsel = function(groups, all.groups, special.groups, k, num.default, upper, lower, rand.sign=TRUE, perturb=TRUE, ...) {
 
   num.linear = num.default
   spline.groups = special.groups
   main.group.labels = unique(groups)
   all.group.labels = unique(all.groups)
-  num.spline = num.nonzero - num.linear
+  num.spline = k - num.linear
   if (num.spline <= 0) {
     stop("At least 1 nonzero interaction is required")
   }
@@ -97,14 +97,14 @@ beta_gamsel = function(groups, all.groups, special.groups, num.nonzero, num.defa
   all.active = c(nz.linear, spline.mains, nz.spline)
   nz.groups = sort(c(nz.linear, nz.spline))
   nz.inds = as.logical(nz.linear.inds + nz.spline.inds)
-  if (length(nz.groups) != num.nonzero) {
+  if (length(nz.groups) != k) {
     stop("Incorrent number of nonzero groups")
   }
   
-  magnitudes = sample(seq(from=upper, to=lower, length=num.nonzero))
+  magnitudes = sample(seq(from=upper, to=lower, length=k))
   beta = rep(0, length(all.groups))
 
-  for (i in 1:num.nonzero) {
+  for (i in 1:k) {
     ind.i = all.groups == nz.groups[i]
     beta[ind.i] = magnitudes[i]
   }

@@ -136,7 +136,7 @@ frob_normalize = function(X, groups) {
     return(X.out)
 }
 
-uniform_design = function(n, groups) {
+uniform_design = function(n, groups, col.normalize=FALSE, corr = 0) {
   p = length(groups)
   return(matrix(runif(n*p), nrow=n))
 }

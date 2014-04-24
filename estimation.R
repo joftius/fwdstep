@@ -11,7 +11,7 @@ source('stop_rules.R')
 # input: active.set, true beta, X, Y, X.test, Y.test, etc
 # output: prediction error, MSE of beta hat, etc
 
-pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha = .1) {
+est_stat = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha = .1) {
 
   p = length(groups)
   rule_name = paste("stop_", stop.rule, sep = "")
@@ -42,16 +42,16 @@ pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test
 
 
 # apply above function with all stopping rules
-sim_pred_est_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, alpha) {
+estimation_stats = function(p.list, active.set, X, Y, groups, beta, X.test, Y.test, alpha = .1) {
   stop.rules = c("first", "forward", "last")
   output = matrix(Inf, nrow = 1, ncol = 3)
   for (stop.rule in stop.rules) {
-    rule.err = pred_est_stats(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha)
+    rule.err = est_stat(p.list, active.set, X, Y, groups, beta, X.test, Y.test, stop.rule, alpha)
     output = rbind(output, rule.err)
     #print(rule.err)
   }
   output = output[-1, ]
   rownames(output) = stop.rules
-  colnames(output) = c("RSS", "Test Error", "MSE(beta)")
+  colnames(output) = c("RSS", "Test Error", "textMSE hat beta")
   return(output)
 }

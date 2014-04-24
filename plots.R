@@ -1,10 +1,10 @@
 
 
-step_plot = function(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, filename,  main.append = "") {
+step_plot = function(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper.coeff, lower.coeff, max.beta, min.beta, fwd.power, design, filename,  main.append = "") {
 
     gmaxmin = paste0(c(max(ugsizes), min(ugsizes)), collapse="/")
     #filename = paste0('figs/', design, "_n", n, '_p', p, '_g', g,
-    #    '_k', num.nonzero, '_lower', lower.coeff, '_upper', upper.coeff)
+    #    '_k', k, '_lower', lower.coeff, '_upper', upper.coeff)
     #filename = paste0(filename, fn.append)
     #filename = paste0(gsub(".", "pt", filename, fixed=TRUE), ".pdf")
     filename = paste0("figs/", filename, ".pdf")
@@ -30,16 +30,19 @@ step_plot = function(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ug
     if (g != p) {
       plot.main = paste0(plot.main, "(", gmaxmin, ")")
     }
-    plot.main = paste0(plot.main, " k:", num.nonzero,
+    plot.main = paste0(plot.main, " k:", k,
                         ", beta:", upper.coeff, "/", lower.coeff,
                         "(", round(max.beta,1), "/", round(min.beta, 1),
                         "), k-SP:", round(fwd.power, 2), main.append)
 
     pdf(filename)
 
-    plot(xax, TrueStep, type = "b", main = plot.main, xlab = "Step", ylab = "",
-         ylim = c(-.01,1.01), xlim = c(min(xax) - .2, max(nxax) + .2),
+    plot(xax, TrueStep, type = "b", main = plot.main, xlab = "Step",
+         ylab = "", ylim = c(-.01,1.01),
+         xlim = c(min(xax) - .2, max(nxax) + .2),
          lwd=2, lty = "dashed")
+    rect(k+.5, -.05, max.steps+.8, 1.05, col = "gray94", border = NA)
+    lines(xax, TrueStep, type = "b", lwd=2, lty = "dashed")
 
     points(nxax, null.Pvals, col="orangered", pch=20)
     arrows(nxax, null.Pvals.bar[1, ], nxax, null.Pvals.bar[2, ],
@@ -59,8 +62,8 @@ step_plot = function(TrueStep, null.p, signal.p, chi.p, num.nonzero, n, p, g, ug
     points(cxax, Chivals.point[1, ], col = "green", pch = 24, cex = .5)
     points(cxax, Chivals.point[2, ], col = "green", pch = 25, cex = .5)
     abline(h = .1)
-    axis(1, at=num.nonzero, tcl=.5)
-    axis(3, at=num.nonzero, tcl=.5, labels=FALSE)
+    #axis(1, at=k, tcl=.5)
+    #axis(3, at=k, tcl=.5, labels=FALSE)
 
     dev.off()
 }

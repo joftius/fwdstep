@@ -28,9 +28,9 @@ noisecorr = 0
 num.nonzero = 6
 num.main = 2
 k = num.nonzero
-max.steps = 30
-upper = 10
-lower = 5
+max.steps = 18
+upper = 15
+lower = 10
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)
@@ -104,10 +104,10 @@ special.power = paste0("(", round(output$special.fwd.power, 2), ")")
 with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append = special.power))
 
 
-ps.fname = paste0('figs/bysignal/', output$filename, ".pdf")
-k = output.l$k
-#psr = t(apply(output.l$psr.mat, 1, cumsum)/k)
-psr = output.l$psr.mat
+ps.fname = paste0("figs/bysignal/", output$filename, ".pdf")
+k = output$k
+#psr = t(apply(output$psr.mat, 1, cumsum)/k)
+psr = output$psr.mat
 print(psr)
 l = nrow(psr)
 m = ncol(psr)
@@ -119,8 +119,8 @@ for (j in 1:nrow(psr)) {
           }
   }
 psr = psr + matrix(0.04*rnorm(l*m), nrow=l)
-pvals = output.l$signal.p
-plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)
+pvals = output$signal.p
+plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower, "/", upper)
 pdf(ps.fname)
 plot(psr[1, ], pvals[1, ], pch = ".", cex = 2, xlim=c(-0.1, max(psr) + .1), ylim=c(-0.1, 1.1), xlab = "Proportion of signal recovered", ylab = "P-values", main = plot.main)
 for (j in 2:l) {

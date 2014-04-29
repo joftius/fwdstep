@@ -145,10 +145,13 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     lower_bound = 0
     upper_bound = Inf
   }
-  return(list(L=L, lower_bound=lower_bound, upper_bound=upper_bound, var=conditional_variance, k=kmaxrank, i=imax))
+
+  values = list(L=L, lower_bound=lower_bound, upper_bound=upper_bound, var=conditional_variance, k=kmaxrank, i=imax)  
+  
+  return(values)
 }
 
-# why using (sd*sigma) ???
+# Should this use sd*sigma?
 pvalue <- function(L, lower_bound, upper_bound, sd, k) {
   first.term = pchisq((upper_bound/sd)^2, k, lower.tail=TRUE)
   if (first.term == 1) {

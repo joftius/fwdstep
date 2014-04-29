@@ -2,7 +2,7 @@
 # Functions to generate simulation data #
 #########################################
 
-#library(gtools)
+library(gtools)
 
 SigmaSqrt = function(Sigma) {
   svdS = svd(Sigma)
@@ -59,7 +59,7 @@ constrain_beta = function(beta, nz.groups, cat.groups) {
 }
 
 # Staircase signal
-beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.groups = NULL, staircase=TRUE) {
+beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=TRUE, permute=TRUE, perturb=TRUE, cat.groups = NULL, staircase=TRUE) {
   # Generate a staircase-shaped signal vector
   # groups: vector of group indices in the form c(1,1,...,2,2,...)
   # num.nonzero: number of signal groups
@@ -232,7 +232,7 @@ categorical_design = function(n, groups, col.normalize = FALSE) {
     cat.levels = rep(0, n)
     dir.prior = rep(0, group.size)
     # Sample from dirichlet prior
-    # Resample to prevent small probabilities
+    # Resample to prevent very small probabilities (leading to empty levels)
     while (min(dir.prior) < group.size/n) {
       dir.prior = rdirichlet(1, rep(1, group.size))
       dir.prior = (dir.prior + rep(1/group.size, group.size))/2
@@ -252,7 +252,8 @@ categorical_design = function(n, groups, col.normalize = FALSE) {
   if (col.normalize) {
     X = col_normalize(X)
   }
-  return(list(X=X, X.cat=X.cat))
+  #return(list(X=X, X.cat=X.cat))
+  return(X)
 }
 
 # Input: inds of main effects

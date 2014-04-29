@@ -1,5 +1,5 @@
-db = "PI"
-#db = "NRTI"
+#db = "PI"
+db = "NRTI"
 
 binary.encoding = TRUE
 

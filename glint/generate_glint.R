@@ -41,7 +41,7 @@ generate_glint = function(X, groups, cat.groups = NULL, ...) {
 
       if ((gcont) & (hcont)) {
         # Both continuous
-        Xgh = cbind(Xgh, rep(1,n))
+        #Xgh = cbind(Xgh, rep(1,n))
         Xgh = cbind(Xgh, X[, c(ginds, hinds)])
         main.append = c(0, rep(1, gs+hs), rep(0, gs*hs))
       } else if ((gcont) & (!hcont)) {
@@ -148,7 +148,8 @@ beta_glint = function(groups, all.groups, special.groups, default.groups, k, num
     ints.cat = length(intersect(c(int.mains[i], int.mains[num.ints+i]), cat.groups))
     if (ints.cat == 0) {
         # In this case, don't add another coeff to the intercept
-        this.int.inds = this.int.inds[-1]
+        #this.int.inds = this.int.inds[-1]
+        # 
     } else if (ints.cat == 1) {
         # One of these is categorical
         #stop("Dunno yet how to constrain cont./cat. interaction")

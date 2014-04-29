@@ -113,7 +113,7 @@ run_simulation = function(
                 design_fun = get(design_name)
                 Z = design_fun(n, groups)
                 if (estimation) {
-                    Z.test = design_fun(n, groups, col.normalize = FALSE, corr = corr)
+                    Z.test = design_fun(n, groups, col.normalize = FALSE)
                 }   
             } else {
                 stop(paste("Misspecified design matrix:", design))
@@ -129,7 +129,7 @@ run_simulation = function(
                 X.test = Z.test
             }
             all.groups = groups
-            b.data = beta_staircase(groups, k, upper.scaled, lower.scaled, cat.groups=cat.groups)
+            b.data = beta_staircase(groups, k, upper.scaled, lower.scaled, cat.groups=cat.groups, rand.sign=TRUE, perturb=TRUE)
             group.sizes = rle(groups)$lengths
             weights = sqrt(group.sizes)
             

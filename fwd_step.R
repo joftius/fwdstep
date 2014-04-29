@@ -32,6 +32,8 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   imax = results$i
   gmax = groups == imax
   kmax = results$k
+  new.active.set = update_active_set(active.set, imax)
+  inactive.set = setdiff(unique(groups), new.active.set)
   # Effective number of parameters
   new.eff.p = eff.p + sum(gmax)
 
@@ -39,10 +41,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
     stop("Too many variables added. Try decreasing max.steps")
   }
 
-  # Also using group_lasso.R
-  p.value = pvalue(results$L, results$lower_bound, results$upper_bound, sqrt(results$var), kmax)
-  new.active.set = update_active_set(active.set, imax)
-  inactive.set = setdiff(unique(groups), new.active.set)
+  conditional_variance = results$var
 
   # Form new residual
   X.project = X
@@ -56,6 +55,12 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
   }
 
   Y.resid = Y - Pgmax %*% Y
+
+  if (conditional_variance <= 0) {
+    p.value = 1
+  } else {
+    p.value = pvalue(results$L, results$lower_bound, results$upper_bound, sqrt(conditional_variance), kmax)
+  }
   
   return(list(test.output = results, var = results$var, p.value = p.value, added = imax, active.set = new.active.set, eff.p = new.eff.p, Y.update = Y.resid, X.update = X.project, grank=kmax))
 }

@@ -1,5 +1,5 @@
-type = 'glint'
-#type = 'gamsel'
+#type = 'glint'
+type = 'gamsel'
 
 
 source('simulation.R')
@@ -10,22 +10,21 @@ estimation = FALSE
 
 if (type == 'gamsel') {
     design = 'uniform'
-    n = 200
+    n = 500
     groups = 1:50
     nsim = 100
 } else {
     design = 'gaussian'
     n = 100
     groups = 1:30
-    nsim = 50
+    nsim = 100
 }
 
-
-k = 3
-k0 = 1
-upper = 10
-lower = 5
-max.steps = 12
+k = 6
+k0 = 2
+upper = 15
+lower = 10
+max.steps = 18
 
 
 corr = 0 # nonzero only supported for gaussian design
@@ -78,8 +77,14 @@ dev.off()
 
 #stop("No grouped features for GAMSel")
 
-groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
-max.steps = 10
+if (type == 'glint') {
+  groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
+} else {
+  n = 100
+  groups = 1:100
+  k = 3
+  k0 = 1
+}
 
 p = length(groups)
 
@@ -92,17 +97,17 @@ output.g = run_simulation(
     max.steps = max.steps,
     estimation = estimation, verbose = TRUE)
 
+
 with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
 
-caption = "Evaluation of model selection using several stopping rules based on our p-values."
-results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k))
-results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k))
 
-#rownames(results.l) = paste("(1)", rownames(results.l))
-rownames(results.g) = paste("(g)", rownames(results.g))
+caption = "Evaluation of model selection using several stopping rules based on our p-values."
+results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k))
+results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k))
 
 file = paste0("tables/", output$filename, ".tex")
 
+rownames(results.g) = paste("(g)", rownames(results.g))
 tex_table(file, rbind(results.l, results.g), caption = caption)
 
 if (estimation) {

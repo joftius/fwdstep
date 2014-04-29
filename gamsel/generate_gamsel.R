@@ -140,18 +140,18 @@ beta_gamsel = function(groups, all.groups, special.groups, k, num.default, upper
 ##       s.main = sum(main.part)
 ##       s.int = sum(int.part)
 ##       beta[main.part] = beta[main.part]/sqrt(s.main)
-      linear.part = which(group)[1]
+#      linear.part = which(group)[1]
       s.linear = 1
-      spline.part = which(group)[-1]
+      spline.part = which(group) #[-1]
       s.spline = length(spline.part)
       beta[spline.part] = sqrt(2)*beta[spline.part]/sqrt(length(spline.part))
-      bg.linear.norm = sqrt(sum(beta[linear.part]^2))
+#      bg.linear.norm = sqrt(sum(beta[linear.part]^2))
       bg.spline.norm = sqrt(sum(beta[spline.part]^2))
       
       if (perturb) {
-        beta[linear.part] = beta[linear.part] + rnorm(s.linear)/2
-        bg.main.new.norm = sqrt(sum(beta[linear.part]^2))
-        beta[linear.part] = beta[linear.part] * bg.linear.norm / bg.main.new.norm
+#        beta[linear.part] = beta[linear.part] + rnorm(s.linear)/2
+#        bg.main.new.norm = sqrt(sum(beta[linear.part]^2))
+#        beta[linear.part] = beta[linear.part] * bg.linear.norm / bg.main.new.norm
         
         beta[spline.part] = beta[spline.part] + rnorm(s.spline)/2
         bg.spline.new.norm = sqrt(sum(beta[spline.part]^2))

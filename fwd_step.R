@@ -61,7 +61,7 @@ add_group = function(X, Y, groups, weights, Sigma, active.set = 0, eff.p = 0, ca
 }
 
 # Iterate add_group for max.steps
-forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0, cat.groups = NULL) {
+forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0, cat.groups = NULL, tol=1e-10) {
   n = length(Y)
   group.sizes = rle(groups)$lengths
 
@@ -90,6 +90,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
   chi.pvals = c()
   c.vars = c()
   Ls = c()
+  Ynorms = c()
 
   Y.update = Y
   X.update = X
@@ -102,6 +103,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
     eff.p = output$eff.p
     RSS = sum(Y.update^2)
     Y.update = output$Y.update
+
     RSSdrop = RSS - sum(Y.update^2)
     chi.p = pchisq(RSSdrop, lower.tail=F, df=grank)
     X.update = output$X.update
@@ -109,6 +111,17 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
     chi.pvals = c(chi.pvals, chi.p)
     c.vars = c(c.vars, output$var)
     Ls = c(Ls, output$test.output[[1]])
+    Ynorms = c(Ynorms, RSS)
+
+    # Early stopping
+    if ((RSSdrop < tol) & (i < max.steps)) {
+        left = max.steps - i
+        active.set = c(active.set, rep(0, left))
+        p.vals = c(p.vals, rep(NA, left))
+        chi.pvals = c(chi.pvals, rep(NA, left))
+        Ls = c(Ls, rep(0, left))
+        return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls, RSS = Ynorms))
+    }
 
     # Some overfitting considerations
     if ((eff.p >= n - max(group.sizes)) & (i < max.steps)) {
@@ -120,6 +133,6 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
     }
   }
 
-  return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls))
+  return(list(active.set = active.set, p.vals = p.vals, chi.pvals = chi.pvals, Ls = Ls, RSS = Ynorms))
 }
 

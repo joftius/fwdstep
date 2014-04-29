@@ -1,20 +1,37 @@
+type = 'glint'
+#type = 'gamsel'
+
+
 source('simulation.R')
 source('tex_table.R')
 source('plots.R')
 
-nsim = 50
-type = 'glint'
-design = 'gaussian'
-estimation = TRUE
-n = 500
-groups = 1:20
+estimation = FALSE
 
-k = 6
+if (type == 'gamsel') {
+    design = 'uniform'
+    n = 200
+    groups = 1:50
+    nsim = 100
+} else {
+    design = 'gaussian'
+    n = 100
+    groups = 1:30
+    nsim = 50
+}
+
+
+k = 3
+k0 = 1
 upper = 10
 lower = 5
-max.steps = 10
+max.steps = 12
+
+
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
+
+p = length(groups)
 
 if ((corr != 0) & (design != 'gaussian')) {
     stop("Feature correlation only supported for gaussian design")
@@ -24,54 +41,47 @@ output = run_simulation(
     nsim = nsim,
     type = type,
     design = design,
-    n = n, groups = groups, k = k,
+    n = n, groups = groups, k = k, k0 = k0,
     upper = upper, lower = lower,
     max.steps = max.steps,
     estimation = estimation, verbose = TRUE)
 
-special.power = paste0("(", output$special.fwd.power, ")")
+special.power = paste0("(", round(output$special.fwd.power, 2), ")")
 with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append = special.power))
 
-## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
-## if (corr != 0) {
-##   ps.fname = paste0(ps.fname, '_corr', corr)
-## }
-## if (noisecorr != 0) {
-##   ps.fname = paste0(ps.fname, '_noisecorr', noisecorr)
-## }
-## ps.fname = paste0(ps.fname, '.pdf')
-## k = output$k
-## #psr = t(apply(output$psr.mat, 1, cumsum)/k)
-## psr = output$psr.mat
-## print(psr)
-## l = nrow(psr)
-## m = ncol(psr)
-## for (j in 1:nrow(psr)) {
-##     inds = which(psr[j,] >= 1)
-##       if (length(inds) > 1) {
-##             inds = inds[-1]
-##                 psr[j,inds] = psr[j,inds] + cumsum(rep(1/(3*k), length(inds)))
-##           }
-##   }
-## psr = psr + matrix(0.02*rnorm(l*m), nrow=l)
-## pvals = output$signal.p
-## plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower, "/", upper)
-## pdf(ps.fname)
-## plot(psr[1, ], pvals[1, ], pch = ".", cex = 2, xlim=c(-0.1, max(psr) + .1), ylim=c(-0.1, 1.1), xlab = "Proportion of signal recovered", ylab = "P-values", main = plot.main)
-## for (j in 2:l) {
-##     inds = which(psr[j,] <= 2)
-##       points(psr[j, inds], pvals[j, inds], pch = ".", cex = 2)
-##   }
-## abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
-## abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
-## abline(v = 1, col = "gray")
-## dev.off()
+ps.fname = paste0("figs/bysignal/", output$filename, ".pdf")
+k = output$k
+#psr = t(apply(output$psr.mat, 1, cumsum)/k)
+psr = output$psr.mat
+l = nrow(psr)
+m = ncol(psr)
+for (j in 1:nrow(psr)) {
+    inds = which(psr[j,] >= 1)
+      if (length(inds) > 1) {
+            inds = inds[-1]
+                psr[j,inds] = psr[j,inds] + cumsum(rep(1/(3*k), length(inds)))
+          }
+  }
+psr = psr + matrix(0.02*rnorm(l*m), nrow=l)
+pvals = output$signal.p
+plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower, "/", upper)
+pdf(ps.fname)
+plot(psr[1, ], pvals[1, ], pch = ".", cex = 2, xlim=c(-0.1, max(psr) + .1), ylim=c(-0.1, 1.1), xlab = "Proportion of signal recovered", ylab = "P-values", main = plot.main)
+for (j in 2:l) {
+    inds = which(psr[j,] <= 2)
+      points(psr[j, inds], pvals[j, inds], pch = ".", cex = 2)
+  }
+abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
+abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
+abline(v = 1, col = "gray")
+dev.off()
 
-k = 3
-upper = 10
-lower = 5
+#stop("No grouped features for GAMSel")
+
 groups = sort(c(rep(1:15, 2), rep(16:20, 3)))
 max.steps = 10
+
+p = length(groups)
 
 output.g = run_simulation(
     nsim = nsim,

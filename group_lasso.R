@@ -23,13 +23,12 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   }
   
   Ctheta = sum(a*b) / (norma*normb)
-  # Why was this next line here?
-  #Ctheta = min(max(Ctheta, -1), 1)
+  # R might believe 1 > 1 and return NaN in sqrt() below
+  Ctheta = min(max(Ctheta, -1), 1)
   Stheta = sqrt(1-Ctheta^2)
   theta = acos(Ctheta)
-  
   Sphi = normb * Stheta / w
-
+  
   if (Sphi > 1) {
     # infeasible
     return(c(0, Inf))

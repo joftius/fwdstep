@@ -34,6 +34,30 @@ ave_pow= function(num.nonzero, active, as) {
   return(length(intersect(active, as))/num.nonzero)
 }
 
+
+# For coefficients of categorical variables,
+# ensure zero-sum constraint.
+center_rescale = function(v) {
+    mod = sqrt(sum(v^2))
+    if (mod > 0) {
+        v = v - mean(v)
+        newmod = sqrt(sum(v^2))
+        if (newmod == 0) {
+            stop("Coefficient is constant, cannot satisfy zero-sum")
+        }
+        v = v * mod / newmod
+    }
+    return(v)
+}
+constrain_beta = function(beta, nz.groups, cat.groups) {
+    group.labels = intersect(unique(nz.groups), cat.groups)
+    for (g in group.labels) {
+        gind = g == groups
+        beta[gind] = center_rescale(beta[gind])
+    }
+    return(beta)
+}
+
 # Staircase signal
 beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, rand.sign=FALSE, permute=FALSE, perturb=FALSE, cat.groups = NULL, staircase=TRUE) {
   # Generate a staircase-shaped signal vector
@@ -89,17 +113,7 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   # Ensure coefs for categorical variables sum to 0
   # Maybe I don't need to do this
   if (length(cat.groups) > 0) {
-    for (g in cat.groups) {
-      gind = groups == g & nz.inds
-      if (sum(gind) > 0) {
-        gmod = sqrt(sum(beta[gind]^2))
-        beta[gind] = beta[gind] - mean(beta[gind])
-        gnewmod = sqrt(sum(beta[gind]^2))
-
-        if (gnewmod == 0) stop("Categorical variable with constant coeff (same for all levels)")
-        beta[gind] = beta[gind] * gmod / gnewmod
-      }
-    }
+      beta = constrain_beta(beta, nz.groups, cat.groups)
   }
 
   if (!staircase) {

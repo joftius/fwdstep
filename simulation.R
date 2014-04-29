@@ -23,13 +23,21 @@ run_simulation = function(
     verbose=FALSE,
     ...) {
 
-    # Load additional files if necessary
-    if (type == "glint") {
-        # TODO: move glint functions from generate_data.R
-        source("glint/generate_glint.R")
-    } else if (type == "gamsel") {
-        source("gamsel/generate_gamsel.R")
+
+    if (type != "default") {
+        # Load additional files if necessary
+        if (type == "glint") {
+            source("glint/generate_glint.R")
+        } else if (type == "gamsel") {
+            source("gamsel/generate_gamsel.R")
+        }
+        # Attach some functions
+        #special_group_of = get(paste0(type, "_special_group_of"))
+        default_group_of = get(paste0(type, "_default_group_of"))
+        beta_name = paste0("beta_", type)
+        beta_fun = get(beta_name)
     }
+    
     if (estimation) {
 #        if (type != "default") {
 #            stop("Estimation error in non-default settings not supported")
@@ -88,7 +96,7 @@ run_simulation = function(
 
         # Construct matrix Z of original features
         if (design == "fixed") {
-            print("Using fixed design matrix")
+            if (verbose) print("Using fixed design matrix")
             data = fixed.data
             Z = data$X
             # Generate beta here
@@ -114,6 +122,8 @@ run_simulation = function(
 
         # Construct glint/gamsel design if necessary
         if (type == "default") {
+
+            # TODO: fixed data here?
             X = Z
             if (estimation) {
                 X.test = Z.test
@@ -126,45 +136,47 @@ run_simulation = function(
         } else {
             # Nomenclature: "special" means splines or interactions
             # Generate special design matrix
-            generate_name = paste0("generate_", type)
-            if (exists(generate_name, mode = "function")) {
-                generate_fun = get(generate_name)
-                data = generate_fun(X=Z, groups=groups, cat.groups=cat.groups, ...)
-                X = data$X
-                if (estimation) {
-                    data.test = generate_fun(X=Z.test, groups=groups, cat.groups=cat.groups, ...)
-                    X.test = data.test$X
-                }
-                all.groups = data$all.groups
-                special.groups = data$special.groups
-                default.groups = data$default.groups
-                G = length(unique(all.groups))
-                mult = sqrt(2*log(G)/n)
-                upper.scaled = upper * mult
-                lower.scaled = lower * mult
-                # Frobenius normalized, do not need weights
-                weights = rep(1, G)
-                    
+            if (design == "fixed") {
+                data = fixed.data
+                
             } else {
-                stop(paste("Misspecified simulation type:", type))
+                generate_name = paste0("generate_", type)
+                if (exists(generate_name, mode = "function")) {
+                    generate_fun = get(generate_name)
+                    data = generate_fun(X=Z, groups=groups, cat.groups=cat.groups, ...)
+                } else {
+                    stop(paste("Misspecified simulation type:", type))
+                }
+            }
+            X = data$X
+            all.groups = data$all.groups
+            special.groups = data$special.groups
+            default.groups = data$default.groups
+            G = length(unique(all.groups))
+            mult = sqrt(2*log(G)/n)
+            upper.scaled = upper * mult
+            lower.scaled = lower * mult
+            if (estimation) {
+                data.test = generate_fun(X=Z.test, groups=groups, cat.groups=cat.groups, ...)
+                X.test = data.test$X
             }
 
-            # Attach some functions
-            #special_group_of = get(paste0(type, "_special_group_of"))
-            default_group_of = get(paste0(type, "_default_group_of"))
+            # Frobenius normalized, do not need weights
+            weights = rep(1, G)
+            
+
             
             # Generate special coefficient vector
-            beta_name = paste0("beta_", type)
-            beta_fun = get(beta_name)
-            b.data = beta_fun(groups, all.groups, special.groups, k=k, num.default=k0, upper=upper.scaled, lower=lower.scaled, cat.groups=cat.groups)
+            b.data = beta_fun(groups=groups, all.groups=all.groups, special.groups=special.groups, default.groups = default.groups, k=k, num.default=k0, upper=upper.scaled, lower=lower.scaled, cat.groups=cat.groups)
             # Special active set for glint/gamsel
             true.special = b.data$true.special
                 
         } 
 
-        Xnormed = frob_normalize(X, all.groups)
+        Xscaled = scale(X, center = TRUE, scale = FALSE)
+        Xscaled = frob_normalize(Xscaled, all.groups)
         if (estimation) {
-            Xnormed.test = frob_normalize(X.test, all.groups)
+            Xscaled.test = frob_normalize(X.test, all.groups)
         }
         beta = b.data$beta
         all.active = b.data$all.active
@@ -204,12 +216,12 @@ run_simulation = function(
         }
         
         # Null results
-        results = forward_group(Xnormed, noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+        results = forward_group(Xscaled, noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
         P.mat[i, ] = results$p.vals
         AS.mat[i, ] = results$active.set
 
         # Non-null results
-        results.b = forward_group(Xnormed, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+        results.b = forward_group(Xscaled, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
 
         if (verbose) {
             print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:k], true.active))/k))
@@ -228,9 +240,9 @@ run_simulation = function(
             stop.rules = c("first", "forward", "last")
             estimation.errs = estimation.errs + estimation_stats(
                 p.list = results$p.vals,
-                active.set = rb.as, X = Xnormed, Y = Y.beta,
+                active.set = rb.as, X = Xscaled, Y = Y.beta,
                 groups = all.groups, beta = beta,
-                X.test = Xnormed.test, Y.test = Y.beta.test, alpha = alpha)
+                X.test = Xscaled.test, Y.test = Y.beta.test, alpha = alpha)
         }
 
         if (type != "default") {

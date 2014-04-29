@@ -22,67 +22,103 @@ generate_glint = function(X, groups, cat.groups = NULL, ...) {
   main.out = rep(1, length(groups))
   gmax = max(groups)
   inds.out = matrix(rep(0, gmax^2), nrow=gmax)
+  cat.out = cat.groups
   gnew = gmax
+#  omitted = 0
   for (g in 1:(gmax-1)) {
     ginds = which(groups == g)
     gs = length(ginds)
     for (h in (g+1):gmax) {
-      gnew = gnew + 1
-      int.groups[[g]] = gnew
-      int.groups[[h]] = gnew
-      main.groups[[gnew]] = c(g, h)
+        main.append = c()
+
       Xgh = matrix(NA, nrow=n)
       hinds = which(groups == h)
       hs = length(hinds)
-      gcont = ifelse(is.element(g, cat.groups), FALSE, TRUE)
-      hcont = ifelse(is.element(h, cat.groups), FALSE, TRUE)
+      gcont = !is.element(g, cat.groups)
+      hcont = !is.element(h, cat.groups)
+        gnew = gnew + 1
+#      all.zero = FALSE
 
       if ((gcont) & (hcont)) {
-
+        # Both continuous
+        Xgh = cbind(Xgh, rep(1,n))
         Xgh = cbind(Xgh, X[, c(ginds, hinds)])
-        main.out = c(main.out, 0, rep(1, gs+hs), rep(0, gs*hs))
-      } else if (gcont) {
+        main.append = c(0, rep(1, gs+hs), rep(0, gs*hs))
+      } else if ((gcont) & (!hcont)) {
+        # g continuous
         Xgh = cbind(Xgh, X[, hinds])
-        main.out = c(main.out, rep(1, gs), rep(0, gs*hs))
-      } else if (hcont) {
-        Xgh = cbind(Xgh, X[, hinds])
-        main.out = c(main.out, rep(1, hs), rep(0, gs*hs))
+        main.append = c(rep(1, hs), rep(0, gs*hs))
+        cat.out = c(cat.out, gnew)
+      } else if ((hcont) & (!gcont)) {
+        # h continuous
+        Xgh = cbind(Xgh, X[, ginds])
+        main.append = c(rep(1, gs), rep(0, gs*hs))
+        cat.out = c(cat.out, gnew)
       } else {
         # Both are categorical
-        main.out = c(main.out, rep(0, gs*hs))
+        main.append = c(rep(0, gs*hs))
+        cat.out = c(cat.out, gnew)
+#        all.zero = TRUE
       }
+        
       for (i in ginds) {
         for (j in hinds) {
           Xij = X[, i] * X[, j]
+#          if (sum(Xij^2) != 0) {
+#              all.zero = FALSE
+#          }
           Xgh = cbind(Xgh, Xij)
         }
       }
       # Remove NA column used to initialize
       Xgh = Xgh[, -1]
-      if ((gcont) & (hcont)) {
-        Xgh = cbind(rep(1/n, n), Xgh)
-      }
-      X.out = cbind(X.out, Xgh)
-      g.out = c(g.out, rep(gnew, ncol(Xgh)))
-      inds.out[g, h] = gnew
-      inds.out[h, g] = gnew
+#      if (all.zero) {
+#        omitted = omitted + 1
+#      } else {
+
+          int.groups[[g]] = gnew
+          int.groups[[h]] = gnew
+          main.groups[[gnew]] = c(g, h)
+          main.out = c(main.out, main.append)
+# why is this here? Done above
+#          if ((gcont) & (hcont)) {
+#              Xgh = cbind(rep(1/n, n), Xgh)
+#          }
+          X.out = cbind(X.out, Xgh)
+          g.out = c(g.out, rep(gnew, ncol(Xgh)))
+          inds.out[g, h] = gnew
+          inds.out[h, g] = gnew
+#      }
     }
   }
   colnames(X.out) = NULL
-  return(list(X=X.out, main.groups=groups, all.groups=g.out, default.groups=main.groups, special.groups=inds.out, main.inds=main.out))
+  return(list(X=X.out, main.groups=groups, all.groups=g.out, default.groups=main.groups, special.groups=inds.out, main.inds=main.out)) #, omitted=omitted))
 }
+
+
+## for (i in 1:100) {
+## b = beta_glint(groups, all.groups, special.groups, k, num.default, upper, lower, cat.groups = cat.groups)
+## continc = is.element(11, b$all.active)
+## print(paste("All cat?:", !continc))
+## discreps = abs(sapply(unique(all.groups), function(g) sum(b$beta[g == all.groups])))
+## failed = discreps > 1e-10
+## print(paste("Constraints:", !any(failed)))
+## if (any(failed)) print(which(failed))
+## if (continc) print("-----------------------")
+## }
 
 # Signal vector generation for glinternet
 # convention: 1/3 of nonzero are only main effects, 2/3 have interactions
 # k should be divisible by 3
 # Note: at most (5/3)*k main effects and (2/3)*num.nz interactions
 # are included, but group sparsity still = k
-beta_glint = function(groups, all.groups, special.groups, k, num.default, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups = NULL) {
+beta_glint = function(groups, all.groups, special.groups, default.groups, k, num.default, upper, lower, rand.sign=TRUE, perturb=TRUE, cat.groups = NULL) {
 
   num.main = num.default
   int.groups = special.groups
   main.group.labels = unique(groups)
-  main.inds = 1:length(groups)
+  main.inds = rep(FALSE, length(all.groups))
+  main.inds[1:length(groups)] = TRUE
   num.ints = k - num.main
   if (num.ints <= 0) {
     stop("At least 1 nonzero interaction is required")
@@ -101,13 +137,24 @@ beta_glint = function(groups, all.groups, special.groups, k, num.default, upper,
   nz.ints = c()
   nz.int.inds = rep(FALSE, length(all.groups))
   for (i in 1:num.ints) {
-    this.int = glint_special_group_of(int.mains[i], int.mains[num.ints+i], int.groups)
+      g1 = int.mains[i]
+      g2 = int.mains[num.ints+i]
+      g1s = sum(groups == g1)
+      g2s = sum(groups == g2)
+    this.int = glint_special_group_of(g1, g2, int.groups)
     nz.ints = c(nz.ints, this.int)
     this.int.inds = which(this.int == all.groups)
     # Check if both main effects are continuous
-    if (length(intersect(c(int.mains[i], int.mains[num.ints+i]), cat.groups)) == 0) {
-      # In this case, don't add another coeff to the intercept
-      this.int.inds = this.int.inds[-1]
+    ints.cat = length(intersect(c(int.mains[i], int.mains[num.ints+i]), cat.groups))
+    if (ints.cat == 0) {
+        # In this case, don't add another coeff to the intercept
+        this.int.inds = this.int.inds[-1]
+    } else if (ints.cat == 1) {
+        # One of these is categorical
+        #stop("Dunno yet how to constrain cont./cat. interaction")
+    } else {
+        # Both are categorical
+        #this.int.inds = this.int.inds[(g1s+g2s+1):length(this.int.inds)]
     }
     nz.int.inds[this.int.inds] = TRUE
   }
@@ -123,101 +170,83 @@ beta_glint = function(groups, all.groups, special.groups, k, num.default, upper,
   beta = rep(0, length(all.groups))
 
   for (i in 1:k) {
-    ind.i = all.groups == nz.groups[i]
-    beta[ind.i] = magnitudes[i]
+      ind.i = all.groups == nz.groups[i]
+      beta[ind.i] = magnitudes[i]
   }
 #  beta[nz.inds] = magnitudes
   
   if (rand.sign) {
-    signs = sample(c(-1, 1), sum(nz.inds), replace = TRUE)
-    beta[nz.inds] = signs*beta[nz.inds]
+      signs = sample(c(-1, 1), sum(nz.inds), replace = TRUE)
+      beta[nz.inds] = signs*beta[nz.inds]
   }
 
   # Normalize coeff across group for fair comparison with non-grouped vars
   # Normalize interaction terms separately
+  # Ensure categorical coeffs satisfy constraints
   int.inds = main.inds != 1
-  
   for (g in nz.groups) {
-    group = g == all.groups
-    if (g <= p) {
-      gs = sum(group)
-      beta[group] = beta[group]/sqrt(gs)
-      bg.norm = sqrt(sum(beta[group]^2))
+      group = g == all.groups
+      #print(c(length(group), length(nz.inds), length(main.inds)))
+      if (g <= p) {
+          gs = sum(group)
+          beta[group] = beta[group]/sqrt(gs)
+          bg.norm = sqrt(sum(beta[group]^2))
       
-      if (perturb) {
-        beta[group] = beta[group] + rnorm(gs) * sqrt(1/10)
-        bg.new.norm = sqrt(sum(beta[group]^2))
-        beta[group] = beta[group] * bg.norm / bg.new.norm
-      }
+          if (perturb) {
+              beta[group] = beta[group] + rnorm(gs) * sqrt(1/10)
+              bg.new.norm = sqrt(sum(beta[group]^2))
+              beta[group] = beta[group] * bg.norm / bg.new.norm
+          }
+
+          if (is.element(g, cat.groups)) {
+              beta[group] = center_rescale(beta[group])
+          }
       
-    } else {
-      group = nz.inds & group
-      main.part = main.inds & group
-      int.part = int.inds & group
-      s.main = sum(main.part)
-      s.int = sum(int.part)
-      beta[main.part] = beta[main.part]/sqrt(s.main)
-      # Inflate interaction terms to give them a chance
-      beta[int.part] = sqrt(2)*beta[int.part]/sqrt(s.int)
-      bg.main.norm = sqrt(sum(beta[main.part]^2))
-      bg.int.norm = sqrt(sum(beta[int.part]^2))
+      } else {
+          #group = nz.inds & group
+          main.part = main.inds & group
+          int.part = int.inds & group
+          s.main = sum(main.part)
+          s.int = sum(int.part)
+          if (s.main > 0) {
+              beta[main.part] = beta[main.part]/sqrt(s.main)
+              bg.main.norm = sqrt(sum(beta[main.part]^2))
+          }
+          # Inflate interaction terms to give them a chance
+          beta[int.part] = sqrt(2)*beta[int.part]/sqrt(s.int)
+          bg.int.norm = sqrt(sum(beta[int.part]^2))
       
-      if (perturb) {
-        beta[main.part] = beta[main.part] + rnorm(s.main) * sqrt(1/10)
-        bg.main.new.norm = sqrt(sum(beta[main.part]^2))
-        beta[main.part] = beta[main.part] * bg.main.norm / bg.main.new.norm
+          if (perturb) {
+              if (s.main > 0) {
+                  beta[main.part] = beta[main.part] + rnorm(s.main) * sqrt(1/10)
+                  bg.main.new.norm = sqrt(sum(beta[main.part]^2))
+                  beta[main.part] = beta[main.part] * bg.main.norm / bg.main.new.norm
+              }
         
-        beta[int.part] = beta[int.part] + rnorm(s.int) * sqrt(1/10)
-        bg.int.new.norm = sqrt(sum(beta[int.part]^2))
-        beta[int.part] = beta[int.part] * bg.int.norm / bg.int.new.norm
-      }
-      
-    }
-  }
-  
-##   # Normalize coeff across group for fair comparison with non-grouped vars
-##   # Only do this if mu = X * beta is formed BEFORE normalizing X
-##   for (g in unique(all.groups)) {
-##     group = g == all.groups
-##     gs = sum(group)
-##     if (g <= p) {
-##       # Main effects normalized as usual
-##       beta[group] = beta[group]/sqrt(gs) #sqrt(max(1,gs-1))
-##     } else {
-##       # Interaction effects are normalized separately
-##       # i.e. they do not share their coeff mass with the main effects
-##       # otherwise it would be difficult to find them
-##       mains.of.g = main_effects_of(g, int.groups)
-##       mgs = 0
-##       for (h in mains.of.g) {
-##         mgs = mgs + sum(h == all.groups)
-##       }
-##       igs = gs - mgs
-##       ginds = which(group)
-##       start.ind = 1
-##       # Check if both groups are continuous
-##       if (length(intersect(mains.of.g, cat.groups)) == 0) {
-##         # Don't add another coeff to the intercept
-##         start.ind = 2
-##       }
-##       for (h in mains.of.g) {
-##         hs = sum(h == all.groups)
-##         end.ind = start.ind + hs - 1
-##         beta[ginds[start.ind:end.ind]] = beta[ginds[start.ind:end.ind]]/sqrt(mgs)
-##         start.ind = end.ind+1
-##       }
-##       # Inflate interaction size
-##       beta[ginds[start.ind:gs]] = sqrt(2)*beta[ginds[start.ind:gs]]/sqrt(igs)
-##     }
-##   }
+              beta[int.part] = beta[int.part] + rnorm(s.int) * sqrt(1/10)
+              bg.int.new.norm = sqrt(sum(beta[int.part]^2))
+              beta[int.part] = beta[int.part] * bg.int.norm / bg.int.new.norm
+          }
+
+          # Center categorical coefficients
+          mains.of.g = glint_default_group_of(g, default.groups)
+          cats.of.g = intersect(mains.of.g, cat.groups)
+          if (length(cats.of.g) == 2) {
+              # Remove global mean
+              beta[int.part] = center_rescale(beta[int.part])
+          } else if (length(cats.of.g) == 1) {
+              # Which one to center? I think only the cat one,
+              # i.e. first half of group
+              cat.inds = which(group)
+              cat.inds = cat.inds[1:(length(cat.inds)/2)]
+              beta[cat.inds] = center_rescale(beta[cat.inds])
+          }
+          
+      }  
+  } # End for
 
   return(list(beta=beta, true.ints=nz.ints, true.mains = nz.mains, true.active = nz.groups, all.active = all.active, true.special=int.mains))
 }
-
-#betad = beta_glinternet(all.groups, int.groups, k, upper, lower)
-#beta = betad$beta
-#true.ints = betad$true.ints
-#for (x in true.ints) print(main_effects_of(x, int.groups))
 
 # Find group index of interaction group for main effects h and g
 glint_special_group_of = function(g, h, special.groups) {

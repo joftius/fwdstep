@@ -2,17 +2,17 @@ source('simulation.R')
 source('tex_table.R')
 source('plots.R')
 
-nsim = 100
+nsim = 500
 type = 'default'
 design = 'gaussian'
 estimation = TRUE
 n = 100
-#groups = 1:200
-groups = 1:50
+groups = 1:200
+#groups = 1:50
 k = 5
 upper = 2
 lower = 1.5
-max.steps = 20
+max.steps = 10
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
@@ -30,6 +30,7 @@ output = run_simulation(
     estimation = estimation, verbose = TRUE)
 
 with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
+
 
 ## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
 ## if (corr != 0) {
@@ -68,9 +69,9 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 
 upper = 3
 lower = 2
-#groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
-groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
-max.steps = 12
+groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+#groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
+max.steps = 10
 
 output.g = run_simulation(
     nsim = nsim,

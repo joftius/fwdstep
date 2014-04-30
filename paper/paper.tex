@@ -69,6 +69,7 @@
 \newcommand{\gstar}{g^*}
 
 \newcommand{\jonathan}[1]{{\color{blue}  #1}}
+\newcommand{\josh}[1]{{\color{green} #1}}
 
 \begin{document}
 
@@ -326,6 +327,7 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
 
 \jonathan{Is $r_0=0$ or $y$? Should be defined in the algorithm. I also put a $y$ in below which I'm not sure
 is correct or not. }
+\josh{Yes, I forgot to specify $r_0 = y$, hence the $y$ is not required (I removed it)}
 
 \begin{algorithm}
   \caption{Forward stepwise variant with groups and weights}
@@ -333,9 +335,9 @@ is correct or not. }
   \begin{algorithmic}[1]
     \REQUIRE An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ variable groups with weights $w_g$
     \ENSURE Ordered active set $A$ of variable groups included in the model at each step
-    \STATE $A \gets \emptyset$, $A^c \gets \{ 1, \ldots, G\}$
+    \STATE $A \gets \emptyset$, $A^c \gets \{ 1, \ldots, G\}$, $r_0 \gets y$
     \FOR{$s=1$ to $steps$}
-    \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T(y- r_{s-1})}_2 / w_g \}$
+    \STATE $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^Tr_{s-1}}_2 / w_g \}$
     \STATE $P_{g^*} \gets I_{n\times n} - X_{g^*}X_{g^*}^\dagger$
     \STATE $A \gets A \cup \{ g^* \}$, $A^c \gets A^c \backslash \{ g^* \}$
     \FORALL{$h \in A^c$}
@@ -458,6 +460,7 @@ it does so under a wide range of conditions.
 \end{figure}
 
 \jonathan{Is average power the same as TPR (or, more correctly, TPP)?}
+\josh{Yes, maybe I should have used that terminology instead?}
 
 
 For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
@@ -540,7 +543,9 @@ In \cite{tests:adaptive} it is pointed out
 \end{equation}
 Further, the above test statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
 {\em conditional} on which variable achieves $\lambda_1$ as well as its sign.
-The limiting results about later steps in \cite{significance:lasso} can (formally) be interpreted as
+The limiting results about later steps in \cite{significance:lasso} can
+%(formally)
+be interpreted as
 recursively applying $T_1$ to the variables that had not previously been selected by LARS.
 
 In the setting of grouped variables, we use an analogous test statistic to
@@ -548,8 +553,19 @@ the right hand side of \eqref{test:exact}. The test statistic is presented as an
 in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
 
-The \emph{group lasso estimator} is a solution to the following penalized
-least-squares convex optimization problem
+Recall the lasso estimator is given by
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{equation}
+\begin{aligned}
+\label{eq:lasso}
+\displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
+   \lambda \| \beta \|_1 \\
+\end{aligned}
+\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \emph{group lasso estimator}, a generalization of the lasso,
+ is a solution to the following penalized
+least-squares convex problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
 \begin{aligned}
@@ -586,7 +602,9 @@ to be zero. The smallest such $\lambda$ is denoted
   \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-In the LASSO setting this is explicitly computable by
+For the LASSO,
+
+this is explicitly computable by
 \begin{equation}
 \label{eq:lammax}
 \lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 . 
@@ -599,79 +617,83 @@ hence it can be expressed as
 % = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2
  = \frac{1}{w_{g^*}}\eta_{g^*}^TX_{g^*}^Ty . 
 \end{equation}
-where $g^*$ is the group that achieves the max and 
-$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves $\|X_{g^*}^Ty\|_2$.
+where $g^*$ is the group that achieves the maximum and 
+$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves the norm $\|X_{g^*}^Ty\|_2$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\begin{figure}
-\label{fig:polytope}
-\begin{center}
-\resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
-\end{center}
-A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
-of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
-active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
-can be written as a set of affine constraints.
-\end{figure}
+% \begin{figure}
+% \label{fig:polytope}
+% \begin{center}
+% \resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
+% \end{center}
+% A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
+% of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
+% active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
+% can be written as a set of affine constraints.
+% \end{figure}
 
 \subsection{Selection events}
 
-The approach to post-selection inference described \cite{lasso:fixed}
-describes the selection event for the LASSO as a convex polytope stylized
-in Figure \ref{fig:polytope}. If all of our groups were of size 1, then
+The approach to post-selection inference in \cite{lasso:fixed}
+describes the selection event for the LASSO as a convex polytope
+satisfying a list of affine constraints.
+%stylized in Figure \ref{fig:polytope}.
+If all of our groups were of size 1, then
 the event that we observe a given set of variables
-in the forward stepwise path (with their signs as they enter) would also
-be described by a set of affine inequalities. This is described in more detail in \cite{exact:lars}.
-
+in the forward stepwise path (with their signs as they enter) would similarly
+be given by a set of affine inequalities.
+%This is described in more detail in \cite{exact:lars}.
 After selection, exact inference for a (randomly) chosen contrast $\eta(y)^T\mu$ of the mean vector
-$\mu$ is carried by considering the conditional distribution of 
+$\mu$ could then be accomplished by analyzing the conditional distribution
 \begin{equation}
 y \sim N(\mu, \sigma^2 I) \bigl| Ay \leq b.
 \end{equation}
-See \cite{lasso:fixed,exact:lars} for further details.
+See \cite{lasso:fixed,exact:lars} for further details on this approach.
 
 In the grouped variables setting, however, the event that $g^*(y)$, the first
-group chosen, is equal to some fixed group $g$ is generally not described by
-a set of affine constraints. The event can be described as
+group chosen, is equal to some fixed group $g$ is generally not given by
+a set of affine constraints. Rather, considering line 3 of Algorithm~\ref{algo:fs}, we see
 \begin{equation}
 \label{eq:first:quadratic}
 \begin{aligned}
 \{g^*(y)=g\} &= \{ \|X_g^Ty\|_2 /w_g \geq \|X_h^Ty\|_2 /w_h , \ \forall h \neq g\} \\
-&=  \{ y^T(X_g^TX_g)y / w_g - y^T(X_h^TX_h)y / w_h, \ \forall h \neq g\} \\
+&=  \{ y^T(X_g^TX_g)y / w_g^2 - y^T(X_h^TX_h)y / w_h^2 \geq 0, \ \forall h \neq g\} \\
 \end{aligned}
 \end{equation}
-
 Hence, our selection event can be expressed as 
 the intersection of a list of quadratic inequalities. This non-affine selection event is stylized in Figure
 \ref{fig:curved}.
-In this section, we consider an arbitrary selection procedure
+In the rest of this section, we consider an arbitrary selection procedure
 $S$ that returns one of a set of possible outcomes $s \in {\cal S}$ by a set of quadratic inequalities.
-That is, for all possible outcomes $s \in {\cal S}$:
+That is, for all possible outcomes $s \in {\cal S}$ there is a set of indices
+$I(s)$ such that
 \begin{equation}
 \label{eq:selection}
 \begin{aligned}
-\{S(y)=s\} = \cap_{i \neq I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
+\{S(y)=s\} = \cap_{i \in I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
 \end{aligned}
 \end{equation}
 
 The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
 assume they are symmetric.
-As in \cite{lasso:exact} we will be interested in some randomly chosen contrast
+As in \cite{lasso:fixed} we will be interested in some randomly chosen contrast
 $\eta(S(y))^T\mu$. In our grouped selection procedure, the procedure $S(y)=g^*(y)$
 and $\eta$ is typically 
 $$
 \eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
 $$
 
-Having fixed $\eta$, we must slice through the selection event along a ray with direction $\eta$ that passes through $y$. 
+Having fixed $\eta$, we proceed to study this contrast by slicing through the selection event along a ray with direction $\eta$ that passes through $y$. 
 That is, we need to find
 $$
 \begin{aligned}
-\left\{t: S(y+t \cdot \eta)=s \right\} &= \cap_{i \in I(s)} \left\{t: (y+t \cdot \eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}. \\
+\lefteqn{
+\left\{t \in \mathbb R : S(y+t \cdot \eta)=s \right\} } \\
+ & \qquad = \cap_{i \in I(s)} \left\{t \in \mathbb R : (y+t \cdot \eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}. \\
 \end{aligned}
 $$
 
@@ -687,18 +709,17 @@ The slice for any particular inequality is
 $$
 \begin{aligned}
 \lefteqn{
-\left\{t: (y+t\eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}} \\
- & \qquad = \left\{t: t^2 \cdot \eta^TQ_i\eta + t \cdot(2 y^TQ_i\eta + a_i^T\eta) + y^TQ_iy + a_i^Ty - b_i \leq 0 \right\} \\
+\left\{t \in \mathbb R : (y+t\cdot \eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}} \\
+ & \qquad = \left\{t \in \mathbb R : t^2 \cdot (\eta^TQ_i\eta) + t \cdot(2 y^TQ_i\eta + a_i^T\eta) + y^TQ_iy + a_i^Ty - b_i \leq 0 \right\} \\
 \end{aligned}
 $$
-This can be computed easily, and results in either the empty, a single interval (possibly infinite) or the union of 
-two disjoint infinite intervals. The intersection over all $I(s)$ is therefore easily computable.
-This yields an easily computable form for the slice
+This can be computed explicitly, and results in either the empty set, a single interval (possibly infinite) or the union of 
+two disjoint infinite intervals. The intersection over all $I(s)$ is therefore also computable, yielding a form for the slice
 \begin{equation}
 \label{eq:slice}
 \{g^*(y)=g, \eta(g^*(y))=\eta\}.
 \end{equation}
-In the picture \eqref{eq:curved}, for every $\eta$, the slice \eqref{eq:slice} is a function
+In the picture \ref{fig:curved}, for every $\eta$, the slice \eqref{eq:slice} is a function
 of $P_{\eta}^{\perp}y$. This amounts to a proof of the following lemma.
 
 \begin{lemma}
@@ -716,20 +737,23 @@ can be described by
 a finite union of closed intervals whose endpoints are functions of 
 $(P_s^{\perp}y, (P_s- (X_s\eta_s)(X_s\eta_s)^T)y)$ where
 $P_s^{\perp}$ is projection on the orthogonal column space of $X_s$.
-Denote this set by $E(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y)$ and also define
+\end{lemma}
+Denote the set \eqref{eq:slice:general} by $E(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y)$ and also define
 $$
 \begin{aligned}
-E_+(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y) &= \left\{y + t \cdot \eta_s: S(y+t \cdot \eta)=s, \frac{X_s^Ty}{\|X_s^Ty\|_2}=\eta_s \right\} \\
+\lefteqn{
+E_+(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y) } \\
+ & \qquad = \left\{y + t \cdot \eta_s: S(y+t \cdot \eta)=s, \frac{X_s^Ty}{\|X_s^Ty\|_2}=\eta_s \right\} \\
 \end{aligned}
 $$
-\end{lemma}
+
 
 In turn, this allows to derive a test statistic to test the hypothesis
 $H_{0,s}:X_s^T\mu=0$ conditional on $s$ being selected.
 \begin{lemma}
 \label{eq:test:dbn}
 Conditional on $H_{0,s} \cap E_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y)$
-the following equality holds in distribution
+we have the following distributional result
 \begin{equation}
 \label{eq:chi:truncated}
 (X_s\eta_s)^Ty \overset{D}{=} \theta_s \chi_{k(s)} | (X_s\eta_s)^TE_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y) 
@@ -741,7 +765,7 @@ $$
 \end{lemma}
 
 {\bf Proof:}
-For any $s$, decompose the distribution of $y$ as
+For any fixed $s$, decompose $y$ as
 $$
 (Z^{\perp}_s,Z_s) = (P_s^{\perp}y, X_s^Ty).
 $$
@@ -754,8 +778,9 @@ Transforming to polar coordinates $(R,U)$ yields a density
 $$
 (2 \pi \Sigma_s \sigma^2)^{-k(s)/2} r^{k(s)-1} \exp \left(-\frac{r^2}{2 \sigma^2} u^T\Sigma_s^{-1}u \right), \qquad r \geq 0, \|u\|_2=1.
 $$
-Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{r(s)}$. The only thing to determine
-is the scale of the $\chi$, which must be $\sigma \|X_s\eta_s\|_2$.
+Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{k(s)}$. Finally, observe that 
+the scale of the $\chi$ above is given by $\theta_s$. \qed
+%$\sigma \|X_s\eta_s\|_2$.
 
 %\subsection{Relation to covariance test}
 %
@@ -957,6 +982,7 @@ nonzero groups recovered in the first $k$ steps is denoted $k$-SP,
 where recall $k$ is the number of truly nonzero groups. 
 
 \jonathan{make the tick marks denoting the number of true groups larger -- can you not just shade the right hand part gray ? easy to do in python...}
+\josh{Done, updated plots now have this form. Will soon finish updating all plots}
 Finally, most of the plots below show the following information. The
 horizontal axis is the step index for forward stepwise. The dashed
 line shows the proportion of iterations where a truly nonzero variable
@@ -985,9 +1011,9 @@ Gaussian design with groups of sizes 5 and 10.}
 \end{figure}
 
 
-\input{../small_sim_selection.tex}
+\input{../tables/default_gaussian_nsim500_n100_p50_g50_k5_lower1pt5_upper2.tex}
 
-\input{../small_sim_estimation.tex}
+\input{../tables/default_gaussian_nsim500_n100_p50_g50_k5_lower1pt5_upper2_estimation.tex}
 
 \begin{figure}[h]
 \begin{center}
@@ -1004,7 +1030,7 @@ The right panel shows results for categorical matrices with all categories havin
 \end{center}
 \end{figure}
 
-\input{../large_sim_selection.tex}
+\input{../tables/default_gaussian_nsim500_n100_p200_g200_k5_lower1pt5_upper2.tex}
 
 
 
@@ -1015,10 +1041,48 @@ We now turn to applying forward stepwise and examining the behavior of
 our test statistic in several unique settings, including a real data
 example.
 
+\subsection{Nonlinear regression with splines}
+
+\begin{figure}
+\begin{center}
+\subfigure[Forward stepwise with splines]{
+\label{fig:spline:fwd}
+\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gauss_glint_p20_n200_lower2p9_upper3p6.pdf}}
+\hspace{-15pt}
+\subfigure[P-value with splines]{
+\label{fig:spline:pval}
+\includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim100_n200_p50_g50_k6_k02_lower10_upper15.pdf}}
+\caption{\small \it The left panel shows the power of forward stepwise
+for various sparsity levels. The right panel shows our p-value marginally
+over each step, with red indicating the global null case and blue
+indicating a signal with $k=6$ nonzero groups.}
+\label{fig:spline}
+\end{center}
+\end{figure}
+
+First we consider a simple extension of the usual linear regression setting. Given a design matrix $X$, we can augment this by adding additional columns given by nonlinear functions of the original covariates. Specifically, we compute spline basis vectors for each covariate and create a group given by this spline basis. Denote this new design matrix
+\begin{equation}
+\label{eq:splinemat}
+  \begin{aligned}
+    \tilde X &=  \begin{pmatrix} X_1 & \cdots & X_G & X^+_1 & \cdots & X^+_G  \end{pmatrix}\\
+    &= \begin{pmatrix} X & X^+ \end{pmatrix}
+  \end{aligned}
+\end{equation}
+with $\tilde G = 2G$ groups. For simplicity we assume the original groups are all size 1, and use the B-spline basis. In our simulations we generate original covariates uniformly in the interval [-1,1] and use cubic splines with boundary knots
+\begin{equation}
+  \begin{aligned}
+    X_i &\sim \text{Unif}[-1,1], \quad
+    X_i^+ = \text{CubicSplineBasis}(X_i)
+  \end{aligned}
+\end{equation}
+Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group.
+
+
+
 
 \subsection{Glinternet for hierarchical interactions}
 \label{sec:glint}
-In regression settings with many variables, considering models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group lasso model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
+In regression settings with many variables, choosing among models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group lasso model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
 \begin{equation}
 \label{eq:glintmat}
 \tilde X = \begin{pmatrix} X_1 & \cdots & X_G & X_{1:2} & \cdots & X_{1:G} & X_{2:3} & \cdots & X_{(G-1):G}  \end{pmatrix}
@@ -1089,9 +1153,10 @@ To demonstrate this method by simulation, we constructed signals which have
 the first $k/3$ main effects nonzero but with no interactions, and the
 remaining $2k/3$ nonzero main effects are matched to each other to form
 interactions.
-This way each nonzero main effect with any nonzero interactions has
-exactly one nonzero interaction. Furthermore, each nonzero interaction
-coefficient has been inflated to be larger than the corresponding main
+%This way each nonzero main effect with any nonzero interactions has
+%exactly one nonzero interaction. 
+We also inflate each nonzero interaction
+coefficient to be larger than the corresponding main
 effect coefficients. This special case is favorable for our algorithm,
 but our purpose here is merely to demonstrate the flexibility of the
 hypothesis test and not to propose a general procedure for models with
@@ -1127,11 +1192,9 @@ indicating a signal with $k=6$ nonzero groups.}
 \end{figure}
 
 
-\subsection{Generalized additive model selection}
-\todo Finish code \\
-\todo Write section \\
 
-\subsection{Real data example}
+
+\subsection{HIVdb data example}
 \label{sec:hiv}
 \todo Sanity check my analysis \\
 \todo For rare mutations try binary wildtype/non-wt? \\
@@ -1139,7 +1202,7 @@ indicating a signal with $k=6$ nonzero groups.}
 
 \cite{HIV} use genomic information to predict efficacy of antiretroviral
 drugs in treating HIV. Quantitative measurements of drug
-response/resistance were regressed on categorical covariates encoded
+response/resistance were regressed on categorical covariates encoding
 the presence and type of certain genetic mutations. We attempt a similar
 analysis using forward stepwise, and report our P-value at each step.
 Categorical covariates are encoded as groups of binary variables using
@@ -1189,6 +1252,29 @@ models are shown in Tables 4 and 5. (\todo Fix this ref after re-running)
 %\label{tab:HIVNRTI}
 %\end{center}
 %\end{figure}
+
+We can also use the procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions between mutations.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figs/HIV_PI_glint.pdf}
+\caption{\small \it Results from PI dataset}
+\label{fig:HIVPI:glint}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI_glint.pdf}
+\caption{\small \it Results from NRTI dataset}
+\label{fig:HIVNRTI:glint}
+\end{center}
+\end{figure}
+
+
+\input{../tables/HIV_PI_glint.tex}
+
+\input{../tables/HIV_NRTI_glint.tex}
 
 \section{Discussion}
 \label{sec:discuss}

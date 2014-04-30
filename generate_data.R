@@ -152,7 +152,7 @@ frob_normalize = function(X, groups) {
 
 uniform_design = function(n, groups, col.normalize=FALSE, corr = 0) {
   p = length(groups)
-  return(matrix(runif(n*p), nrow=n))
+  return(matrix(2*runif(n*p)-1, nrow=n))
 }
 
 # Fixed group sizes, gaussian design

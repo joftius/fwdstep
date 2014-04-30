@@ -50,7 +50,7 @@ generate_gamsel = function(X, groups, degrees = 3, col.normalize = FALSE, ...) {
       stop("Currently only supports groups of size 1")
     }
     Xvect = X[, col]
-    spline.basis = bs(Xvect, degree = degrees[g], Boundary.knots = c(0,1))
+    spline.basis = bs(Xvect, degree = degrees[g], Boundary.knots = c(-1,1))
     #X.out = cbind(X.out, X[, col])
     X.out = cbind(X.out, spline.basis)
     all.groups = c(all.groups, rep(gnew, ncol(spline.basis))) #+1))

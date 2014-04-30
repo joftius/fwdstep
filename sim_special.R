@@ -10,7 +10,7 @@ estimation = FALSE
 
 if (type == 'gamsel') {
     design = 'uniform'
-    n = 500
+    n = 200
     groups = 1:50
     nsim = 100
 } else {

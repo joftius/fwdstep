@@ -1,4 +1,5 @@
 source('simulation.R')
+source('tpr_simulation.R')
 source('tex_table.R')
 source('plots.R')
 
@@ -7,7 +8,7 @@ type = 'default'
 design = 'gaussian'
 estimation = TRUE
 n = 100
-groups = 1:200
+groups = 1:00
 #groups = 1:50
 k = 5
 upper = 2
@@ -30,7 +31,6 @@ output = run_simulation(
     estimation = estimation, verbose = TRUE)
 
 with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
-
 
 ## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
 ## if (corr != 0) {

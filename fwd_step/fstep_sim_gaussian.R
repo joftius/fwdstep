@@ -63,10 +63,7 @@ for (i in 1:length(ns)) {
   }
 
   power.MCavg = rowMeans(pow.mat)
-
   print(pow.mat)
-
-#  print(mu.mat)
 
   # Save plot
   plot.main = paste0("n = ", n, ", p = ", p, ", signal strength ", lower.coeff, "/", upper.coeff)

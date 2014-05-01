@@ -395,7 +395,6 @@ criteria which stop at the step minimizing
 \frac{1}{2} \| y - X \beta_s \|_2^2 + \lambda \pen(\beta_s)
 \end{aligned}
 \end{equation}
-(\todo describe construction of $\beta$ after finding $A$)
 where we have written $\{ \beta_s : s = 1, \ldots, steps \}$ as
 the sequence of models outputted by forward stepwise. The function
 $\pen(\beta)$ is a penalty on model complexity usually taken to be the
@@ -413,66 +412,46 @@ proportion of noise variables among variables declared significant
 
 Although forward stepwise is a greedy algorithm producing a
 potentially sub-optimal sequence of models, under favorable conditions
-it can still perform well. There is a small segment of the
-compressed sensing literature \citep{donoho:pursuit, cai:wang:omp}
-with results stating that forward stepwise (often referred to in that
-literature as Orthogonal Matching Pursuit or OMP) can exactly select
-the true model
-under some stringent conditions involving quantities like the sparsity
-of the true model and the coherence of the design matrix. The
-coherence $\mu(X)$ of a matrix $X$ with columns scaled to have unit
-2-norm is defined as
-
+it can still perform well. There is a subset of the compressed sensing literature \citep{donoho:pursuit, cai:wang:omp} dedicated to forward stepwise (often referred to in that literature as Orthogonal Matching Pursuit or OMP). 
+Typical results from these works establish that forward stepwise can exactly select the true model under some stringent conditions involving quantities like the sparsity of the true model and the coherence of the design matrix.
+The coherence $\mu(X)$ of a matrix $X$ with columns scaled to have unit 2-norm is defined as
 \begin{equation}
   \mu := \mu(X) = \max_{i \neq j} \{ | \innerp{ X_i }{ X_j } | \}
 \end{equation}
-
-Recalling that $k$ is the sparsity of $\beta$, typical results in this
-literature say that if $k < (1/\mu + 1)/2$ and the nonzero
-coefficients of $\beta$ are sufficiently large then forward stepwise
-recovers $\beta$ with high probability. The coherence condition is
-necessary to guarantee exact recovery \citep{cai:wang:xu:sharp} in the
-sense that it is possible to construct counterexamples with
-$k = (1/\mu + 1)/2$. We refer the reader to the literature for details.
-For our purposes the
-conditions required to guarantee exact recovery are usually too
-stringent. Simulations show empirically that forward
-stepwise can work well even when it is not working perfectly, and that
-it does so under a wide range of conditions.
+Recalling that $k$ is the sparsity of $\beta$, it has been shown that if $k < (1/\mu + 1)/2$ and the nonzero coefficients of $\beta$ are sufficiently large then forward stepwise recovers $\beta$ with high probability.
+The coherence condition is necessary to guarantee exact recovery \citep{cai:wang:xu:sharp} in the sense that it is possible to construct counterexamples with $k = (1/\mu + 1)/2$.
+We refer the reader to \cite{donoho:pursuit, cai:wang:omp} for details.
+But for our purposes the conditions required to guarantee exact recovery are usually too stringent.
+Simulations show empirically that forward stepwise can work well even when it is not working perfectly, and that it does so under a wide range of conditions.
 
 
 \begin{figure}
 \begin{center}
-\subfigure[Ternary design]{
-\label{fig:fsternary}
-\includegraphics[width=0.5\textwidth]{../figs/fwdstep/ternary_p2n_n100_lower1p4_upper1p4.pdf}}
+\subfigure[Categorical design]{
+\label{fig:fscat}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_default_categorical_nsim100_n100_p400_g200_sizes2-2_k24_lower2_upper4.pdf}}
 \hspace{-15pt}
-\subfigure[Gaussian design with correlation]{
+\subfigure[Correlated gaussian design]{
 \label{fig:fsgausscorr}
-\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gaussian_p2n_n100_lower1p4_upper1p6_corr0p2.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_default_gaussian_nsim100_n100_p200_g200_k24_lower1pt2_upper2_corr0pt1.pdf}}
 \caption{\small \it The left panel shows the results of the simulation
-  using design matrices with i.i.d. ternary entries taking values $0,
-  \pm 1$ with equal probability. The left panel shows the results
-  with design matrices of standard Gaussian entries with
-  equi-correlation of 0.2. }
+  using a categorical design consisting of 200 binary factors.
+  The right panel shows the results with design matrices of Gaussian
+  entries with equi-correlation 0.1 between all columns. Plotted in
+  green are the TPP and average model sizes for models chosen by BIC.}
 \label{fig:fwdstepsim}
 \end{center}
 \end{figure}
 
-\jonathan{Is average power the same as TPR (or, more correctly, TPP)?}
-\josh{Yes, maybe I should have used that terminology instead?}
-
-
 For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
-various data sets with \textit{steps} equal to $k$ and the ``average
-power'' was calculated as the number of true variables in the active
-set after $k$ steps divided by $k$:
-$$
-\text{Power}_k = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
-$$ (\todo Make this consistent with
-$\gamma$ in simulations section)
-Nonzero coefficients had magnitude
-in a range of multiples of $\gamma := \sqrt{2\log(G)}$, e.g. in $[1.4
+various data sets with \textit{steps} equal to $k$.
+In the resulting active set $A_k$, the number of true variables divided by $k$ is the True Positive Proportion (TPP):
+\[
+\text{TPP}_k = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
+\]
+Since we know $k$ in the simulations we can use $\text{TPP}_k$ as a measure of how well forward stepwise is performing. When it is close to 1 we are recovering most of the true variables before including false ones.
+Nonzero coefficients had magnitudes
+in a range of multiples of $\gamma := \sqrt{2\log(G)/n}$, e.g. in $[1.4
 \gamma, 1.6 \gamma]$. Results are shown in
 Figure~\ref{fig:fwdstepsim}. After computing the
 coherence of these design matrices, some calculations show the required
@@ -481,7 +460,10 @@ about 2 or smaller, and the required nonzero coefficient magnitude is
 likely in the range of 10 to 100 times $\gamma$. These simulations are far
 from the stringent conditions required by theory to guarantee perfect
 recovery, but the performance, while not perfect, may still be good
-enough for some purposes.
+enough for some purposes. Finally, to serve as a comparison with existing
+commonly used model selection procedures, in Figure~\ref{fig:fwdstepsim}
+we show in green the TPP and average model sizes for models chosen by
+the \textit{step} function in \textit{R} using the BIC criterion.
 
 
 
@@ -1047,7 +1029,7 @@ example.
 \begin{center}
 \subfigure[Forward stepwise with splines]{
 \label{fig:spline:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gauss_glint_p20_n200_lower2p9_upper3p6.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim50_n100_p200_g200_k21_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
 \subfigure[P-value with splines]{
 \label{fig:spline:pval}
@@ -1178,11 +1160,11 @@ that were discovered and is labeled ``Int. Power.''
 \begin{center}
 \subfigure[Forward stepwise on glinternet]{
 \label{fig:glint:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/fwdstep/gauss_glint_p20_n200_lower2p9_upper3p6.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim50_n100_p72_g36_sizes2-2_k15_k01_lower3_upper5.pdf}}
 \hspace{-15pt}
 \subfigure[P-value with glinternet]{
 \label{fig:glint:pval}
-\includegraphics[width=0.5\textwidth]{../figs/gaussian_size1_n200_p40_g40_k6_lower2p5_upper3p9_glint.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/glint_gaussian_nsim100_n100_p30_g30_k6_k02_lower4_upper8.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
 for various sparsity levels. The right panel shows our p-value marginally
 over each step, with red indicating the global null case and blue

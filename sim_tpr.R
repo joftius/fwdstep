@@ -1,8 +1,9 @@
 
 source('tpr_simulation.R')
 
+#groups = 1:100
+groups = 1:500
 #groups = 1:50
-groups = 1:200
 #groups = sort(c(rep(1:26, 2), rep(27:38, 4)))
 #groups = sort(rep(1:36, 2))
 #groups = sort(rep(1:50, 3))
@@ -19,12 +20,12 @@ noisecorr = 0
 #corr = 0
 #noisecorr = 0
 
-nsim = 100
+nsim = 200
 n = 100
 
-kmax = 24
+kmax = 25
 upper = 2
-lower = 1.2
+lower = 1.5
 
 ### No editing below ###
 

@@ -23,7 +23,8 @@ run_tpr_simulation = function(
     verbose=TRUE,
     ...) {
 
-    klist = 3*(1:floor(kmax/3))
+    #klist = 3*(1:floor(kmax/3))
+    klist = c(1,5,10,15,20,25)
     klen = length(klist)
 
     if (type != "default") {
@@ -79,6 +80,8 @@ run_tpr_simulation = function(
     
     bic.tpp = tpp.mat
     bic.steps = tpp.mat
+    ric.tpp = tpp.mat
+    ric.steps = tpp.mat
     
     estimation.errs = matrix(0, nrow=1, ncol=klen)
     start.time = as.numeric(Sys.time())
@@ -226,18 +229,24 @@ run_tpr_simulation = function(
             results = forward_group(Xscaled, Y.beta, groups=all.groups, weights, Sigma, max.steps = k, cat.groups = cat.groups, pval=FALSE)
             as = results$active.set
 
-            # Using step() with BIC
+            # Using step() with BIC/RIC
             if (type == "default") {
               if (design == "gaussian") {
-
-                steps = min(2*k, k+10)
-                bic.as = step.as(X=X, Y=Y.beta, steps = steps, k=log(n))
+                dfmult = log(n)
+                steps = min(floor(n/2), max(groups)-1)
+                
+                bic.as = step.as(X=Xscaled, Y=Y.beta, steps = steps, k=dfmult)
                 b.tpp = length(intersect(bic.as, true.active))/k
                 bic.tpp[i,j] = b.tpp
                 bic.steps[i,j] = length(bic.as)
 
+                dfmult = 2*log(p)
+                ric.as = step.as(X=Xscaled, Y=Y.beta, steps = steps, k=dfmult)
+                r.tpp = length(intersect(ric.as, true.active))/k
+                ric.tpp[i,j] = r.tpp
+                ric.steps[i,j] = length(ric.as)
+
               }
-              
             }
             
             
@@ -264,7 +273,11 @@ run_tpr_simulation = function(
     # Summarize some results
     TPR = colMeans(tpp.mat)
     bic.TPR = colMeans(bic.tpp)
-    bic.size = as.character(round(colMeans(bic.steps), 1))
+    bic.size = as.character(apply(bic.steps, 2, median))
+    if (p > n) {
+      ric.TPR = colMeans(ric.tpp)
+      ric.size = as.character(apply(ric.steps, 2, median))
+    }
     
     if (type != "default") {
         ez.TPR = colMeans(ez.tpp.mat)
@@ -329,7 +342,8 @@ run_tpr_simulation = function(
       }
   
       pdf(plotfile)
-      plot(klist, TPR, type = "l", main = plot.main, xlab = "Sparsity", ylab = "TPP", ylim = c(-0.1, 1.1), lwd = 2)
+      plot(klist, TPR, type = "l", main = plot.main, xlab = "Sparsity", ylab = "TPP", ylim = c(-0.1, 1.1), lwd = 2, xaxt="n")
+      axis(1, at=klist)
 
       abline(h = c(.9, .7, .5, .3, .1), lty = 2, col = "gray")
       abline(h = c(1, .8, .6, .4, .2, 0), lty = 3, col = "gray")
@@ -347,13 +361,22 @@ run_tpr_simulation = function(
       } else {
         if (design == "gaussian") {
           points(klist, bic.TPR, type="l", lwd = 2, lty="dashed", col="green")
-          axis(side=3, at=klist, labels=bic.size, pos=1.02, tck=0
-               , lwd=0, col.axis = "green")
+          axis(side=3, at=klist, labels=bic.size, pos=1.02, tck=0,
+               lwd=0, col.axis = "green")
+
+          if (p > n) {
+            points(klist, ric.TPR, type="l", lwd = 2, lty="dotdash", col="purple")
+            axis(side=1, at=klist, labels=ric.size, pos=-0.02, tck=0,
+                 lwd=0, col.axis = "purple")
+          }
         }
       }
 
       dev.off()
     }
+
+    if (p > n)  print(ric.size)
+    print(bic.size)
 
     return(outlist)
 }

@@ -3,17 +3,22 @@ source('tpr_simulation.R')
 source('tex_table.R')
 source('plots.R')
 
-nsim = 500
+nsim = 400
 type = 'default'
 design = 'gaussian'
-estimation = TRUE
+estimation = FALSE #TRUE
 n = 100
-groups = 1:00
-#groups = 1:50
-k = 5
+#groups = 1:500
+#groups = 1:400
+#groups = 1:200
+#groups = 1:100
+groups = 1:50
+
+k = 10
 upper = 2
 lower = 1.5
-max.steps = 10
+
+max.steps = min(n/2, max(groups)-1) #floor(max(groups)/3)
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
 
@@ -28,9 +33,12 @@ output = run_simulation(
     n = n, groups = groups, k = k,
     upper = upper, lower = lower,
     max.steps = max.steps,
+    corr = corr,
     estimation = estimation, verbose = TRUE)
 
-with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
+output$main.append = paste0(", BIC: (", round(output$bic.tpp, 2), "/", output$bic.size, ")")
+
+with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append))
 
 ## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
 ## if (corr != 0) {
@@ -67,11 +75,10 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## abline(v = 1, col = "gray")
 ## dev.off()
 
-upper = 3
-lower = 2
-groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+#groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
 #groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
-max.steps = 10
+#groups = 1:200
+k = 15
 
 output.g = run_simulation(
     nsim = nsim,
@@ -80,16 +87,19 @@ output.g = run_simulation(
     n = n, groups = groups, k = k,
     upper = upper, lower = lower,
     max.steps = max.steps,
+    corr = corr,
     estimation = estimation, verbose = TRUE)
 
-with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
+output.g$main.append = paste0(", BIC: (", round(output.g$bic.tpp, 2), "/", output.g$bic.size, ")")
+
+with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append))
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values."
-results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k))
-results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k))
+results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k, bic.list = bic.list, ric.list = ric.list))
+results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k, bic.list = bic.list, ric.list = ric.list))
 
-#rownames(results.l) = paste("(1)", rownames(results.l))
-rownames(results.g) = paste("(g)", rownames(results.g))
+#rownames(results.l) = paste0("*", rownames(results.l))
+#rownames(results.g) = paste0("**", rownames(results.g))
 
 file = paste0("tables/", output$filename, ".tex")
 
@@ -99,7 +109,8 @@ if (estimation) {
     file = paste0("tables/", output$filename, "_estimation.tex")
     est.err = output$estimation
     est.err.g = output.g$estimation
-    rownames(est.err.g) = paste("(g)", rownames(est.err.g))
+    rownames(est.err) = paste("(5)", rownames(est.err))
+    rownames(est.err.g) = paste("(10)", rownames(est.err.g))
     tex_table(file, rbind(est.err, est.err.g),
               caption = "Prediction and estimation errors")
 }

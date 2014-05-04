@@ -82,6 +82,13 @@ run_simulation = function(
     ez.recover.mat = P.mat
     ps.recover.mat = P.mat
     estimation.errs = matrix(0, nrow=3, ncol=3)
+    bic.list = list()
+    bic.tpp = c()
+    bic.size = c()
+    ric.list = list()
+    ric.tpp = c()
+    ric.size = c()
+    
     start.time = as.numeric(Sys.time())
 
     ### Begin main loop ###
@@ -223,6 +230,31 @@ run_simulation = function(
         # Non-null results
         results.b = forward_group(Xscaled, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
 
+        # Comparison with BIC/RIC
+        if (type == "default") {
+          if (design == "gaussian") {
+
+            steps = min(floor(n/2), max(groups)-1)
+            
+            dfmult = log(n)
+            bic.as = step.as(X=Xscaled, Y=Y.beta, steps = steps, k=dfmult)
+            b.tpp = length(intersect(bic.as, true.active))/k
+            bic.true.step = sapply(bic.as, function(x) is.element(x, true.active))
+            bic.tpp = c(bic.tpp, b.tpp)
+            bic.size = c(bic.size, length(bic.as))
+            bic.list[[i]] = c(length(bic.as), bic.true.step)
+
+            dfmult = 2*log(p)
+            ric.as = step.as(X=Xscaled, Y=Y.beta, steps = steps, k=dfmult)
+            r.tpp = length(intersect(ric.as, true.active))/k
+            ric.true.step = sapply(ric.as, function(x) is.element(x, true.active))
+            ric.tpp = c(ric.tpp, r.tpp)
+            ric.size = c(ric.size, length(ric.as))
+            ric.list[[i]] = c(length(ric.as), ric.true.step)
+          }
+          
+        }
+
         if (verbose) {
             print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:k], true.active))/k))
         }
@@ -280,6 +312,11 @@ run_simulation = function(
     if (type != "default") {
         num.recovered.special = rowSums(special.recover.mat[, 1:k])
         special.fwd.power = mean(num.recovered.special) / length(true.special)
+    } else {
+      if (design == "gaussian") {
+        bic.size = median(bic.size)
+        bic.tpp = mean(bic.tpp)
+      }
     }
     fwd.power = mean(num.recovered.groups) / k
     estimation.errs = estimation.errs / nsim
@@ -301,6 +338,15 @@ run_simulation = function(
     
     if (type != "default") {
         outlist$special.fwd.power = special.fwd.power
+    } else {
+      if (design == "gaussian") {
+        outlist$bic.list = bic.list
+        outlist$bic.tpp = bic.tpp
+        outlist$bic.size = bic.size
+        outlist$ric.list = ric.list
+        outlist$ric.tpp = ric.tpp
+        outlist$ric.size = ric.size        
+      }
     }
     if (estimation) {
         outlist$estimation = estimation.errs

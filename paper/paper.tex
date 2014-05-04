@@ -325,9 +325,9 @@ In our implementation we treat the active set $A$ as an ordered list to easily t
 % \label{algo:fs}
 % \end{algorithm}
 
-\jonathan{Is $r_0=0$ or $y$? Should be defined in the algorithm. I also put a $y$ in below which I'm not sure
-is correct or not. }
-\josh{Yes, I forgot to specify $r_0 = y$, hence the $y$ is not required (I removed it)}
+%\jonathan{Is $r_0=0$ or $y$? Should be defined in the algorithm. I also put a $y$ in below which I'm not sure
+%is correct or not. }
+%\josh{Yes, I forgot to specify $r_0 = y$, hence the $y$ is not required (I removed it)}
 
 \begin{algorithm}
   \caption{Forward stepwise variant with groups and weights}
@@ -438,7 +438,8 @@ Simulations show empirically that forward stepwise can work well even when it is
   using a categorical design consisting of 200 binary factors.
   The right panel shows the results with design matrices of Gaussian
   entries with equi-correlation 0.1 between all columns. Plotted in
-  green are the TPP and average model sizes for models chosen by BIC.}
+  green are the TPP and median model sizes (top) for models chosen by BIC,
+  and in red the same are shown (bottom) for RIC.}
 \label{fig:fwdstepsim}
 \end{center}
 \end{figure}
@@ -462,8 +463,9 @@ from the stringent conditions required by theory to guarantee perfect
 recovery, but the performance, while not perfect, may still be good
 enough for some purposes. Finally, to serve as a comparison with existing
 commonly used model selection procedures, in Figure~\ref{fig:fwdstepsim}
-we show in green the TPP and average model sizes for models chosen by
-the \textit{step} function in \textit{R} using the BIC criterion.
+we show in green the TPP and median model sizes for models chosen by
+the \textit{step} function in \textit{R} using the BIC criterion, and
+the same for RIC are plotted in red.
 
 
 
@@ -932,8 +934,6 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
 \section{Simulations}
 \label{sec:simulations}
 
-\todo Compare to AIC and other classical stopping rules? \\
-
 We performed simulations with several classes of design matrices including
 Gaussian, categorical, and categorical from a real data set. Gaussian
 design matrices are generated either independently or with some global
@@ -963,8 +963,6 @@ horizontal axes. The proportion of truly
 nonzero groups recovered in the first $k$ steps is denoted $k$-SP,
 where recall $k$ is the number of truly nonzero groups. 
 
-\jonathan{make the tick marks denoting the number of true groups larger -- can you not just shade the right hand part gray ? easy to do in python...}
-\josh{Done, updated plots now have this form. Will soon finish updating all plots}
 Finally, most of the plots below show the following information. The
 horizontal axis is the step index for forward stepwise. The dashed
 line shows the proportion of iterations where a truly nonzero variable
@@ -993,10 +991,6 @@ Gaussian design with groups of sizes 5 and 10.}
 \end{figure}
 
 
-\input{../tables/default_gaussian_nsim500_n100_p50_g50_k5_lower1pt5_upper2.tex}
-
-\input{../tables/default_gaussian_nsim500_n100_p50_g50_k5_lower1pt5_upper2_estimation.tex}
-
 \begin{figure}[h]
 \begin{center}
 \subfigure[Real data categorical design]{
@@ -1012,10 +1006,12 @@ The right panel shows results for categorical matrices with all categories havin
 \end{center}
 \end{figure}
 
-\input{../tables/default_gaussian_nsim500_n100_p200_g200_k5_lower1pt5_upper2.tex}
+%\input{../tables/default_gaussian_nsim500_n100_p200_g200_k5_lower1pt5_upper2.tex}
 
 
+\input{../tables/stop_comparison_easy.tex}
 
+\input{../tables/stop_comparison_hard.tex}
 
 \section{Applications}
 \label{sec:applications}
@@ -1029,7 +1025,7 @@ example.
 \begin{center}
 \subfigure[Forward stepwise with splines]{
 \label{fig:spline:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim50_n100_p200_g200_k21_k01_lower5_upper10.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim100_n100_p200_g200_k18_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
 \subfigure[P-value with splines]{
 \label{fig:spline:pval}
@@ -1160,7 +1156,7 @@ that were discovered and is labeled ``Int. Power.''
 \begin{center}
 \subfigure[Forward stepwise on glinternet]{
 \label{fig:glint:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim50_n100_p72_g36_sizes2-2_k15_k01_lower3_upper5.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim100_n100_p72_g36_sizes2-2_k15_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
 \subfigure[P-value with glinternet]{
 \label{fig:glint:pval}
@@ -1172,7 +1168,6 @@ indicating a signal with $k=6$ nonzero groups.}
 \label{fig:glint}
 \end{center}
 \end{figure}
-
 
 
 

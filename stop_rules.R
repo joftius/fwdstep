@@ -5,6 +5,12 @@
 # Input a list of p-values and alpha
 # Output largest index for model inclusion (0 if empty model)
 
+# Include everything
+# This one is a shortcut for AIC, BIC, and k-oracle
+stop_all = function(p.list, alpha = .1) {
+  return(length(p.list))
+}
+
 stop_first = function(p.list, alpha = .1) {
 
   p.big = which(p.list > alpha)

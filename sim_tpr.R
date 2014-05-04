@@ -1,8 +1,8 @@
 
 source('tpr_simulation.R')
 
-#groups = 1:100
-groups = 1:500
+groups = 1:200
+#groups = 1:500
 #groups = 1:50
 #groups = sort(c(rep(1:26, 2), rep(27:38, 4)))
 #groups = sort(rep(1:36, 2))
@@ -15,7 +15,7 @@ design = 'gaussian'
 #design = 'ternary'
 #design = 'uniform'
 
-corr = .1
+corr = 0
 noisecorr = 0
 #corr = 0
 #noisecorr = 0

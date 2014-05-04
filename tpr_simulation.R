@@ -274,10 +274,9 @@ run_tpr_simulation = function(
     TPR = colMeans(tpp.mat)
     bic.TPR = colMeans(bic.tpp)
     bic.size = as.character(apply(bic.steps, 2, median))
-    if (p > n) {
-      ric.TPR = colMeans(ric.tpp)
-      ric.size = as.character(apply(ric.steps, 2, median))
-    }
+    ric.TPR = colMeans(ric.tpp)
+    ric.size = as.character(apply(ric.steps, 2, median))
+
     
     if (type != "default") {
         ez.TPR = colMeans(ez.tpp.mat)
@@ -364,18 +363,16 @@ run_tpr_simulation = function(
           axis(side=3, at=klist, labels=bic.size, pos=1.02, tck=0,
                lwd=0, col.axis = "green")
 
-          if (p > n) {
-            points(klist, ric.TPR, type="l", lwd = 2, lty="dotdash", col="purple")
-            axis(side=1, at=klist, labels=ric.size, pos=-0.02, tck=0,
+          points(klist, ric.TPR, type="l", lwd = 2, lty="dotdash", col="purple")
+          axis(side=1, at=klist, labels=ric.size, pos=-0.02, tck=0,
                  lwd=0, col.axis = "purple")
-          }
         }
       }
 
       dev.off()
     }
 
-    if (p > n)  print(ric.size)
+    print(ric.size)
     print(bic.size)
 
     return(outlist)

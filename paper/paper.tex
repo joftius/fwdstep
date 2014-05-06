@@ -76,7 +76,7 @@
 \begin{frontmatter}
 
 % "Title of the paper"
-\title{A significance test in forward stepwise regression}
+\title{A significance test in forward stepwise model selection}
 
 %%%
 %%% \runtitle{} - I don't know what this is
@@ -98,8 +98,8 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 %%%
 
 \begin{abstract}
-% perhaps de-emphasize group lasso and emphasize forward stepwise?
-  We extend the methods developed by \cite{significance:lasso} and
+% perhaps de-emphasize group LASSO and emphasize forward stepwise?
+  We extend the methods developed by \cite{significance:LASSO} and
   \cite{tests:adaptive} on significance tests for penalized
   regression to stepwise model selection by iteratively applying
   the global null hypothesis test on the residual in a forward stepwise
@@ -132,21 +132,38 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 \section{Introduction}
 \label{sec:intro}
 
-Forward stepwise regression is a classical model selection procedure
+Consider the regression setting with a single response variable $Y$
+and collection of predictor or covariate variables denoted $\mathcal X$.
+One often wishes to choose a subset of variables $X \subset \mathcal X$
+for modeling the response, assuming the remaining variables are
+irrelevent and can be discarded without much loss of predictive
+or explanatory power. Doing this in a structured and principled way
+usually requires algorithmic methods for choosing $X$. One such method,
+forward stepwise regression, is a procedure
 that begins with an empty model and sequentially adds the best predictor
-variable in each step. The usual $\chi^2$ and $F$-tests for significance
+variable in each step. Because of the stochastic nature of this
+algorithm--making use of the data to choose variables--
+the usual $\chi^2$ and $F$-tests for significance
 fail when a model has been selected this way and tend to be
 anti-conservative unless they are computed on a held-out validation
-dataset. In the lasso setting, \cite{significance:lasso} derived
+dataset. This is one instance of the general problem of conducting
+inference and model selection using the same data, a problem
+of central importance on which some recent progress has been made.
+
+In the LASSO setting, \cite{significance:LASSO} derived
 a novel test statistic and its asymptotic null distribution, making
 possible valid inferences after model selection using the full data.
 \cite{tests:adaptive} modified and extended those results to the
-group lasso \citep{grouplasso} and other penalized regression
+group LASSO \citep{groupLASSO} and other penalized regression
 problems, but only under the global null hypothesis.
 One of the strengths of these test statistics is that they can be
 used for valid significance testing when computed on the same
-data used for model selection, eliminating the need for data splitting or for situations in which
-data splitting is not appropriate.
+data used for model selection, eliminating the need for data splitting
+or for situations in which data splitting is not appropriate. For example,
+when categorical covariates contain rare levels with very few observations
+it can be difficult or impossible to split the sample with an adequate
+number of such observations occurring in each split.
+
 The present work iteratively applies the global null test
 of \cite{tests:adaptive} for each step in forward stepwise selection,
 and works out some of the details necessary for
@@ -156,11 +173,12 @@ more computationally efficient than penalized methods with
 regularization parameters chosen by cross-validation.
 
 
-In Section~\ref{sec:stepwise} we establish notation and describe the
+In the next section we establish notation and describe the
 forward stepwise algorithm used in most of the paper.
-Section~\ref{sec:testing}  reviews some recent work on
-post-selection inference: \cite{significance:lasso,tests:adaptive,lasso:fixed}
-relevant to our work here, and we describes a general framework
+Section~\ref{sec:testing} reviews some recent work on
+post-selection inference
+\citep{significance:LASSO,tests:adaptive,LASSO:fixed}
+relevant to our work here, and describes a general framework
 for post-selection inference based on quadratic comparisons.
 Simulation results in Section~\ref{sec:simulations} show
 empirically that our method performs well in settings where forward
@@ -196,8 +214,8 @@ As a classical method dating back about half a century
 forward stepwise regression has not received much attention in
 recent years in the theoretical statistics community. But it continues
 to be widely used by practitioners.
-For example, search results on PubMed for forward stepwise
-(summarized in Figure~\ref{fig:pubmed}) show that many recent
+For example, search results on PubMed for forward stepwise,
+summarized in Figure~\ref{fig:pubmed}, show that many recent
 papers mention the method and there is an increasing trend over time.
 Its popularity among researchers continues despite the fact that it
 invalidates inferences using the standard $\chi^2$ or $F$-tests.
@@ -217,13 +235,13 @@ different from the most commonly used versions.
 
 
 We allow forward stepwise selection to add groups of variables in each
-step, not only in the case of binary encoding for categorical
+step, not only in the case of dummy variable encoding for categorical
 variables but also for any grouping purpose. For example, groups of
 variables may be pre-designated factors such as expression
 measurements for all genes in a single functional pathway.
-To emphasize this we use $g, h$ as indices rather than the usual
+To emphasize this we use $g, h$ as covariate indices rather than the usual
 $i, j$ throughout. Since single variables can be considered groups of
-size 1, our general exposition includes non-grouped situations as a special
+size 1, this includes non-grouped situations as a special
 case. Our variant of forward stepwise uses a different method than
 usual for choosing which group to add because we are using the
 same objective in the forward stepwise procedure that was used to
@@ -235,13 +253,13 @@ For each $1 \leq g \leq G$ the design matrix encoding the
 $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
 the number of individual variables or columns in group $g$.
 % Do we need to assume $p_g \ll n$ or $\text{rank}(X_g) = p_g$?
-When a group encodes a categorical variable as binary indicators for the
-levels of that variable, by default we use the full encoding with a column for every
-level. Although this introduces collinearity, our method does not require
-the design matrix to have full rank.
+When a group encodes a categorical variable as indicators for the
+levels of that variable, by default we use the full encoding with a
+column for every level. Although this introduces collinearity, our method
+does not require the design matrix to have full rank.
 
 
-Define $p = \sum_{g=1}^Gp_g$,
+Denote $p = \sum_{g=1}^Gp_g$,
 the total number of individual variables, so $p = G$ in the
 case where all groups have size 1. Let $X$ be the matrix constructed
 by column-binding the $X_g$, that is  
@@ -250,9 +268,13 @@ by column-binding the $X_g$, that is
 X = \begin{pmatrix} X_1 & X_2 & \cdots & X_G  \end{pmatrix}
 \end{equation*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-For convenience, we assume throughout that the individual columns of $X$ are scaled to
-have unit 2-norm (we do not scale groups, this is accomplished later
-by weighting).
+We normalize each group by its Frobenius norm, but this is not required
+especially since we also allow weights, $w_g$, for each group. These
+weights act like penalties or costs, so increasing $w_g$ makes it
+more difficult for the group $X_g$ to enter the model. The
+modeler can choose weights arbitrarily, but we set them all to be
+1 since we already normalize by the Frobenius norm.
+
 With each group we associate the $p_g \times 1$ coefficient vector
 $\beta_g$, and write $\beta$ for the $p \times 1$ vector constructed
 by stacking all of the $\beta_g$ in order.  Finally, our model for the
@@ -277,15 +299,8 @@ entries. In the rest of this paper we refer to variable groups $X_g$
 as noise groups if $\beta_g$ is a zero vector and as true or signal
 groups if $\beta_g$ has any nonzero entries. We refer to the number
 of such nonzero groups as the \textit{sparsity} of the model, and
-denote this $k := \# \{ g : \beta_g \neq 0 \}$.
-
-Before we describe the forward stepwise procedure we require one last
-ingredient. To each group of variables we assign a weight $w_g$. These
-weights act like penalties or costs, so increasing $w_g$ makes it
-more difficult for the group $X_g$ to enter the model. The
-modeler can choose weights arbitrarily, but we mostly use one
-particular choice, based on $p_g$, that we discuss later. With this we
-are ready to describe the forward stepwise procedure.
+denote this $k := \# \{ g : \beta_g \neq 0 \}$. With this notation
+we are now ready to describe our procedure concretely.
 
 
 \subsection{Description of the algorithm}
@@ -294,40 +309,13 @@ First, the user must specify the maximum number of steps allowed,
 which we denote \textit{steps} (consistent with the \textit{R} function
 for stepwise). To enable our test statistic computations,
 \textit{steps} should be at most $\min (n, G) - 1$, but it is
-computationally desirable to set it as low as possible while still being
-larger than the (unknown) sparsity of $\beta$.
-This way forward stepwise has a chance of recovering all the nonzero
-coefficients of $\beta$ and then terminating without performing much
+computationally desirable to set it as low as possible while
+safely larger than the sparsity of $\beta$. 
+Then forward stepwise may recover all the nonzero
+coefficients of $\beta$ and terminate without performing much
 additional computation.
+Of course the sparsity is usually unknown, so this requires guesswork.
 In our implementation we treat the active set $A$ as an ordered list to easily track the order of groups entering the model.
-
-% \begin{algorithm}
-% \DontPrintSemicolon
-% \KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
-% \KwResult{Active set $A$ of variable groups included in the model}
-% \SetKwFunction{lsfitResidual}{lsfitResidual}
-% \caption{\small \it Forward stepwise procedure with groups and weights}
-% \BlankLine
-% $A \gets \emptyset$\;
-% $A^c \gets \{ 1, \ldots, G \}$\;
-% $r_0 \gets y$\;
-% \For{$s \gets 1$ \KwTo $steps$}{
-%   $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
-%   $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
-%   $A \gets A \cup \{ g^* \}$\;
-%   $A^c \gets A^c \backslash \{ g^* \}$\;
-%   \For{$g \in A^c$}{
-%     $X_g \gets P X_g$\;
-%   }
-%   $r_s \gets P r_{s-1}$\;
-% }
-% \KwRet{$A$}
-% \label{algo:fs}
-% \end{algorithm}
-
-%\jonathan{Is $r_0=0$ or $y$? Should be defined in the algorithm. I also put a $y$ in below which I'm not sure
-%is correct or not. }
-%\josh{Yes, I forgot to specify $r_0 = y$, hence the $y$ is not required (I removed it)}
 
 \begin{algorithm}
   \caption{Forward stepwise variant with groups and weights}
@@ -353,8 +341,7 @@ The active set $A$ contains variable groups chosen to be included in
 the model. Fitting $\hat \beta$ can be done by tracking the individual
 fits and projections, or by simply fitting a linear model on the submatrix
 of $X$ corresponding to $A$. 
-We now use forward stepwise to refer specifically to
-Algorithm~\ref{algo:fs} unless otherwise specified. Note that other
+ Note that other
 implementations of forward stepwise use different criteria for choosing
 the next variable to add, such as the correlation with the residual.
 Since we do not renormalize the columns after projecting the covariates
@@ -362,24 +349,26 @@ Since we do not renormalize the columns after projecting the covariates
 correlations unless the design matrix is orthogonal and all weights are 1. We could
 renormalize the columns, though we choose not to.
 There are advantages and disadvantages to both criteria which we do not
-discuss. Our choice was motivated by the group lasso result in
+discuss. Our choice was motivated by the group LASSO result in
 \cite{tests:adaptive}, but we believe other criteria can be handled
 with appropriate modifications.
+We now use forward stepwise to refer specifically to
+Algorithm~\ref{algo:fs} unless otherwise specified.
 
 \subsection{Performance of forward stepwise}
 
 Among model selection procedures, forward stepwise is one which performs
 variable selection: from a potentially large set of variables it chooses
-a subset to include in the model. The most general form of variable
-selection is  "best-subset" selection, a procedure which searches among
-all $2^G$ subsets of $G$ variable groups and picks the best model.
+a subset to include in the model. The most ambitious form of variable
+selection is  ``best-subset'' selection, a procedure which picks the
+best model among all $2^G$ subsets of the $G$ possible groups.
 This exhaustive search is computationally infeasible when $G$ is
 large, and when possible it still
 runs the risk of over-fitting unless model complexity is
 appropriately penalized (as in \eqref{eq:subsetregress} below).
 Forward stepwise produces a much
 smaller set of potential models, with cardinality at most
-\textit{steps}. However
+\textit{steps} (which, recall, is less than $\min(n,G)$). However
 it is a greedy algorithm, so the set of models it produces may not
 contain the best possible model. This is an inherent shortcoming of
 forward stepwise procedures and should be kept in mind when choosing
@@ -396,16 +385,16 @@ criteria which stop at the step minimizing
 \end{aligned}
 \end{equation}
 where we have written $\{ \beta_s : s = 1, \ldots, steps \}$ as
-the sequence of models outputted by forward stepwise. The function
+the sequence of models output by forward stepwise. The function
 $\pen(\beta)$ is a penalty on model complexity usually taken to be the
 number of nonzero entries of $\beta$. Proposals for $\lambda$ include
 2 ($C_p$ of \cite{CP}, AIC of \cite{AIC}), $\log(n)$ (BIC of \cite{BIC}), and
 $2\log(p)$ (RIC of \cite{RIC}). Stopping rules based on classical test
 statistics have also been used, so it is natural to consider using
-the new test statistics of \cite{significance:lasso} or
+the new test statistics of \cite{significance:LASSO} or
 \cite{tests:adaptive}
 to choose a model. \cite{sequential:fdr} examined some stopping rules
-using the asymptotic p-values of \cite{significance:lasso} and showed
+using the asymptotic p-values of \cite{significance:LASSO} and showed
 their stopping rules control false discovery rate--the expected
 proportion of noise variables among variables declared significant
 \citep{fdr}. We explore this further in Section~\ref{sec:simulations}.
@@ -418,40 +407,41 @@ The coherence $\mu(X)$ of a matrix $X$ with columns scaled to have unit 2-norm i
 \begin{equation}
   \mu := \mu(X) = \max_{i \neq j} \{ | \innerp{ X_i }{ X_j } | \}
 \end{equation}
-Recalling that $k$ is the sparsity of $\beta$, it has been shown that if $k < (1/\mu + 1)/2$ and the nonzero coefficients of $\beta$ are sufficiently large then forward stepwise recovers $\beta$ with high probability.
+Denoting $k$ as the sparsity of $\beta$, the literature establishes
+that if $k < (1/\mu + 1)/2$ and the nonzero coefficients of $\beta$ are sufficiently large then forward stepwise recovers $\beta$ with high probability.
 The coherence condition is necessary to guarantee exact recovery \citep{cai:wang:xu:sharp} in the sense that it is possible to construct counterexamples with $k = (1/\mu + 1)/2$.
 We refer the reader to \cite{donoho:pursuit, cai:wang:omp} for details.
-But for our purposes the conditions required to guarantee exact recovery are usually too stringent.
+For our purposes the conditions required to guarantee exact recovery are usually too stringent.
 Simulations show empirically that forward stepwise can work well even when it is not working perfectly, and that it does so under a wide range of conditions.
-
 
 \begin{figure}
 \begin{center}
-\subfigure[Categorical design]{
+\subfigure[Categorical designs]{
 \label{fig:fscat}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_default_categorical_nsim100_n100_p400_g200_sizes2-2_k24_lower2_upper4.pdf}}
 \hspace{-15pt}
-\subfigure[Correlated gaussian design]{
+\subfigure[Gaussian designs]{
 \label{fig:fsgausscorr}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_default_gaussian_nsim100_n100_p200_g200_k24_lower1pt2_upper2_corr0pt1.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/tpr_default_gaussian_nsim200_n100_p200_g200_k25_lower1pt5_upper2.pdf}}
 \caption{\small \it The left panel shows the results of the simulation
   using a categorical design consisting of 200 binary factors.
   The right panel shows the results with design matrices of Gaussian
-  entries with equi-correlation 0.1 between all columns. Plotted in
-  green are the TPP and median model sizes (top) for models chosen by BIC,
-  and in red the same are shown (bottom) for RIC.}
+  entries. Plotted in green are the TPP (dashed line) and median model
+  sizes (top) for models chosen by BIC, and in purple the same are shown
+  (dot-dash line, bottom) for RIC.}
 \label{fig:fwdstepsim}
 \end{center}
 \end{figure}
 
-For various sparsity levels $k$, Algorithm~\ref{algo:fs} was run on
-various data sets with \textit{steps} equal to $k$.
-In the resulting active set $A_k$, the number of true variables divided by $k$ is the True Positive Proportion (TPP):
+For various sparsity levels $k$, we applied Algorithm~\ref{algo:fs} to
+various data sets with \textit{steps} set to $k$.
+In the resulting active set $A_k$, the number of true variables divided by $k$ is the $k$-True Positive Proportion ($k$-TPP):
 \[
 \text{TPP}_k = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
 \]
-Since we know $k$ in the simulations we can use $\text{TPP}_k$ as a measure of how well forward stepwise is performing. When it is close to 1 we are recovering most of the true variables before including false ones.
-Nonzero coefficients had magnitudes
+In some plots this has been denoted $k$-SP instead of $k$-TPP (\todo fix).
+Since we know $k$ in the simulations we can use $k$-TPP as a measure of how well forward stepwise is performing. When it is close to 1 we are recovering most of the true variables before including false ones.
+In our simulations nonzero coefficients have magnitudes
 in a range of multiples of $\gamma := \sqrt{2\log(G)/n}$, e.g. in $[1.4
 \gamma, 1.6 \gamma]$. Results are shown in
 Figure~\ref{fig:fwdstepsim}. After computing the
@@ -462,50 +452,49 @@ likely in the range of 10 to 100 times $\gamma$. These simulations are far
 from the stringent conditions required by theory to guarantee perfect
 recovery, but the performance, while not perfect, may still be good
 enough for some purposes. Finally, to serve as a comparison with existing
-commonly used model selection procedures, in Figure~\ref{fig:fwdstepsim}
+commonly used model selection procedures, in Figure~\ref{fig:fwdstepsim}(b)
 we show in green the TPP and median model sizes for models chosen by
 the \textit{step} function in \textit{R} using the BIC criterion, and
-the same for RIC are plotted in red.
-
+the same for RIC are plotted in purple.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Significance testing: from lasso to group lasso}
+\section{Significance testing: from LASSO to group LASSO}
 \label{sec:testing}
-
-\todo Reorganize and update this section \\
 
 In the ordinary least squares setting, a significance test for a
 single variable can be conducted by comparing the drop in residual
 sums of squares (RSS) to a $\chi^2_1$ distribution. Similarly, when
 adding a group of $k$ variables we can compare the drop in RSS to a
 $\chi^2_k$ random variable. This generally does not work when the
-group to be added has been chosen by a method that uses the data \cite{olshen:flevel},
+group to be added has been chosen by a method that uses the data
+\citep{olshen:flevel},
 and in particular it fails for forward stepwise procedures adding
 the ``best'' (e.g. most highly correlated) predictor in each step. In
-that case, the test statistic (drop in RSS) does not match the
+that case, the drop in RSS does not match its
 theoretical null distribution even when the null hypothesis is
-true. \cite{significance:lasso} introduced a new test statistic based
-on the knots in the lasso solution path. They derived a simple
+true. \cite{significance:LASSO} introduced a new test statistic based
+on the knots in the LASSO solution path. They derived a simple
 asymptotic null distribution, proved a type of convergence under broad
 ``minimum growth'' conditions, and demonstrated in simulations that
 the test statistic closely matches its asymptotic distribution even in
 finite samples.  That work marked an important advance in the problem
 of combining inference with model selection.  \cite{tests:adaptive}
-extended that work to the group lasso \citep{grouplasso} and other
+extended that work to the group LASSO \citep{groupLASSO} and other
 problems, and modified the test statistic to one with an exact finite
 sample distribution under the global null hypothesis.
 
-
-Writing $\hat \beta(\lambda)$ for the lasso solution for a fixed value of $\lambda$, we recall
-the following facts summarized in \cite{significance:lasso,tibshirani_lasso_uniqueness}.
+To describe the previous work we require some facts about the solution path
+of the LASSO.
+Writing $\hat \beta(\lambda)$ for the LASSO solution for a fixed value of $\lambda$, we recall
+the following facts summarized in \cite{significance:LASSO,tibshirani_LASSO_uniqueness}.
 
 \begin{itemize}
 
   \item The vector valued function $\hat \beta(\lambda)$ is a
-    continuous function of $\lambda$. For the lasso path, the
+    continuous function of $\lambda$. For the LASSO path, the
     coordinates of $\hat \beta(\lambda)$ are piecewise linear with
     changes in slope occurring at a finite number of $\lambda$ values
     referred to as \emph{knots}. 
@@ -527,7 +516,7 @@ In \cite{tests:adaptive} it is pointed out
 \end{equation}
 Further, the above test statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
 {\em conditional} on which variable achieves $\lambda_1$ as well as its sign.
-The limiting results about later steps in \cite{significance:lasso} can
+The limiting results about later steps in \cite{significance:LASSO} can
 %(formally)
 be interpreted as
 recursively applying $T_1$ to the variables that had not previously been selected by LARS.
@@ -537,17 +526,17 @@ the right hand side of \eqref{test:exact}. The test statistic is presented as an
 in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
 
-Recall the lasso estimator is given by
+Recall the LASSO estimator is given by
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
 \begin{aligned}
-\label{eq:lasso}
+\label{eq:LASSO}
 \displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
    \lambda \| \beta \|_1 \\
 \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The \emph{group lasso estimator}, a generalization of the lasso,
+The \emph{group LASSO estimator}, a generalization of the LASSO,
  is a solution to the following penalized
 least-squares convex problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -571,10 +560,13 @@ with the group penalty
 The parameter $\lambda \geq 0$ enforces sparsity in groups: for large
 $\lambda$ most of the $\beta_g$ will be zero vectors. The weights
 $w_g$ are usually taken to be $\sqrt {p_g}$ to normalize the penalty
-across groups with different sizes.  Note that this includes the usual lasso estimator as a
-special case when all of the groups are of size 1, since then the
+across groups with different sizes.  This can also be accomplished
+by scaling the corresponding submatrices by their Frobenius norms
+and setting all weights equal.
+Note that this includes the usual LASSO estimator as a
+special case when all groups are of size 1, since then the
 penalty term is the $L^1$-norm of $\beta$. The solution path of the group
-lasso has similar properties to the lasso case, however it is not
+LASSO has similar properties to the LASSO case, however it is not
 generally piecewise linear.
 
 For sufficiently large $\lambda$ the solution to~\eqref{eq:gsoln} is forced
@@ -586,9 +578,7 @@ to be zero. The smallest such $\lambda$ is denoted
   \end{aligned}
 \end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-For the LASSO,
-
-this is explicitly computable by
+For the group LASSO this is explicitly computable by
 \begin{equation}
 \label{eq:lammax}
 \lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 . 
@@ -602,7 +592,10 @@ hence it can be expressed as
  = \frac{1}{w_{g^*}}\eta_{g^*}^TX_{g^*}^Ty . 
 \end{equation}
 where $g^*$ is the group that achieves the maximum and 
-$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves the norm $\|X_{g^*}^Ty\|_2$.
+$\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves the norm $\|X_{g^*}^Ty\|_2$. One of the key conceptual points about our
+test is that it conditions on both the maximizer $g^*$ and on the unit
+vector $\eta_{g^*}$. Most of the p-value computations will be done in
+terms of these quantities.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
@@ -614,7 +607,7 @@ $\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves th
 % \begin{center}
 % \resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
 % \end{center}
-% A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
+% A polytope selection event. Solving the LASSO \eqref{eq:LASSO} for a fixed value
 % of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
 % active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
 % can be written as a set of affine constraints.
@@ -622,11 +615,14 @@ $\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves th
 
 \subsection{Selection events}
 
-The approach to post-selection inference in \cite{lasso:fixed}
+Before giving the full description of the p-value, we turn to another
+previous work and describe how to extend the framework there to the
+setting with groups.
+The approach to post-selection inference in \cite{LASSO:fixed}
 describes the selection event for the LASSO as a convex polytope
 satisfying a list of affine constraints.
 %stylized in Figure \ref{fig:polytope}.
-If all of our groups were of size 1, then
+If all groups are of size 1, then
 the event that we observe a given set of variables
 in the forward stepwise path (with their signs as they enter) would similarly
 be given by a set of affine inequalities.
@@ -636,9 +632,9 @@ $\mu$ could then be accomplished by analyzing the conditional distribution
 \begin{equation}
 y \sim N(\mu, \sigma^2 I) \bigl| Ay \leq b.
 \end{equation}
-See \cite{lasso:fixed,exact:lars} for further details on this approach.
+See \cite{LASSO:fixed,exact:lars} for further details on this approach.
 
-In the grouped variables setting, however, the event that $g^*(y)$, the first
+With non-trivial groups, however, the event that $g^*(y)$, the first
 group chosen, is equal to some fixed group $g$ is generally not given by
 a set of affine constraints. Rather, considering line 3 of Algorithm~\ref{algo:fs}, we see
 \begin{equation}
@@ -661,11 +657,11 @@ $I(s)$ such that
 \{S(y)=s\} = \cap_{i \in I(s)} \{y: y^TQ_iy + a_i^Ty\leq b_i \}.
 \end{aligned}
 \end{equation}
-
 The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
 assume they are symmetric.
-As in \cite{lasso:fixed} we will be interested in some randomly chosen contrast
-$\eta(S(y))^T\mu$. In our grouped selection procedure, the procedure $S(y)=g^*(y)$
+As in \cite{LASSO:fixed} we will be interested in some randomly chosen contrast
+$\eta(S(y))^T\mu$.
+In our grouped selection procedure, the selection rule is $S(y)=g^*(y)$
 and $\eta$ is typically 
 $$
 \eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
@@ -737,7 +733,7 @@ $H_{0,s}:X_s^T\mu=0$ conditional on $s$ being selected.
 \begin{lemma}
 \label{eq:test:dbn}
 Conditional on $H_{0,s} \cap E_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y)$
-we have the following distributional result
+we have the following truncated $\chi$ distributional result
 \begin{equation}
 \label{eq:chi:truncated}
 (X_s\eta_s)^Ty \overset{D}{=} \theta_s \chi_{k(s)} | (X_s\eta_s)^TE_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y) 
@@ -746,6 +742,7 @@ where the scale
 $$
 \theta_s = \sigma \frac{y^TP_sy}{y^TX_sX_s^Ty}.
 $$
+and the vertical bar $|$ here denotes restriction to an interval.
 \end{lemma}
 
 {\bf Proof:}
@@ -772,7 +769,7 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
 %In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
 %\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
 %
-%This is Lemma 5 from \cite{significance:lasso}.
+%This is Lemma 5 from \cite{significance:LASSO}.
 %
 %\begin{itemize}
 %
@@ -797,138 +794,89 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
 %\end{itemize}
 %
 %
-%\subsection{Exact p-value calculation}
-%
-%\todo Complete this section
-%
-%We now describe how to calculate our p-value, following the discussion of
-%group lasso in \cite{tests:adaptive}. For the rest of this section let
-%$g = \gstar$ be the index of
-%the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
-%%\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
-%%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
-%For a vector $u \in \real^p$, let $u_h$ denote the coordinates
-%of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
-%We can rearrange the columns of $X$ to group these adjacently, so that
-%\[
-%u^TX^T = \begin{pmatrix} u_1^T X_1^T & u_2^T X_2^T & \cdots & u_G^TX_G^T \end{pmatrix}
-%\]
-%One step of the calculation will be to find an orthonormal basis for the
-%linear space $\vecsp_g = \{ u \in \real^p : u_g^T X_g^T y = 0, u_h = 0
-%\text{ for all } h \neq g \}$ so that we can project orthogonally to
-%this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
-%should be the case since $g$ maximizes the absolute value of this
-%quantity), then the
-%space is trivial and the desired orthogonal projection is the identity.
-%Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
-%generally has dimension $p_g-1$.
-%% have dimension $r-1$ for $r = \text{rank}(X_g)$. This holds except in
-%% degenerate cases such as $X_g = 0$ or $r \ll p_g$, but these cases are not
-%% likely to occur since $\norm{X_g^T y}_2/w_g$ is supposed to be maximized.
-%% We proceed by forming the $n \times p_g$ matrix
-%% $X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
-%% on the first $r-1$ columns. For precise theorems showing that this will
-%% generally work, see \cite{outerp:indep}.
-%We compute an orthonormal basis by Gram-Schmidt and form a
-%$p_g \times p_g$ matrix, which we denote $V_g$, by appending one column
-%%0's in the coordinates corresponding to all groups $h \neq g$ and to
-%of zeroes (since Gram-Schmidt only produces $p_g-1$ columns).
-%With this we are ready to define the projection
-%
-%\begin{equation}
-%  \begin{aligned}
-%    \label{eq:proj}
-%    P_g &= \Sigma X_gV_g (V_g^T X_g^T \Sigma X_g V_g)^\dagger V_g^TX_g^T \\
-%   \end{aligned}
-%\end{equation}
-%Also define $H_g = (I-P_g)\Sigma$ and the conditional variance
-%
-%\begin{equation}
-%  \begin{aligned}
-%    \label{eq:cvar}
-%    \sigma^2_g &= y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
-%  \end{aligned}
-%\end{equation}
-%These simplify when $X_g$ is a single column, in which case $P_g = 0$,
-%$H_g = \Sigma$, and $\sigma^2_g = X_g^T\Sigma X_g^T/w_g^2$. We now
-%describe how to compute our p-value in Algorithm~\ref{algo:pval}. Note
-%that $F_{\chi^2_r}$ denotes the distribution function of a $\chi^2$
-%random variable with $r$ degrees of freedom.
-%%Define $U_g = X_g^Ty/(w_g\norm{X_g^Ty}_2)$.
-%
-%\begin{algorithm}
-%  \caption{Computing p-value}
-%  \label{algo:pval}
-%  \begin{algorithmic}
-%    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
-%    \ENSURE Our p-value for the group $g$ entering the model.
-%    \STATE Compute $H_g$ and $\sigma^2_g$
-%    \IF{$X_g$ is a single column}
-%    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
-%    \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
-%    \ELSE
-%    \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
-%    \STATE $H_g \gets (I - P_g)\Sigma$
-%    \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
-%    \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
-%    \ENDIF
-%    \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
-%%    \STATE \COMMENT{Compute the following two $p$-vectors}
-%    \STATE $a \gets X^T(y - \lambda \tilde X_g)$
-%    \STATE $b \gets X^T \tilde X_g$
-%    \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
-%    \STATE $r \gets \text{rank}(X_g)$
-%    \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
-%    \RETURN $u$
-%  \end{algorithmic}
-%\end{algorithm}
-%
-%We next describe the \textsc{LinearFractional} subproblem and its solution. We
-%gave the problem this name because it originated in the form
-%\[
-%\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
-%{1 - u_g^TX_g^TX_hu_h}
-%\]
-%The solution we describe next is to a slightly different problem, and
-%also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
-%For details see Appendix~\ref{app:closedform} or \cite{tests:adaptive}.
-%
-%\begin{algorithm}
-%  \caption{The \textsc{LinearFractional} optimization subproblem}
-%  \label{algo:linfrac}
-%  \begin{algorithmic}
-%    \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
-%%(we take $1e^{-10}$)
-%    \ENSURE Solution pair $(v_-, v_+)$.
-%    \FOR{$h$ in $A^c$}
-%      \IF{$\norm{b_h}_2 == 0$ or $\norm{a_h}_2/\norm{b_h}_2 < \text{tol}$}
-%        \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
-%      \ELSE
-%        \STATE $\theta_c \gets a_h^Tb_h/(\norm{a_h}_2 \norm{b_h}_2)$
-%        \STATE $\theta_s \gets \sqrt{1-\theta_c^2}$
-%        \STATE $\theta \gets \arccos (\theta_c)$
-%        \STATE $\phi_s \gets \theta_s \norm{b_h}_2 / w_h$
-%        \IF{$\phi_s > 1$}
-%          \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
-%        \ELSE
-%          \STATE $\phi \gets \arcsin(\phi_s)$
-%%          \STATE $\phi_2 \gets \pi - \phi_1$
-%          \STATE $z_\pm \gets s_\pm \norm{a_h}_2 \cos(\phi) /(w_h - s_\pm \norm{b_h}_2 \cos(\theta - \phi))$ for $s_\pm = \pm 1$
-%          \IF{$\norm{b_h}_2 < w_h$}
-%            \STATE $(v_h^-, v_h^+) \gets (\max \{ z_+, z_- \}, \infty)$
-%          \ELSE
-%            \STATE $(v_h^-, v_h^+) \gets (\min \{ z_+, z_- \}, \max \{ z_+, z_- \})$
-%          \ENDIF
-%        \ENDIF
-%      \ENDIF
-%    \ENDFOR
-%    \STATE $v^- \gets \min_h v_h^-$
-%    \STATE $v^+ \gets \max_h v_h^+$
-%    \RETURN $(v^-, v^+)$
-%  \end{algorithmic}
-%\end{algorithm}
-%
 
+\subsection{Computation of p-value}
+
+\begin{algorithm}
+ \caption{Computing p-value}
+ \label{algo:pval}
+ \begin{algorithmic}
+   \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
+   \ENSURE Our p-value for the group $g$ entering the model.
+   \STATE Compute $H_g$ and $\sigma^2_g$
+   \IF{$X_g$ is a single column}
+   \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
+   \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
+   \ELSE
+   \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
+   \STATE $H_g \gets (I - P_g)\Sigma$
+   \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
+   \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
+   \ENDIF
+   \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
+   \STATE \COMMENT{Compute the following two $p$-vectors}
+   \STATE $a \gets X^T(y - \lambda \tilde X_g)$
+   \STATE $b \gets X^T \tilde X_g$
+   \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
+   \STATE $r \gets \text{rank}(X_g)$
+   \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
+   \RETURN $u$
+ \end{algorithmic}
+\end{algorithm}
+
+We now describe how to calculate our p-value, following the discussion of
+group LASSO in \cite{tests:adaptive}. For the rest of this section let
+$g = \gstar$ be the index of
+the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
+%$\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
+%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
+For a vector $u \in \real^p$, let $u_h$ denote the coordinates
+of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
+We can rearrange the columns of $X$ to group these adjacently, so that
+\[
+u^TX^T = \begin{pmatrix} u_1^T X_1^T & u_2^T X_2^T & \cdots & u_G^TX_G^T \end{pmatrix}
+\]
+One step of the calculation will be to find an orthonormal basis for the
+linear space $\vecsp_g = \{ u \in \real^p : u_g^T X_g^T y = 0, u_h = 0
+\text{ for all } h \neq g \}$ so that we can project orthogonally to
+this space. If $X_g$ is a single column and $X_g^Ty \neq 0$ (which
+should be the case since $g$ maximizes the absolute value of this
+quantity), then the
+space is trivial and the desired orthogonal projection is the identity.
+Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
+generally has dimension $p_g-1$.
+
+%We proceed by forming the $n \times p_g$ matrix
+%$X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
+%on the first $r-1$ columns. For precise theorems showing that this will
+%generally work, see \cite{outerp:indep}.
+We compute an orthonormal basis by Gram-Schmidt and form a
+$p_g \times p_g$ matrix, which we denote $V_g$, by appending
+0's in the coordinates corresponding to all groups $h \neq g$ and
+an additional column of zeroes (since Gram-Schmidt only produces $p_g-1$).
+We can now define the projection
+
+\begin{equation}
+ \begin{aligned}
+   \label{eq:proj}
+   P_g &= \Sigma X_gV_g (V_g^T X_g^T \Sigma X_g V_g)^\dagger V_g^TX_g^T. \\
+  \end{aligned}
+\end{equation}
+Also define $H_g = (I-P_g)\Sigma$ and the conditional variance
+
+\begin{equation}
+ \begin{aligned}
+   \label{eq:cvar}
+   \sigma^2_g &= y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2) \\
+ \end{aligned}
+\end{equation}
+These simplify when $X_g$ is a single column, in which case $P_g = 0$,
+$H_g = \Sigma$, and $\sigma^2_g = X_g^T\Sigma X_g^T/w_g^2$.
+Note that $F_{\chi^2_r}$ denotes the distribution function of a $\chi^2$
+random variable with $r$ degrees of freedom. This completes the
+description of Algorithm~\ref{algo:pval} which we use to compute our
+p-value. Additional details, including the statement and solution of
+the \textsc{LinearFractional} subproblem, appear in Appendix~\ref{app:closedform}.
 
 
 \section{Simulations}
@@ -948,7 +896,7 @@ Section~\ref{sec:hiv}
 
 Since we are interested in variable selection we generate signals with
 nonzero coefficients on the scale of $\gamma := \sqrt{2 \log(p)/n}$.
-(\todo Check this scaling. \todo Cite some paper on support recovery?).
+(\todo Cite some paper on support recovery?).
 Coefficients within a
 nonzero group have roughly the same magnitude, and the magnitudes for
 each nonzero group range from a lower limit times $\gamma$ to an upper
@@ -958,8 +906,9 @@ nonzero coefficient groups respectively. Each plot also displays the
 number of observations or rows, $n$, the number of columns, $p$, the
 number of groups, $g$, and the largest and smallest group sizes in
 parentheses if the groups are not all size 1. The number of nonzero
-groups, $k$, is also displayed via inward-facing tick marks on the
-horizontal axes. The proportion of truly
+groups, $k$, is also displayed graphically by shading with the portion
+of the plot showing steps after $k$ shaded gray.
+The proportion of truly
 nonzero groups recovered in the first $k$ steps is denoted $k$-SP,
 where recall $k$ is the number of truly nonzero groups. 
 
@@ -978,11 +927,11 @@ the triangles above and below show the 95\% and 5\% quantiles.
 \begin{center}
 \subfigure[Gaussian with correlations]{
 \label{fig:gausscorr}
-\includegraphics[width=0.5\textwidth]{../figs/gaussian_n100_p200_g200_k5_lower1pt5_upper2_corr0pt2_noisecorr0pt1.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g200_k10_lower1pt5_upper2_corr0pt2.pdf}}
 \hspace{-15pt}
 \subfigure[Gaussian with groups]{
 \label{fig:gaussgroups}
-\includegraphics[width=0.5\textwidth]{../figs/gaussian_n100_p200_g35_k5_lower2_upper2pt5.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim500_n100_p200_g35_sizes5-10_k5_lower2_upper3.pdf}}
 \caption{\small \it The left panel shows results for Gaussian design
 matrices with equicorrelation $\rho=0.2$ and equicorrelated noise with
 correlation 0.1. The right panel shows results for an independent
@@ -999,7 +948,7 @@ Gaussian design with groups of sizes 5 and 10.}
 \hspace{-15pt}
 \subfigure[Simulated categorical design]{
 \label{fig:gausscat}
-\includegraphics[width=0.5\textwidth]{../figs/categorical_n100_p100_g20_k4_lower4_upper5.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/default_categorical_nsim500_n100_p80_g40_sizes2-2_k5_lower2_upper4.pdf}}
 \caption{\small \it The left panel shows results for a categorical design
 taken from a real data set.
 The right panel shows results for categorical matrices with all categories having 5 levels.}
@@ -1023,17 +972,22 @@ example.
 
 \begin{figure}
 \begin{center}
-\subfigure[Forward stepwise with splines]{
+\subfigure[Power of forward stepwise with splines]{
 \label{fig:spline:fwd}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim100_n100_p200_g200_k18_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[P-value with splines]{
+\subfigure[P-value with spline groups]{
 \label{fig:spline:pval}
 \includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim100_n200_p50_g50_k6_k02_lower10_upper15.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
-for various sparsity levels. The right panel shows our p-value marginally
-over each step, with red indicating the global null case and blue
-indicating a signal with $k=6$ nonzero groups.}
+in this setting for various sparsity levels, with the dashed line
+showing a liberal definition of power that allows mistakes when
+choosing between a non-zero spline group and its corresponding linear
+term.
+The right panel shows our p-value marginally
+over each step, with red indicating the global null case, blue
+indicating a signal with $k=6$ nonzero groups, and green showing
+the nominal $\chi^2$ p-values also computed on the non-null case.}
 \label{fig:spline}
 \end{center}
 \end{figure}
@@ -1053,36 +1007,37 @@ with $\tilde G = 2G$ groups. For simplicity we assume the original groups are al
     X_i^+ = \text{CubicSplineBasis}(X_i)
   \end{aligned}
 \end{equation}
-Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group.
-
-
+Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline}(b) the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-SP (top right).
 
 
 \subsection{Glinternet for hierarchical interactions}
 \label{sec:glint}
-In regression settings with many variables, choosing among models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group lasso model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
+In regression settings with many variables, choosing among models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group LASSO model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
 \begin{equation}
 \label{eq:glintmat}
 \tilde X = \begin{pmatrix} X_1 & \cdots & X_G & X_{1:2} & \cdots & X_{1:G} & X_{2:3} & \cdots & X_{(G-1):G}  \end{pmatrix}
 \end{equation}
-where $X_{g:h}$ is the submatrix including $X_g$, $X_h$, and all
+where $X_{g:h}$ is the submatrix encoding the interaction between $X_g$
+and $X_h$. For example, if both of these are categorical variables,
+then $X_{g:h}$ consists of all
 $p_gp_h$  column multiples between columns in group $g$ and columns
 in group $h$. For example, if
 \[
 X_g = \begin{pmatrix} X_{g1} & X_{g2} \end{pmatrix}, \quad
 X_h = \begin{pmatrix} X_{h1} & X_{h2} \end{pmatrix}
 \]
-are two groups each containing two columns, then
+are two categorical variables each with two levels, then
 \[
-X_{g:h} = \begin{pmatrix} X_g & X_h & X_{g1} * X_{h1} & X_{g1} * X_{h2} & X_{g1} * X_{h1} & X_{g2} * X_{h2} \end{pmatrix}
+X_{g:h} = \begin{pmatrix} X_{g1} * X_{h1} & X_{g1} * X_{h2} & X_{g1} * X_{h1} & X_{g2} * X_{h2} \end{pmatrix}
 \]
 where * denotes the pointwise product (Hadamard product) of vectors
 (the $i$th entry of $X_{g1} * X_{h1}$ is the $i$th entry of $X_{g1}$ times
-the $i$th entry of $X_{h1}$). Note that this expanded matrix has
+the $i$th entry of $X_{h1}$). For more details see \cite{glint}.
+Note that this expanded matrix has
 $\tilde G = G + \binom{G}{2} = O(G^2)$ groups. We refer to the first
-$G$ of these as main effects or main effect groups, and the remaining
+$G$ of these as main effect groups and the remaining
 as interaction groups. Finally, instead of fitting a
-model by group lasso, we use forward stepwise on the expanded design
+model by group LASSO, we use forward stepwise on the expanded design
 matrix. The overlapping groups still guarantee that our fitted model
 satisfies the strong hierarchy condition. 
 
@@ -1137,34 +1092,36 @@ We also inflate each nonzero interaction
 coefficient to be larger than the corresponding main
 effect coefficients. This special case is favorable for our algorithm,
 but our purpose here is merely to demonstrate the flexibility of the
-hypothesis test and not to propose a general procedure for models with
+hypothesis test and not to propose an optimal procedure for models with
 interactions.
 
 Results are shown in Figure~\ref{fig:glint}. The left
 panel shows average power of forward stepwise. Power is calculated
 using the group structure we impose, and not in terms of the original
-main effects and interactions. However, the dotted line shows a more
+main effects and interactions. However, the dashed line shows a more
 forgiving definition of power where we are rewarded for discovering part
 of a nonzero group, i.e. for discovering only one main effect from a
-true interaction group. In the right panel we see that the global null
-result still holds (red vertical lines), and that with a signal the
-p-value is small until the signal has been recovered (blue). The
-interaction power is the proportion of nonzero interaction groups
-that were discovered and is labeled ``Int. Power.''
+true interaction group. The proportion of nonzero interaction groups
+that were discovered in the first $k$-steps is shown in parentheses
+after the $k$-SP (top right).
 
 \begin{figure}
 \begin{center}
-\subfigure[Forward stepwise on glinternet]{
+\subfigure[Power of forward stepwise with interactions]{
 \label{fig:glint:fwd}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim100_n100_p72_g36_sizes2-2_k15_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[P-value with glinternet]{
+\subfigure[P-value with \textsc{glinternet}]{
 \label{fig:glint:pval}
 \includegraphics[width=0.5\textwidth]{../figs/glint_gaussian_nsim100_n100_p30_g30_k6_k02_lower4_upper8.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
-for various sparsity levels. The right panel shows our p-value marginally
-over each step, with red indicating the global null case and blue
-indicating a signal with $k=6$ nonzero groups.}
+on the \textsc{glinternet} problem
+for various sparsity levels. The dashed line shows a more forgiving
+definition of power described in the section.
+The right panel shows our p-value marginally
+over each step, with red indicating the global null case, blue
+indicating a signal with $k=6$ nonzero groups, and green showing
+the nominal $\chi^2$ p-values.}
 \label{fig:glint}
 \end{center}
 \end{figure}
@@ -1173,9 +1130,6 @@ indicating a signal with $k=6$ nonzero groups.}
 
 \subsection{HIVdb data example}
 \label{sec:hiv}
-\todo Sanity check my analysis \\
-\todo For rare mutations try binary wildtype/non-wt? \\
-\todo Finish writing section \\
 
 \cite{HIV} use genomic information to predict efficacy of antiretroviral
 drugs in treating HIV. Quantitative measurements of drug
@@ -1186,13 +1140,12 @@ Categorical covariates are encoded as groups of binary variables using
 the full encoding, and weights are set to the square-root of the
 number of levels for that covariate. We perform forward stepwise once
 for each drug response, restricting to the subset of the data with
-no missing values and requiring all categorical variables to have 2 or
-greater observations in each level. 
+no missing values.
 
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/HIV_PI.pdf}
-\caption{\small \it Results from PI dataset}
+\caption{\small \it Forward stepwise results from PI dataset}
 \label{fig:HIVPI}
 \end{center}
 \end{figure}
@@ -1200,7 +1153,7 @@ greater observations in each level.
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI.pdf}
-\caption{\small \it Results from NRTI dataset}
+\caption{\small \it Forward stepwise results from NRTI dataset}
 \label{fig:HIVNRTI}
 \end{center}
 \end{figure}
@@ -1210,11 +1163,11 @@ Figure~\ref{fig:HIVNRTI}. The PI data contains protease inhibitor
 resistance mutations, and the NRTI data contains nucleoside RT inhibitor
 resistance mutations.
 Each panel shows results for a different drug,
-with p-values plotted by step in forward stepwise. The solid black point
-is the last p-value to fall under the 0.1 threshold and points after it
-are colored red. If the \textit{last} stopping rule were used then the
-p-values for including variables are the black points, and the resulting
-models are shown in Tables 4 and 5. (\todo Fix this ref after re-running)
+with p-values plotted by step in forward stepwise. 
+The \textit{last} stopping rule is applied and the region of the plot
+corresponding to the chosen model is unshaded, with the remainder shaded.
+The chosen variables are shown in Tables 3 and 4.
+(\todo Fix this ref after final re-run of code)
 
 %\begin{figure}
 %\begin{center}
@@ -1230,12 +1183,12 @@ models are shown in Tables 4 and 5. (\todo Fix this ref after re-running)
 %\end{center}
 %\end{figure}
 
-We can also use the procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions between mutations.
+We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions. Results from this are shown in Figures~\ref{fig:HIVPI:glint} and \ref{fig:HIVNRTI:glint} and Tables 5 and 6.
 
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/HIV_PI_glint.pdf}
-\caption{\small \it Results from PI dataset}
+\caption{\small \it \textsc{Glinternet} results from PI dataset}
 \label{fig:HIVPI:glint}
 \end{center}
 \end{figure}
@@ -1243,7 +1196,7 @@ We can also use the procedure described in Section~\ref{sec:glint} to fit a mode
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI_glint.pdf}
-\caption{\small \it Results from NRTI dataset}
+\caption{\small \it \textsc{Glinternet} results from NRTI dataset}
 \label{fig:HIVNRTI:glint}
 \end{center}
 \end{figure}
@@ -1271,11 +1224,57 @@ get an exact p-value at every step. \\
 \newpage
 
 \appendix
-\section{Derivation of closed forms of statistic}
+\section{Additional details on closed-form computations}
 \label{app:closedform}
 
-\todo Clean this section \\
-\todo Make $M=\lambda_2$ a special case corollary \\
+We next describe the \textsc{LinearFractional} subproblem and its solution. We
+gave the problem this name because it originated in the form
+\[
+\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
+{1 - u_g^TX_g^TX_hu_h}
+\]
+The solution we describe next is to a slightly different problem, and
+also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
+%For details see \cite{tests:adaptive}.
+
+\begin{algorithm}
+ \caption{The \textsc{LinearFractional} optimization subproblem}
+ \label{algo:linfrac}
+ \begin{algorithmic}
+   \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
+(we take $1e^{-10}$)
+   \ENSURE Solution pair $(v_-, v_+)$.
+   \FOR{$h$ in $A^c$}
+     \IF{$\norm{b_h}_2 == 0$ or $\norm{a_h}_2/\norm{b_h}_2 < \text{tol}$}
+       \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+     \ELSE
+       \STATE $\theta_c \gets a_h^Tb_h/(\norm{a_h}_2 \norm{b_h}_2)$
+       \STATE $\theta_s \gets \sqrt{1-\theta_c^2}$
+       \STATE $\theta \gets \arccos (\theta_c)$
+       \STATE $\phi_s \gets \theta_s \norm{b_h}_2 / w_h$
+       \IF{$\phi_s > 1$}
+         \STATE $(v^-_h, v^+_h) \gets (0, \infty)$
+       \ELSE
+         \STATE $\phi \gets \arcsin(\phi_s)$
+         \STATE $\phi_2 \gets \pi - \phi_1$
+         \STATE $z_\pm \gets s_\pm \norm{a_h}_2 \cos(\phi) /(w_h - s_\pm \norm{b_h}_2 \cos(\theta - \phi))$ for $s_\pm = \pm 1$
+         \IF{$\norm{b_h}_2 < w_h$}
+           \STATE $(v_h^-, v_h^+) \gets (\max \{ z_+, z_- \}, \infty)$
+         \ELSE
+           \STATE $(v_h^-, v_h^+) \gets (\min \{ z_+, z_- \}, \max \{ z_+, z_- \})$
+         \ENDIF
+       \ENDIF
+     \ENDIF
+   \ENDFOR
+   \STATE $v^- \gets \min_h v_h^-$
+   \STATE $v^+ \gets \max_h v_h^+$
+   \RETURN $(v^-, v^+)$
+ \end{algorithmic}
+\end{algorithm}
+
+
+% \todo Clean this section \\
+% \todo Make $M=\lambda_2$ a special case corollary \\
 
 For the sake of completeness this appendix provides full derivations
 of closed forms for the quantities required to compute our
@@ -1341,41 +1340,42 @@ And $M^-_{\eta, h}$ is $\infty$ when $\norm{b_h} < w$ and otherwise given by
 M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \norm{b_h} c_h \cos(\psi^+) } \\
 \end{align*}
 
-I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
+% I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
 
-\hrule
-\hrule
-We can rewrite this by rationalizing the denominator:
-\[
-M =
-\frac
-{ a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
-{ 1-b_h^Tb_h }
-\]
-Leaving $M$ in this form we now consider $\lambda_2$. The KKT conditions for the group lasso problem give (directly from Yuan and Lin)
-\begin{align*}
-\norm{ X_g^T(y - X \beta) } & \leq \lambda w_g \quad \forall \beta_g \neq 0 \\
-\beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{S_g} } \right)_+ S_g
-\end{align*}
-where $S_g = X_g^T(y - X \beta_{-g})$. These expressions simplify for $\lambda_2 \leq \lambda < \lambda_1$. Letting $g$ be the index of the first group to enter we now have $S_g = X_g^Ty$ 
-\begin{align*}
-\beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{X_g^Ty} } \right) X_g^Ty \\
-\lambda w_h & \geq \norm{ X_h^Ty - X_h^T P_g y (1-\lambda w_g / \norm{X_g^Ty})  } \quad \forall h \neq g
-\end{align*}
-Now let $\lambda = \lambda_2$, so the inequality above is strict for all other groups and equality is attained for the second group to enter. Hence $\lambda_2$ satisfies
-\begin{align*}
-\lambda_2 & = \max_{h \neq g} 
-\norm{ X_h^T(I - P_g) y - \lambda_2 ( w_g X_h^T P_g y / \norm{X_g^Ty} )  } / w_h\\
-& = \max_{h \neq g} \norm{ a_h - \lambda_2 b_h } 
-\end{align*}
+% \hrule
+% \hrule
+% We can rewrite this by rationalizing the denominator:
+% \[
+% M =
+% \frac
+% { a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
+% { 1-b_h^Tb_h }
+% \]
+% Leaving $M$ in this form we now consider $\lambda_2$. The KKT conditions for the group LASSO problem give (directly from Yuan and Lin)
+% \begin{align*}
+% \norm{ X_g^T(y - X \beta) } & \leq \lambda w_g \quad \forall \beta_g \neq 0 \\
+% \beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{S_g} } \right)_+ S_g
+% \end{align*}
+% where $S_g = X_g^T(y - X \beta_{-g})$. These expressions simplify for $\lambda_2 \leq \lambda < \lambda_1$. Letting $g$ be the index of the first group to enter we now have $S_g = X_g^Ty$ 
+% \begin{align*}
+% \beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{X_g^Ty} } \right) X_g^Ty \\
+% \lambda w_h & \geq \norm{ X_h^Ty - X_h^T P_g y (1-\lambda w_g / \norm{X_g^Ty})  } \quad \forall h \neq g
+% \end{align*}
+% Now let $\lambda = \lambda_2$, so the inequality above is strict for all other groups and equality is attained for the second group to enter. Hence $\lambda_2$ satisfies
+% \begin{align*}
+% \lambda_2 & = \max_{h \neq g} 
+% \norm{ X_h^T(I - P_g) y - \lambda_2 ( w_g X_h^T P_g y / \norm{X_g^Ty} )  } / w_h\\
+% & = \max_{h \neq g} \norm{ a_h - \lambda_2 b_h } 
+% \end{align*}
 
-Write $\lambda_{2,h}$ as the positive root of the quadratic equation obtained by squaring the norm, so $\lambda_{2,h}^2 = \norm{ a_h - \lambda_2 b_h }^2$. Then $\lambda_2 = \max_{h \neq g} \lambda_{2,h}$. Solving this (note that $b_h^Tb_h < 1$), we find
-\[
-\lambda_{2,h} = \frac
-{ a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
-{ 1-b_h^Tb_h }
-\]
-Hence when $h$ is the index of the second group to enter, we have $\lambda_2 = \lambda_{2,h} = M$.
+% Write $\lambda_{2,h}$ as the positive root of the quadratic equation obtained by squaring the norm, so $\lambda_{2,h}^2 = \norm{ a_h - \lambda_2 b_h }^2$. Then $\lambda_2 = \max_{h \neq g} \lambda_{2,h}$. Solving this (note that $b_h^Tb_h < 1$), we find
+% \[
+% \lambda_{2,h} = \frac
+% { a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
+% { 1-b_h^Tb_h }
+% \]
+% Hence when $h$ is the index of the second group to enter, we have $\lambda_2 = \lambda_{2,h} = M$.
+
 
 \end{document}
 

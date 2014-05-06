@@ -3,7 +3,7 @@ db = "NRTI"
 
 binary.encoding = TRUE
 
-max.steps = 50
+max.steps = 40
 
 setwd('..')
 source('fwd_step.R')
@@ -32,9 +32,9 @@ clean_col = function(column) {
 }
 
 cnames = c()
-for (j in max(resps):ncol(data)) {
+for (j in (max(resps)+1):ncol(data)) {
     newcol = clean_col(data[,j])
-    if ((length(levels(newcol)) > 1) & (min(table(newcol)) >= 2)) {
+    if (length(unique(newcol)) > 1) {
         cnames = c(cnames, names(data)[j])
         Z = cbind(Z, newcol)
     }
@@ -57,14 +57,14 @@ for (respind in 1:nresps) {
     Y = log(Z[subrows,respind])
     Y = Y - mean(Y)
     n = length(Y)
-    # Now restrict to gene variants with >= 2 observations
     X = matrix(NA, nrow=n)
+    X.cat = X
     groups = c()
     g = 1
     cnames = c()
     for (j in (nresps+1):ncol(Z)) {
         newcol = Z[subrows, j]
-        if ((length(levels(newcol)) > 1) & (min(table(newcol)) >= 2)) {
+        if (length(unique(newcol)) > 1) {
             cnames = c(cnames, names(Z)[j])
             submat = model.matrix(~ Z[subrows,j] - 1)
             if (binary.encoding) {
@@ -75,14 +75,20 @@ for (respind in 1:nresps) {
             } else {
                 colnames(submat) = paste0(names(Z)[j], levels(Z[,j]))
             }
-            if (min(colSums(submat)) > 2) {
-                groups = c(groups, rep(g, ncol(submat)))
-                g = g + 1
-                X = cbind(X, submat)
-            }
+            groups = c(groups, rep(g, ncol(submat)))
+            g = g + 1
+            X = cbind(X, submat)
+            X.cat = cbind.data.frame(X.cat, as.factor(newcol))
         }
     }
     X = X[ , -1]
+    X.cat = X.cat[, -1]
+    colnames(X.cat) = cnames
+    full.model = lm(Y ~ . - 1, data=data.frame(X.cat), na.action = na.omit)
+    s2 = sum(full.model$residuals^2)
+    s2 = s2/full.model$df.residual
+    Sigma = diag(rep(s2,n))
+    
     gld = generate_glint(X, groups, cat.groups = unique(groups))
     glX = gld$X
     all.groups = gld$all.groups
@@ -90,13 +96,7 @@ for (respind in 1:nresps) {
     default.groups = gld$default.groups
     omits = c(omits, gld$omitted)
     
-    # Modified generate_glint to leave out interaction groups
-    # when the interaction is all 0
-    #for (g in (max(groups)+1):max(all.groups)) {
-    #    group = which(g == all.groups)
-    #}
-
-    glX = scale(glX, center=TRUE, scale=FALSE)
+    #glX = scale(glX, center=TRUE, scale=FALSE)
     glX = frob_normalize(glX, all.groups)
     G = max(all.groups)
     Gs = c(Gs, G)
@@ -104,14 +104,11 @@ for (respind in 1:nresps) {
     ps = c(ps, length(all.groups))
     #weights = sqrt(rle(groups)$lengths)
     weights = rep(1, max(all.groups))
-    Sigma = diag(rep(1,n))
+
     # Perform forward stepwise
-    m.steps = min(c(n-1, floor(G/2), max.steps))
+    m.steps = min(c(G-1, max.steps, floor(n/10)))
     ms = c(ms, m.steps)
-    ## if ((respind == 6) & (db == "PI")) {
-    ##     ms = 32 # Less data, 
-    ## }
-    print(paste0("--- Response ", respind,
+    print(paste0("--- Response ", respind, "(", round(s2, 2), ")",
                  " with ", n, " obs and ", G, " groups, using ",
                  m.steps, " steps"))
     results = forward_group(glX, Y, all.groups, weights, Sigma, max.steps = m.steps)
@@ -135,14 +132,15 @@ for (respind in 1:nresps) {
       }
       A.set = c(A.set, gname)
     }
-    A.sets[[colnames(Z)[respind]]] = A.set
-    print(length(A.set))
+    if (length(A.set) > 0) {
+      A.sets[[colnames(Z)[respind]]] = A.set
+    } else {
+      A.sets[[colnames(Z)[respind]]] = c(0)
+    }
 }
 
 print(A.sets)
 print(sapply(A.sets, length))
-print("Number of omitted interactions:")
-print(omits)
 
 filename = paste0("figs/HIV_", db, "_glint.pdf")
 pdf(filename)
@@ -154,6 +152,11 @@ for (i in 1:nresps) {
         max.steps = min(which(na.vals)) - 1
     }
     alen = length(A.sets[[i]])
+    if (alen == 1) {
+      if (A.sets[[i]] == 0) {
+        alen = 0
+      }
+    }
     if (alen < max.steps) {
         # Active set is not maximum size
         nonsignif = Pvals[i,(alen+1):max.steps]
@@ -171,7 +174,6 @@ for (i in 1:nresps) {
     plot(xvals, yvals, ylim=c(0,1), xlab="Step", ylab="P-values", main=names(A.sets)[i])
     rect(k+.5, -.05, max.steps+.8, 1.05, col = "gray94", border = NA)
     points(xvals, yvals)
-    #points(nsignif, Pvals[i,nsignif], pch=19)
     
     if (length(nonsignif) > 0) {
         points((nsignif+1):max.steps, nonsignif)
@@ -190,5 +192,5 @@ for (i in 1:nresps) {
     mat[i,3] = Gs[i]
     mat[i,4] = paste(A.sets[[i]], collapse = " ")
 }
-caption="Variables chosen using \\textit{last} stopping rule"
+caption="Variables chosen using \\textit{last} stopping rule in \\textsc{Glinternet}"
 tex_table(texfile, mat, caption)

@@ -34,6 +34,15 @@ ave_pow= function(num.nonzero, active, as) {
   return(length(intersect(active, as))/num.nonzero)
 }
 
+groupwise_center_scale = function(X, groups) {
+  # Center by group
+  gmeans = sapply(unique(groups), function(x) mean(X[,groups == x]))
+  gmeans = gmeans[groups]
+  X = sweep(X, 2, gmeans, FUN="-")
+  # Scale by group
+  X = frob_normalize(X, groups)
+  return(X)
+}
 
 # For coefficients of categorical variables,
 # ensure zero-sum constraint.

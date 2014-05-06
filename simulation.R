@@ -138,7 +138,7 @@ run_simulation = function(
             all.groups = groups
             b.data = beta_staircase(groups, k, upper.scaled, lower.scaled, cat.groups=cat.groups, rand.sign=TRUE, perturb=TRUE)
             group.sizes = rle(groups)$lengths
-            weights = sqrt(group.sizes)
+            #weights = sqrt(group.sizes)
             
         } else {
             # Nomenclature: "special" means splines or interactions
@@ -168,20 +168,21 @@ run_simulation = function(
                 X.test = data.test$X
             }
 
-            # Frobenius normalized, do not need weights
-            weights = rep(1, G)
-            
-
-            
             # Generate special coefficient vector
             b.data = beta_fun(groups=groups, all.groups=all.groups, special.groups=special.groups, default.groups = default.groups, k=k, num.default=k0, upper=upper.scaled, lower=lower.scaled, cat.groups=cat.groups)
             # Special active set for glint/gamsel
             true.special = b.data$true.special
                 
         } 
+        # Frobenius normalized, do not need weights
+        weights = rep(1, G)
+            
+        if (length(cat.groups) > 0) {
+          Xscaled = frob_normalize(X, all.groups)
+        } else {
+          Xscaled = groupwise_center_scale(X, all.groups)
+        }
 
-        Xscaled = scale(X, center = TRUE, scale = FALSE)
-        Xscaled = frob_normalize(Xscaled, all.groups)
         if (estimation) {
             Xscaled.test = frob_normalize(X.test, all.groups)
         }
@@ -213,6 +214,7 @@ run_simulation = function(
 #####################################################
         # De-mean before passing to solvers #
         Y.beta = Y.beta - mean(Y.beta)
+        centered.noise = noise - mean(noise)
         # Do we really want to do this?     #
 #####################################################
         
@@ -223,7 +225,7 @@ run_simulation = function(
         }
         
         # Null results
-        results = forward_group(Xscaled, noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+        results = forward_group(Xscaled, centered.noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
         P.mat[i, ] = results$p.vals
         AS.mat[i, ] = results$active.set
 
@@ -253,10 +255,6 @@ run_simulation = function(
             ric.list[[i]] = c(length(ric.as), ric.true.step)
           }
           
-        }
-
-        if (verbose) {
-            print(c(upper, lower, mu.max, length(intersect(results.b$active.set[1:k], true.active))/k))
         }
 
         # Track results
@@ -300,6 +298,10 @@ run_simulation = function(
             # Append proportion of signal recover matrix
             ps.recover.mat[i, cg] = length(intersect(already.counted, all.active))/max(length(all.active),1)
             cg = cg + 1
+        }
+
+        if (verbose) {
+          #print(c(upper, lower, mu.max, length(intersect(rb.as[1:k], true.active))/k))
         }
     }
     # End main simulation loop

@@ -137,6 +137,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
   chi.pvals = c()
   c.vars = c()
   Ls = c()
+  ranks = c()
   Ynorms = c()
 
   Y.update = Y
@@ -153,6 +154,7 @@ forward_group = function(X, Y, groups, weights = 0, Sigma = NULL, max.steps = 0,
       active.set = output$active.set
       imax = output$added
       grank = output$grank
+      ranks = c(ranks, grank)
       eff.p = output$eff.p
       RSS = sum(Y.update^2)
       Y.update = output$Y.update

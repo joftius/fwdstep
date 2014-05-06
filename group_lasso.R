@@ -24,6 +24,7 @@ trignometric_form = function(num, den, weight, tol=1.e-10) {
   
   Ctheta = sum(a*b) / (norma*normb)
   # R might believe 1 > 1 and return NaN in sqrt() below
+  # so we truncate to the interval first
   Ctheta = min(max(Ctheta, -1), 1)
   Stheta = sqrt(1-Ctheta^2)
   theta = acos(Ctheta)
@@ -71,9 +72,10 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
   Uwhich = U[which]
   Xmax = X[,which]
   kmax = sum(which)
-  kmaxrank = kmax
   if (length(dim(Xmax)) == 2) {
     kmaxrank = rankMatrix(Xmax)[1]
+  } else {
+    kmaxrank = 1
   }
 
   eta = rep(0, p)
@@ -114,6 +116,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     conditional_variance = sum(Xeta^2)
   }
   # use formula above display (42) in tests:adaptive
+  
   Xeta = Xeta / conditional_variance
   C_X = t(X) %*% Xeta
 

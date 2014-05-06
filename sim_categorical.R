@@ -8,10 +8,10 @@ design = 'categorical'
 estimation = FALSE
 
 n = 100
-groups = sort(rep(1:100, 2))
+groups = sort(rep(1:40, 2))
 
 k = 5
-upper = 3
+upper = 4
 lower = 2
 max.steps = 15
 noisecorr = 0
@@ -64,8 +64,6 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## abline(v = 1, col = "gray")
 ## dev.off()
 
-upper = 8
-lower = 4
 groups = sort(c(rep(1:20, 4), rep(21:40, 8)))
 max.steps = 10
 

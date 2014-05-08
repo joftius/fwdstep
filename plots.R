@@ -33,7 +33,7 @@ step_plot = function(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max
     plot.main = paste0(plot.main, " k:", k,
                         ", beta:", upper.coeff, "/", lower.coeff,
                         "(", round(max.beta,1), "/", round(min.beta, 1),
-                        "), k-SP:", round(fwd.power, 2), main.append)
+                        "), k-TPR:", round(fwd.power, 2), main.append)
 
     pdf(filename)
 

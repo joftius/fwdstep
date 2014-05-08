@@ -1,7 +1,7 @@
-#db = "NRTI"
-db = "PI"
+db = "NRTI"
+#db = "PI"
 
-binary.encoding = TRUE
+binary.encoding = FALSE
 
 setwd('..')
 source('fwd_step.R')
@@ -19,18 +19,17 @@ if (db == "NRTI") {
   resps = 4:10
 }
 
-nsim = 10
+nsim = 400
 type = "default"
 design = "fixed"
 fn.append = '' #'Pg'
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
-nsim = 10
 num.nonzero = 5
 k = num.nonzero
-max.steps = 15
-upper = 10
-lower = 5
+max.steps = 10
+upper = 8
+lower = 4
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)

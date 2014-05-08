@@ -12,18 +12,18 @@ if (type == 'gamsel') {
     design = 'uniform'
     n = 200
     groups = 1:50
-    nsim = 100
+    nsim = 200
 } else {
     design = 'gaussian'
     n = 100
     groups = 1:30
-    nsim = 100
+    nsim = 200
 }
 
 k = 6
 k0 = 2
-upper = 15
-lower = 10
+upper = 10
+lower = 5
 max.steps = 18
 
 

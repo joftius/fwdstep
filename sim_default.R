@@ -15,8 +15,8 @@ groups = 1:200
 #groups = 1:50
 
 k = 10
-upper = 2
-lower = 1.5
+upper = 3
+lower = 2
 
 max.steps = 15
 #max.steps = min(n/2, max(groups)-1) #floor(max(groups)/3)
@@ -77,9 +77,12 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## abline(v = 1, col = "gray")
 ## dev.off()
 
-#groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
 #groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
 #groups = 1:200
+corr = 0
+noisecorr = 0
+max.steps = 10
 k = 5
 
 output.g = run_simulation(
@@ -93,13 +96,13 @@ output.g = run_simulation(
     noisecorr = noisecorr,
     estimation = estimation, verbose = TRUE)
 
-output.g$main.append = paste0(", RIC: (", round(output.g$ric.tpp, 2), "/", output.g$ric.size, ")")
+#output.g$main.append = paste0(", RIC: (", round(output.g$ric.tpp, 2), "/", output.g$ric.size, ")")
 
-with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append))
+with(output.g, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename))
 
 caption = "Evaluation of model selection using several stopping rules based on our p-values."
 results.l = with(output, sim_select_stats(signal.p, active.set, true.step, k, bic.list = bic.list, ric.list = ric.list))
-results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k, bic.list = bic.list, ric.list = ric.list))
+results.g = with(output.g, sim_select_stats(signal.p, active.set, true.step, k))
 
 #rownames(results.l) = paste0("*", rownames(results.l))
 #rownames(results.g) = paste0("**", rownames(results.g))

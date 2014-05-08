@@ -99,7 +99,7 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 
 \begin{abstract}
 % perhaps de-emphasize group LASSO and emphasize forward stepwise?
-  We extend the methods developed by \cite{significance:LASSO} and
+  We extend the methods developed by \cite{significance:lasso} and
   \cite{tests:adaptive} on significance tests for penalized
   regression to stepwise model selection by iteratively applying
   the global null hypothesis test on the residual in a forward stepwise
@@ -150,11 +150,11 @@ dataset. This is one instance of the general problem of conducting
 inference and model selection using the same data, a problem
 of central importance on which some recent progress has been made.
 
-In the LASSO setting, \cite{significance:LASSO} derived
+In the LASSO setting, \cite{significance:lasso} derived
 a novel test statistic and its asymptotic null distribution, making
 possible valid inferences after model selection using the full data.
 \cite{tests:adaptive} modified and extended those results to the
-group LASSO \citep{groupLASSO} and other penalized regression
+group LASSO \citep{grouplasso} and other penalized regression
 problems, but only under the global null hypothesis.
 One of the strengths of these test statistics is that they can be
 used for valid significance testing when computed on the same
@@ -172,12 +172,33 @@ be more statistically efficient than validation on held-out data, and
 more computationally efficient than penalized methods with
 regularization parameters chosen by cross-validation.
 
+As a small illustrative example, consider a response $Y$ with ten
+categorical predictors $X_g$ having between 2 and 4 levels. The true 
+relationship is that $Y$ only depends on $X_1$ and $X_9$. Specifically,
+if observation $i$ has covariates $X_{1,i} = j, X_{9,i} = k$ then
+\[
+    Y_i = \beta_{1,j} + \beta_{9,k} + \epsilon_i , \qquad
+    \epsilon_i \sim N(0,1)
+\]
+$X_1$ has three levels with $\beta_1 = (1, .5, -1)$, $X_9$
+has two levels with $\beta_9 = (.5, -.5)$. We generated a random
+categorical design matrix $X$ and created an instance of this example
+with $n = 40$ observations. Running forward stepwise, we calculated
+both our p-value and the usual $\chi^2$ p-value at each step. In
+Table~\ref{tab:example} we see that forward stepwise chooses the
+truly nonzero variables first and both p-values for these are small.
+However, once forward stepwise begins adding noise variables, the
+$\chi^2$ p-value remains relatively small, potentially leading to 
+incorrect inferences.
 
-In the next section we establish notation and describe the
-forward stepwise algorithm used in most of the paper.
+
+\input{../tables/small.tex}
+
+In the next section we establish general notation and describe the
+forward stepwise algorithm used throughout the paper.
 Section~\ref{sec:testing} reviews some recent work on
 post-selection inference
-\citep{significance:LASSO,tests:adaptive,LASSO:fixed}
+\citep{significance:lasso,tests:adaptive,lasso:fixed}
 relevant to our work here, and describes a general framework
 for post-selection inference based on quadratic comparisons.
 Simulation results in Section~\ref{sec:simulations} show
@@ -188,8 +209,9 @@ some from \cite{sequential:fdr}--appear promising. In
 Section~\ref{sec:applications} we apply
 the method to several variants of forward
 stepwise tailored to models with interactions and generalized additive
-models, as well as to a real data example.
-(\todo Change this paragraph if necessary as the sections are completed)
+models, as well as to a real data example involving genomic prediction
+of individual drug responses to treat HIV.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -356,6 +378,7 @@ We now use forward stepwise to refer specifically to
 Algorithm~\ref{algo:fs} unless otherwise specified.
 
 \subsection{Performance of forward stepwise}
+\label{sec:fs:performance}
 
 Among model selection procedures, forward stepwise is one which performs
 variable selection: from a potentially large set of variables it chooses
@@ -391,10 +414,10 @@ number of nonzero entries of $\beta$. Proposals for $\lambda$ include
 2 ($C_p$ of \cite{CP}, AIC of \cite{AIC}), $\log(n)$ (BIC of \cite{BIC}), and
 $2\log(p)$ (RIC of \cite{RIC}). Stopping rules based on classical test
 statistics have also been used, so it is natural to consider using
-the new test statistics of \cite{significance:LASSO} or
+the new test statistics of \cite{significance:lasso} or
 \cite{tests:adaptive}
 to choose a model. \cite{sequential:fdr} examined some stopping rules
-using the asymptotic p-values of \cite{significance:LASSO} and showed
+using the asymptotic p-values of \cite{significance:lasso} and showed
 their stopping rules control false discovery rate--the expected
 proportion of noise variables among variables declared significant
 \citep{fdr}. We explore this further in Section~\ref{sec:simulations}.
@@ -437,9 +460,8 @@ For various sparsity levels $k$, we applied Algorithm~\ref{algo:fs} to
 various data sets with \textit{steps} set to $k$.
 In the resulting active set $A_k$, the number of true variables divided by $k$ is the $k$-True Positive Proportion ($k$-TPP):
 \[
-\text{TPP}_k = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
+k\text{-TPP} = \frac{\# \left\{g: g \in A_k, \beta_g \neq 0\right\}}{k}.
 \]
-In some plots this has been denoted $k$-SP instead of $k$-TPP (\todo fix).
 Since we know $k$ in the simulations we can use $k$-TPP as a measure of how well forward stepwise is performing. When it is close to 1 we are recovering most of the true variables before including false ones.
 In our simulations nonzero coefficients have magnitudes
 in a range of multiples of $\gamma := \sqrt{2\log(G)/n}$, e.g. in $[1.4
@@ -461,7 +483,7 @@ the same for RIC are plotted in purple.
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Significance testing: from LASSO to group LASSO}
+\section{Significance testing with model selection}
 \label{sec:testing}
 
 In the ordinary least squares setting, a significance test for a
@@ -475,21 +497,21 @@ and in particular it fails for forward stepwise procedures adding
 the ``best'' (e.g. most highly correlated) predictor in each step. In
 that case, the drop in RSS does not match its
 theoretical null distribution even when the null hypothesis is
-true. \cite{significance:LASSO} introduced a new test statistic based
+true. \cite{significance:lasso} introduced a new test statistic based
 on the knots in the LASSO solution path. They derived a simple
 asymptotic null distribution, proved a type of convergence under broad
 ``minimum growth'' conditions, and demonstrated in simulations that
 the test statistic closely matches its asymptotic distribution even in
 finite samples.  That work marked an important advance in the problem
 of combining inference with model selection.  \cite{tests:adaptive}
-extended that work to the group LASSO \citep{groupLASSO} and other
+extended that work to the group LASSO \citep{grouplasso} and other
 problems, and modified the test statistic to one with an exact finite
 sample distribution under the global null hypothesis.
 
 To describe the previous work we require some facts about the solution path
 of the LASSO.
 Writing $\hat \beta(\lambda)$ for the LASSO solution for a fixed value of $\lambda$, we recall
-the following facts summarized in \cite{significance:LASSO,tibshirani_LASSO_uniqueness}.
+the following facts summarized in \cite{significance:lasso,tibshirani_LASSO_uniqueness}.
 
 \begin{itemize}
 
@@ -516,7 +538,7 @@ In \cite{tests:adaptive} it is pointed out
 \end{equation}
 Further, the above test statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
 {\em conditional} on which variable achieves $\lambda_1$ as well as its sign.
-The limiting results about later steps in \cite{significance:LASSO} can
+The limiting results about later steps in \cite{significance:lasso} can
 %(formally)
 be interpreted as
 recursively applying $T_1$ to the variables that had not previously been selected by LARS.
@@ -530,7 +552,7 @@ Recall the LASSO estimator is given by
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
 \begin{aligned}
-\label{eq:LASSO}
+\label{eq:lasso}
 \displaystyle \hat \beta_\lambda = \argmin_{\beta \in \real^p} \frac{1}{2} \| y - X \beta \|_2^2 +
    \lambda \| \beta \|_1 \\
 \end{aligned}
@@ -580,7 +602,7 @@ to be zero. The smallest such $\lambda$ is denoted
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 For the group LASSO this is explicitly computable by
 \begin{equation}
-\label{eq:lammax}
+%\label{eq:lammax}
 \lambda_1^{\text{group}} = \max_{g} \frac{1}{w_g}\|X_g^Ty\|_2 . 
 \end{equation}
 The value above is also the dual norm of the penalty~\eqref{eq:gpen}
@@ -607,18 +629,18 @@ terms of these quantities.
 % \begin{center}
 % \resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
 % \end{center}
-% A polytope selection event. Solving the LASSO \eqref{eq:LASSO} for a fixed value
+% A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
 % of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
 % active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
 % can be written as a set of affine constraints.
 % \end{figure}
 
-\subsection{Selection events}
+\subsection{Quadratic selection events}
 
 Before giving the full description of the p-value, we turn to another
 previous work and describe how to extend the framework there to the
 setting with groups.
-The approach to post-selection inference in \cite{LASSO:fixed}
+The approach to post-selection inference in \cite{lasso:fixed}
 describes the selection event for the LASSO as a convex polytope
 satisfying a list of affine constraints.
 %stylized in Figure \ref{fig:polytope}.
@@ -632,7 +654,7 @@ $\mu$ could then be accomplished by analyzing the conditional distribution
 \begin{equation}
 y \sim N(\mu, \sigma^2 I) \bigl| Ay \leq b.
 \end{equation}
-See \cite{LASSO:fixed,exact:lars} for further details on this approach.
+See \cite{lasso:fixed,exact:lars} for further details on this approach.
 
 With non-trivial groups, however, the event that $g^*(y)$, the first
 group chosen, is equal to some fixed group $g$ is generally not given by
@@ -659,7 +681,7 @@ $I(s)$ such that
 \end{equation}
 The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
 assume they are symmetric.
-As in \cite{LASSO:fixed} we will be interested in some randomly chosen contrast
+As in \cite{lasso:fixed} we will be interested in some randomly chosen contrast
 $\eta(S(y))^T\mu$.
 In our grouped selection procedure, the selection rule is $S(y)=g^*(y)$
 and $\eta$ is typically 
@@ -769,7 +791,7 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
 %In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
 %\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
 %
-%This is Lemma 5 from \cite{significance:LASSO}.
+%This is Lemma 5 from \cite{significance:lasso}.
 %
 %\begin{itemize}
 %
@@ -804,7 +826,7 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
    \ENSURE Our p-value for the group $g$ entering the model.
    \STATE Compute $H_g$ and $\sigma^2_g$
-   \IF{$X_g$ is a single column}
+   \IF{$p_g = 1$}
    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
    \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
    \ELSE
@@ -824,9 +846,12 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
  \end{algorithmic}
 \end{algorithm}
 
-We now describe how to calculate our p-value, following the discussion of
-group LASSO in \cite{tests:adaptive}. For the rest of this section let
-$g = \gstar$ be the index of
+Lemma \ref{eq:test:dbn} gives an explicit characterization of our p-value
+that can also be used to calculate it in practice. However, in this
+section we describe an alternative derivation following the discussion of
+group LASSO in \cite{tests:adaptive}. The implementation described here
+was used in all simulations.
+For the rest of this section let $g = \gstar$ be the index of
 the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
 %$\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
 %$r = \text{rank}(X_g)$ be the rank of the maximizing group.
@@ -882,52 +907,43 @@ the \textsc{LinearFractional} subproblem, appear in Appendix~\ref{app:closedform
 \section{Simulations}
 \label{sec:simulations}
 
-We performed simulations with several classes of design matrices including
-Gaussian, categorical, and categorical from a real data set. Gaussian
+We performed simulations with several classes of random design matrices
+including Gaussian and categorical, and with fixed categorical designs
+from the HIV data set of Section~\ref{sec:hiv}. Gaussian
 design matrices are generated either independently or with some global
 correlation $\rho > 0$ between all pairs of columns. Categorical matrices
 were generated by first choosing a vector of probabilities for a given
 variable from a Dirichlet prior, and then sampling category levels with
 that vector of probabilities. Resampling was used to ensure the minimum
 number of observations in any level was at least five. Finally, categorical
-varables were encoded as groups of 0-1 vectors using the full encoding.
-The categorical data matrices from real data are described in
-Section~\ref{sec:hiv}
+variables were encoded as groups of 0-1 vectors using the full encoding.
 
 Since we are interested in variable selection we generate signals with
-nonzero coefficients on the scale of $\gamma := \sqrt{2 \log(p)/n}$.
-(\todo Cite some paper on support recovery?).
+nonzero coefficients on the scale of $\gamma := \sqrt{2 \log(G)/n}$,
+where recall $G$ is the number of groups.
 Coefficients within a
-nonzero group have roughly the same magnitude, and the magnitudes for
-each nonzero group range from a lower limit times $\gamma$ to an upper
-limit times $\gamma$. In plots, the limits are listed next to ``beta:''
-and the numbers in parentheses are the largest and smallest 2-norms of
-nonzero coefficient groups respectively. Each plot also displays the
+nonzero group have roughly the same magnitude and are normalized
+so that $\| \beta_g \|_2$ has the same scale independent of $p_g$.
+The magnitudes for different
+nonzero groups range from a lower limit times $\gamma$ to an upper
+limit times $\gamma$. In text above each plot, the limits are listed
+next to ``beta:'' and the numbers in parentheses are the largest
+and smallest 2-norms of nonzero coefficient groups respectively.
+Each plot also displays the
 number of observations or rows, $n$, the number of columns, $p$, the
 number of groups, $g$, and the largest and smallest group sizes in
 parentheses if the groups are not all size 1. The number of nonzero
 groups, $k$, is also displayed graphically by shading with the portion
 of the plot showing steps after $k$ shaded gray.
 The proportion of truly
-nonzero groups recovered in the first $k$ steps is denoted $k$-SP,
+nonzero groups recovered in the first $k$ steps is denoted $k$-TPP,
 where recall $k$ is the number of truly nonzero groups. 
-
-Finally, most of the plots below show the following information. The
-horizontal axis is the step index for forward stepwise. The dashed
-line shows the proportion of iterations where a truly nonzero variable
-was added to the model at that step. Solid verticle lines show the
-middle 50\% of p-values calculated at that step, with red calculated
-on a null model with no nonzero groups, blue calculated on the non-null
-model, and green calculated on the non-null model from the usual
-$\chi^2$ significance test.
-The points in these lines are the average p-value at that step, and
-the triangles above and below show the 95\% and 5\% quantiles.
 
 \begin{figure}[h]
 \begin{center}
 \subfigure[Gaussian with correlations]{
 \label{fig:gausscorr}
-\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g200_k10_lower1pt5_upper2_corr0pt2.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g200_k10_lower1pt5_upper2_corr0pt2_noisecorr0pt1.pdf}}
 \hspace{-15pt}
 \subfigure[Gaussian with groups]{
 \label{fig:gaussgroups}
@@ -939,12 +955,25 @@ Gaussian design with groups of sizes 5 and 10.}
 \end{center}
 \end{figure}
 
+We show two types of plots, one containing the same information as in
+Figure~\ref{fig:fwdstepsim}. The other plots each show a scenario with
+a fixed sparsity level and contain the following information. The
+horizontal axis is the step index for forward stepwise. The dashed
+line shows the proportion of iterations where a truly nonzero variable
+was added to the model at that step. Solid verticle lines are essentially
+narrow boxplots, showing the middle 50\% of p-values calculated at that
+step with circular points in these lines as the average and triangles
+showing the 95\% and 5\% quantiles. Different color verticle lines
+represent the following: red are calculated using our p-value on a null
+model with no nonzero groups, blue are calculated on the non-null
+model, and green calculated on the non-null model using the usual
+$\chi^2$ significance test.
 
 \begin{figure}[h]
 \begin{center}
 \subfigure[Real data categorical design]{
 \label{fig:hivnrti}
-\includegraphics[width=0.5\textwidth]{../figs/HIV_NRTI_n848_p48_g14_k4_lower21_upper25.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/default_fixed_nsim100_n639_p354_g177_sizes2-2_k5_lower5_upper10.pdf}}
 \hspace{-15pt}
 \subfigure[Simulated categorical design]{
 \label{fig:gausscat}
@@ -955,12 +984,51 @@ The right panel shows results for categorical matrices with all categories havin
 \end{center}
 \end{figure}
 
-%\input{../tables/default_gaussian_nsim500_n100_p200_g200_k5_lower1pt5_upper2.tex}
+The performance of forward stepwise in these plots is characterized by how
+close the dashed line is to a step function. If forward stepwise finds all
+truly nonzero variables first this line will be close to 1 until the step
+index reaches $k$ and then it will be close to 0. When this is the case,
+our p-value tends to be small while forward stepwise is selecting truly
+nonzero variables, uniform on the step where the dashed line goes to 0,
+and then progressively larger afterward. A reasonable stopping rule based
+on this behavior is to pick the model including all variables up to and
+including the last one with a significant p-value. We call this the
+\textit{last} stopping rule, and it selects the first $\hat k_\textit{last}$
+variables in the forward stepwise path where, if
+$p_j$ denotes our p-value calculated at the $j$-th step, then
+\begin{equation}
+  \label{eq:klast}
+  \begin{aligned}
+    \hat k_\textit{last} & = \max \{ j \leq steps : p_j < \alpha \}. \\
+  \end{aligned}
+\end{equation}
+To test this stopping rule we compare it with several others which we now
+describe. The \textit{oracle} stopping rule assumes knowledge of the
+sparsity $k$ and always picks the first $k$ variables. The \textit{first}
+rule stops immediately before the first variable to yield a p-value
+larger than $\alpha$, and since this requires rejection of the global 
+null in order to include the first variable
+it controls the family-wise error rate. However it does not seem to have
+good power.
+The \textit{forward}
+stopping rule is defined in \cite{sequential:fdr} and has the desirable
+property that it controls the false discovery rate. Finally, \textit{RIC}
+and \textit{BIC}
+are the risk inflation criterion and Bayesian information criterion
+described in Section~\ref{sec:fs:performance}. Tables~\ref{tab:easy} and
+\ref{tab:hard} show simulation results with $\alpha = 0.1$.
+To summarize these results, \textit{forward} is the only rule which
+controls FDR, \textit{BIC} selects models that are far too large,
+\textit{RIC} has low FDR and good power when the sparsity is low,
+and \textit{last} is comparable to \textit{RIC},
+with perhaps more power in the higher dimensional setting
+(and a correspondingly larger FDR when the signal is also weak).
 
 
 \input{../tables/stop_comparison_easy.tex}
 
 \input{../tables/stop_comparison_hard.tex}
+
 
 \section{Applications}
 \label{sec:applications}
@@ -978,7 +1046,7 @@ example.
 \hspace{-15pt}
 \subfigure[P-value with spline groups]{
 \label{fig:spline:pval}
-\includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim100_n200_p50_g50_k6_k02_lower10_upper15.pdf}}
+\includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim200_n200_p50_g50_k6_k02_lower5_upper10.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
 in this setting for various sparsity levels, with the dashed line
 showing a liberal definition of power that allows mistakes when
@@ -1007,7 +1075,7 @@ with $\tilde G = 2G$ groups. For simplicity we assume the original groups are al
     X_i^+ = \text{CubicSplineBasis}(X_i)
   \end{aligned}
 \end{equation}
-Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline}(b) the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-SP (top right).
+Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline}(b) the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-TPP (top right).
 
 
 \subsection{Glinternet for hierarchical interactions}
@@ -1103,7 +1171,7 @@ forgiving definition of power where we are rewarded for discovering part
 of a nonzero group, i.e. for discovering only one main effect from a
 true interaction group. The proportion of nonzero interaction groups
 that were discovered in the first $k$-steps is shown in parentheses
-after the $k$-SP (top right).
+after the $k$-TPP (top right).
 
 \begin{figure}
 \begin{center}
@@ -1166,8 +1234,8 @@ Each panel shows results for a different drug,
 with p-values plotted by step in forward stepwise. 
 The \textit{last} stopping rule is applied and the region of the plot
 corresponding to the chosen model is unshaded, with the remainder shaded.
-The chosen variables are shown in Tables 3 and 4.
-(\todo Fix this ref after final re-run of code)
+The chosen variables are shown in Tables~\ref{tab:hivPI} and
+\ref{tab:hivNRTI}.
 
 %\begin{figure}
 %\begin{center}
@@ -1183,7 +1251,7 @@ The chosen variables are shown in Tables 3 and 4.
 %\end{center}
 %\end{figure}
 
-We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions. Results from this are shown in Figures~\ref{fig:HIVPI:glint} and \ref{fig:HIVNRTI:glint} and Tables 5 and 6.
+We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions. Results from this are shown in Figures~\ref{fig:HIVPI:glint} and \ref{fig:HIVNRTI:glint} and Tables~\ref{tab:glintPI} and \ref{tab:glintNRTI}.
 
 \begin{figure}
 \begin{center}
@@ -1209,11 +1277,43 @@ We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:
 \section{Discussion}
 \label{sec:discuss}
 
-\todo Brief summary \\
-\todo After finising everything else, move some points of discussion
-here \\
-\todo Mention ongoing work, like tracking all the constraints to
-get an exact p-value at every step. \\
+Under the global null hypothesis $\beta = 0$, we have a test statistic
+which we can use against the alternative of including the ``best''
+predictor (the one chosen by forward stepwise).
+This test statistic has an exact, finite sample distribution.
+If we choose to include the variable, we are no longer in the global null
+setting. However, by orthogonalizing both the response and the remaining
+predictors with respect to the included variable, it is reasonable to
+iterate the global null test. While not fully theoretically justified,
+this method seems to work well in all our simulations. By this we mean that
+the p-value tends to be small on the step when including the last truly
+nonzero predictor, uniform on the following step, and subsequently
+stochastically larger than uniform. This is in contrast to p-values
+calculated from traditional variable-inclusion tests like the $\chi^2$
+test, which tend to be smaller than uniform long after the last truly
+nonzero predictor has been included.
+
+When adding the next variable in forward stepwise, our hypothesis test
+roughly depends on the improvement gained by this variable compared to
+the next best variable. Thus, the p-value is small when there is a large
+gap between the variable to be included and all the remaining variables.
+If multiple predictors have truly nonzero coefficients that are close
+in magnitude, the p-value may be large until forward stepwise reaches
+the last one. This motivated us to consider the \textit{last} stopping
+rule for model selection \eqref{eq:klast}. In simulations we
+found this stopping rule to have good performance in terms of power
+(true positive rate), comparable to that of RIC \citep{RIC}.
+But it does not control the false discovery rate
+unless the truly nonzero coefficients are large enough to guarantee
+forward stepwise picks the corresponding variables before picking too
+many noise variables.
+
+The present work calculates p-values at each step ignoring the constraints
+imposed by previous steps. Future work adjusting for all previous steps
+is in progress, and may be able to give exact p-values at a step chosen
+stochastically by procedures like BIC and RIC. The authors hope to
+eventually release an R package implementing these methods.
+
 
 \newpage
 
@@ -1224,21 +1324,27 @@ get an exact p-value at every step. \\
 \newpage
 
 \appendix
-\section{Additional details on closed-form computations}
+\section{Linear fractional subproblem}
 \label{app:closedform}
 
-We next describe the \textsc{LinearFractional} subproblem and its solution. We
-gave the problem this name because it originated in the form
+This appendix describes the \textsc{LinearFractional} optimization
+subproblem and its solution.
+The problem was named as it originated in the form
 \[
-\maximize_{h \neq g, \norm{u_h}_2 = 1} \frac{u_h^TX_h^Ty - u_h^TX_h^TX_gX_g^Ty}
-{1 - u_g^TX_g^TX_hu_h}
+\maximize_{h \neq g, \norm{u_h}_2 = 1}
+\frac{u_h^TX_h^Ty - u_h^TX_h^T\tilde X_g \tilde X_g^Ty}
+{1 - u_g^T \tilde X_g^TX_hu_h}
 \]
-The solution we describe next is to a slightly different problem, and
+The solution we describe next is to a slightly different problem which
 also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
-%For details see \cite{tests:adaptive}.
+Although the logic seems a bit complicated, it mainly involves ruling out
+several cases as infeasible. The infeasibilities are precisely those given
+by the characterization of the global maximizer in \cite{tests:adaptive}.
+After ruling out degenerate cases, we obtain the following solution
+by transforming to trigonometric coordinates and using calculus.
 
 \begin{algorithm}
- \caption{The \textsc{LinearFractional} optimization subproblem}
+ \caption{The \textsc{LinearFractional} subproblem}
  \label{algo:linfrac}
  \begin{algorithmic}
    \REQUIRE The $p$-vectors $a, b$ in Algorithm~\ref{algo:pval}, weights, inactive set $A^c$, a small tolerance number
@@ -1273,72 +1379,73 @@ also incorporates the information that $g$ maximizes $\norm{X_g^Ty}_2/w_g$.
 \end{algorithm}
 
 
+
 % \todo Clean this section \\
 % \todo Make $M=\lambda_2$ a special case corollary \\
 
-For the sake of completeness this appendix provides full derivations
-of closed forms for the quantities required to compute our
-statistic. We require two facts from \cite{tests:adaptive}
+% For the sake of completeness this appendix provides full derivations
+% of closed forms for the quantities required to compute our
+% statistic. We require two facts from \cite{tests:adaptive}
 
-A point $\eta \in \K$ maximizes $f_\eta$ over a convex
-set $\K$ if and only if the following conditions hold: 
-\begin{equation}
-\label{eq:maxcond}
-\grad f_{|T_{\eta}\K} = 0, \quad
-\tf^{\eta}_{\eta} \geq \V^+_{\eta}, \quad
-\tf^{\eta}_{\eta} \leq \V^-_{\eta}, \quad \text{and} \quad
-\V^0_{\eta} \leq 0.
-\end{equation}
-The same equivalence holds true even when $\K$ is only locally
-convex. 
+% A point $\eta \in \K$ maximizes $f_\eta$ over a convex
+% set $\K$ if and only if the following conditions hold: 
+% \begin{equation}
+% \label{eq:maxcond}
+% \grad f_{|T_{\eta}\K} = 0, \quad
+% \tf^{\eta}_{\eta} \geq \V^+_{\eta}, \quad
+% \tf^{\eta}_{\eta} \leq \V^-_{\eta}, \quad \text{and} \quad
+% \V^0_{\eta} \leq 0.
+% \end{equation}
+% The same equivalence holds true even when $\K$ is only locally
+% convex. 
 
-Write $M^{\pm}_{\eta, h}$ and $M^0_{\eta, h}$ as the corresponding suprema and infima over the restricted parameter set $S_h$. Note that the characterization of the global maximizer (Lemma 1, general paper) implies $M^0_{\eta, h} \leq 0$ and $M^+_{\eta, h} \leq M^-_{\eta, h}$ for all $h \neq g$. This will be used below to eliminate some degenerate cases of the optimization sub-problem on each $S_h$.
+% Write $M^{\pm}_{\eta, h}$ and $M^0_{\eta, h}$ as the corresponding suprema and infima over the restricted parameter set $S_h$. Note that the characterization of the global maximizer (Lemma 1, general paper) implies $M^0_{\eta, h} \leq 0$ and $M^+_{\eta, h} \leq M^-_{\eta, h}$ for all $h \neq g$. This will be used below to eliminate some degenerate cases of the optimization sub-problem on each $S_h$.
 
-Now fix $h$, let $P_g = X_gX_g^T$ and define
-\begin{align*}
-a_h &= w_h^{-1} X_h^T (I-P_g) y \\
-b_h &= w_g w_h^{-1} X_h^T P_g y / \norm{X_g^T y} \\
-c_h &= a_h^T b_h / (\norm{a_h} \norm{b_h}) \\
-K_h   &= \{ x : \norm{x} = 1, b_h^Tx > w \}
-\end{align*}
-Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
+% Now fix $h$, let $P_g = X_gX_g^T$ and define
+% \begin{align*}
+% a_h &= w_h^{-1} X_h^T (I-P_g) y \\
+% b_h &= w_g w_h^{-1} X_h^T P_g y / \norm{X_g^T y} \\
+% c_h &= a_h^T b_h / (\norm{a_h} \norm{b_h}) \\
+% K_h   &= \{ x : \norm{x} = 1, b_h^Tx > w \}
+% \end{align*}
+% Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
 
-Now, if $a_h$ is in the polar cone of $K_h$ (and ruling out the probability zero case where $a_h^Tx = 0$ on the boundary of $K_h$), then the numerator $a_h^Tx < 0$ on $K_h$ so there is a finite positive infimum in the interior $K_h$. Similarly there is a finite positive supremum on the interior of $K_h^c$ (the numerator is negative near the boundary of $K_h$ by continuity).
+% Now, if $a_h$ is in the polar cone of $K_h$ (and ruling out the probability zero case where $a_h^Tx = 0$ on the boundary of $K_h$), then the numerator $a_h^Tx < 0$ on $K_h$ so there is a finite positive infimum in the interior $K_h$. Similarly there is a finite positive supremum on the interior of $K_h^c$ (the numerator is negative near the boundary of $K_h$ by continuity).
 
-To attain the infimum on $K_h$ requires making $x$ close to $b_h$ and simultaneously making the numerator closer to zero, so $x$ should be on the side of $b_h$ that is closer to $a_h$. To attain the supremum on $K_h^c$ requires making $x$ simultaneously close to $a_h$ (so that $a_h^Tx > 0$) and $b_h$ (to make the denominator small). In summary, both the infimum and supremum are attained with $x$ between $a_h$ and $b_h$, when the angle $\theta$ between $a_h$ and $b_h$ is larger than both the angle $\psi$ between $a_h$ and $x$ and the angle $\phi$ between $x$ and $b_h$. This allows the simplification $\phi = \theta - \psi$. This is easier to verify for the case when $\norm{b_h} < w$.
+% To attain the infimum on $K_h$ requires making $x$ close to $b_h$ and simultaneously making the numerator closer to zero, so $x$ should be on the side of $b_h$ that is closer to $a_h$. To attain the supremum on $K_h^c$ requires making $x$ simultaneously close to $a_h$ (so that $a_h^Tx > 0$) and $b_h$ (to make the denominator small). In summary, both the infimum and supremum are attained with $x$ between $a_h$ and $b_h$, when the angle $\theta$ between $a_h$ and $b_h$ is larger than both the angle $\psi$ between $a_h$ and $x$ and the angle $\phi$ between $x$ and $b_h$. This allows the simplification $\phi = \theta - \psi$. This is easier to verify for the case when $\norm{b_h} < w$.
 
-We have verified that solving both cases requires finding the maxima of the trigonometric form $\norm{a_h} \cos (\psi) / (w - \norm{b_h} \cos(\theta - \psi))$ of the linear fraction on the interiors of $K_h$ (if it is nonempty) and $K_h^c$. The derivative is proportional to
-\[
-\frac{\norm{b_h} \sin(\theta) - w \sin(\psi)}{w - \norm{b_h} \cos(\theta - \psi)}
-\]
-Since we have ruled out the boundary of $K_h$, we can ignore the denominator and focus on critical points corresponding to the angles $\psi^{\pm}$ (symmetric about $\pi/2$) where $\sin(\psi^{\pm}) = (\norm{b_h} / w) \sin (\theta)$. That is,
-\[
-\psi^{\pm} \in \arcsin \frac{\norm{b_h}}{w} \sqrt{1-c_h^2}
-\]
-Note that these critical points only exist if $\sin(\theta) < w/\norm{b_h}$, and since we have argued that the infimum and supremum are attained it follows that this condition is met in our case. Let $\psi^+$ denote the smaller of the two angles. If $K_h$ is nonempty, then $\psi^-$ gives the infimum in $K_h$ and $\psi^+$ the supremum on $K_h^c$. This is necessary since if $x$ is in $K_h$ then its angle from $a_h$ is larger than $\pi/2$ because $a_h$ is in the polar cone of $K_h$. If $K_h$ is empty, then the supremum is still attained at $\psi^+$ since the numerator is negative at $\psi^- > \pi/2$ and the denominator is always positive.
+% We have verified that solving both cases requires finding the maxima of the trigonometric form $\norm{a_h} \cos (\psi) / (w - \norm{b_h} \cos(\theta - \psi))$ of the linear fraction on the interiors of $K_h$ (if it is nonempty) and $K_h^c$. The derivative is proportional to
+% \[
+% \frac{\norm{b_h} \sin(\theta) - w \sin(\psi)}{w - \norm{b_h} \cos(\theta - \psi)}
+% \]
+% Since we have ruled out the boundary of $K_h$, we can ignore the denominator and focus on critical points corresponding to the angles $\psi^{\pm}$ (symmetric about $\pi/2$) where $\sin(\psi^{\pm}) = (\norm{b_h} / w) \sin (\theta)$. That is,
+% \[
+% \psi^{\pm} \in \arcsin \frac{\norm{b_h}}{w} \sqrt{1-c_h^2}
+% \]
+% Note that these critical points only exist if $\sin(\theta) < w/\norm{b_h}$, and since we have argued that the infimum and supremum are attained it follows that this condition is met in our case. Let $\psi^+$ denote the smaller of the two angles. If $K_h$ is nonempty, then $\psi^-$ gives the infimum in $K_h$ and $\psi^+$ the supremum on $K_h^c$. This is necessary since if $x$ is in $K_h$ then its angle from $a_h$ is larger than $\pi/2$ because $a_h$ is in the polar cone of $K_h$. If $K_h$ is empty, then the supremum is still attained at $\psi^+$ since the numerator is negative at $\psi^- > \pi/2$ and the denominator is always positive.
 
-Finally we calculate the values of the linear fraction at $\psi^{\pm}$. Let us first record some facts:
-\begin{align*}
-0 < \psi^+ < \pi/2, \quad \psi^- = \pi - \psi^+ \\
-\cos(\theta) = c_h, \quad \sin(\theta) = \sqrt{1-c_h^2} \\
-\sin(\psi^+) = \sin(\psi^-) = \frac{\norm{b_h}}{w} \sin(\theta) \\
-\cos(\psi^+) = -\cos(\psi^-) = \sqrt{1 - (\norm{b_h}/w)^2(1-c_h^2)}
-\end{align*}
-Using the angle difference formula,
-\begin{align*}
-\cos(\theta - \psi^+) & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+) \\
-& = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+)
-\end{align*}
-Hence
-\begin{align*}
-M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) - \norm{b_h} c_h \cos(\psi^+) } \\
-% & = 
-% & = \frac{ w \norm{a} a_h^Tb_h / \norm{b_h} }{ w^2 - \norm{a}\norm{b}^2 + (a^Tb)/\norm{a} - a^Tb \cos \psi^+ }
-\end{align*}
-And $M^-_{\eta, h}$ is $\infty$ when $\norm{b_h} < w$ and otherwise given by
-\begin{align*}
-M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \norm{b_h} c_h \cos(\psi^+) } \\
-\end{align*}
+% Finally we calculate the values of the linear fraction at $\psi^{\pm}$. Let us first record some facts:
+% \begin{align*}
+% 0 < \psi^+ < \pi/2, \quad \psi^- = \pi - \psi^+ \\
+% \cos(\theta) = c_h, \quad \sin(\theta) = \sqrt{1-c_h^2} \\
+% \sin(\psi^+) = \sin(\psi^-) = \frac{\norm{b_h}}{w} \sin(\theta) \\
+% \cos(\psi^+) = -\cos(\psi^-) = \sqrt{1 - (\norm{b_h}/w)^2(1-c_h^2)}
+% \end{align*}
+% Using the angle difference formula,
+% \begin{align*}
+% \cos(\theta - \psi^+) & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+) \\
+% & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+)
+% \end{align*}
+% Hence
+% \begin{align*}
+% M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) - \norm{b_h} c_h \cos(\psi^+) } \\
+% % & = 
+% % & = \frac{ w \norm{a} a_h^Tb_h / \norm{b_h} }{ w^2 - \norm{a}\norm{b}^2 + (a^Tb)/\norm{a} - a^Tb \cos \psi^+ }
+% \end{align*}
+% And $M^-_{\eta, h}$ is $\infty$ when $\norm{b_h} < w$ and otherwise given by
+% \begin{align*}
+% M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \norm{b_h} c_h \cos(\psi^+) } \\
+% \end{align*}
 
 % I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
 
@@ -1376,6 +1483,46 @@ M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \nor
 % \]
 % Hence when $h$ is the index of the second group to enter, we have $\lambda_2 = \lambda_{2,h} = M$.
 
+\section{A note on power}
+\label{app:power}
+
+Although we have shown through simulations in a variety of settings that
+our test has power, here we give a theoretical result in one specific case
+where it is easy to prove something. Namely, consider the case where all
+groups have size 1, and the design matrix is orthonormal. By a
+transformation we can reduce the identity design matrix case
+\[
+y_i = \mu_i + \epsilon_i, \qquad \epsilon_i \sim N(0,1)
+\]
+without loss of generality. In this simple case our p-value can be
+calculated as
+\[
+\frac{\tilde \Phi(\lambda_1)}{\tilde \Phi(\lambda_2)}
+\]
+where $\lambda_1$ and $\lambda_2$ are the first two knots in the LASSO
+solution path and $\tilde \Phi = 1 - \Phi$ is the survival function of
+a standard Gaussian. 
+
+
+The simplest possible alternative hypothesis
+is the 1-sparse case where a single $\mu_i$ is nonzero. Let
+$\mu_1 = r \sqrt{2\log(p)}$ and all other $\mu_i = 0$. If $r$ is some
+constant greater than 1, then with high probability the first
+knot $\lambda_1$ will be achieved by $y_1$. 
+Applying the normal tail bounds
+\[
+\frac{\tilde \Phi(xr)}
+{\tilde\Phi(x)} \leq \frac{\phi(rx)/rx}{(1-1/x^2)\phi(x)/x}
+\]
+with $x = \sqrt{2\log(p)}$ we obtain, by continuity,
+\[
+ \frac{\tilde \Phi(\lambda_1)}{\tilde \Phi(\lambda_2)}
+\lessapprox \frac{p^{1-r^2}}{r\left(1-\frac{1}{2\log(p)}\right)}.
+\]
+For any $r > 1$ the upper bound goes to 0 as $p \to \infty$, so
+in this case the test has asymptotic full power at the same threshold
+as Bonferroni. This is the best possible threshold for asymptotic power
+against the 1-sparse alternative.
 
 \end{document}
 

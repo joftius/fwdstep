@@ -234,7 +234,7 @@ run_simulation = function(
 
         # Comparison with BIC/RIC
         if (type == "default") {
-          if (design == "gaussian") {
+          if (p == G) {
 
             steps = min(floor(n/2), max(groups)-1)
             
@@ -315,9 +315,11 @@ run_simulation = function(
         num.recovered.special = rowSums(special.recover.mat[, 1:k])
         special.fwd.power = mean(num.recovered.special) / length(true.special)
     } else {
-      if (design == "gaussian") {
+      if (p == G) {
         bic.size = median(bic.size)
         bic.tpp = mean(bic.tpp)
+        ric.size = median(ric.size)
+        ric.tpp = mean(ric.tpp)
       }
     }
     fwd.power = mean(num.recovered.groups) / k
@@ -341,7 +343,7 @@ run_simulation = function(
     if (type != "default") {
         outlist$special.fwd.power = special.fwd.power
     } else {
-      if (design == "gaussian") {
+      if (p == G) {
         outlist$bic.list = bic.list
         outlist$bic.tpp = bic.tpp
         outlist$bic.size = bic.size

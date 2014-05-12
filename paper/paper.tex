@@ -693,7 +693,11 @@ and $\eta$ is typically
 $$
 \eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
 $$
-This choice of $\eta$ reflects our goal of calculating a p-value for inclusion of the variable $g^*$ chosen by forward stepwise.
+Note that for each fixed $g$ and $\eta \in \real^g$ with $\|\eta\|_2=1$, the event 
+$$
+\left\{y:\frac{X_g^Ty}{\|X_g^Ty\|_2} = \eta \right\} = \left\{y: \|X_g^Ty\|^2_2 \leq (X_g\eta)^Ty \right\},
+$$
+is defined by another quadratic inequality that can be appended to $I(s)$.
 
 Having fixed $\eta$, we proceed to study this contrast by slicing through the selection event along a ray with direction $\eta$ that passes through $y$. 
 That is, we need to find
@@ -757,6 +761,42 @@ E_+(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y) } \\
 \end{aligned}
 $$
 
+We now present an explicit algorithm for computing this slice in quadratic selection procedures.
+
+\begin{algorithm}
+ \caption{Truncation interval for quadratic decisions}
+ \label{algo:quadratic}
+ \begin{algorithmic}
+   \REQUIRE Response $y$, state $s$ list of quadratic inequalities $\{Q_i, a_i, b_i: i \in I(s)\}$, direction
+   of interest $\eta$ with $\|\eta\|_2=1$.
+   \ENSURE The set $\{t: (y+t \cdot \eta)^TQ_i(y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i  \ \forall i \in I(s) \}$.
+      \STATE Initialize  interval: $M= (-\infty,\infty)$, $U=-\infty, L=\infty$
+    \FOR{$i$ in $I(s)$}
+    \STATE{$a=\eta^TQ_i\eta, b=2y^TQ_i\eta + a_i^T\eta, c=y^TQ_iy + a_i^Ty - b_i$}
+    \IF{$a \neq 0$}
+    \IF{$b^2-4ac > 0$}
+    \STATE Stop: $y$ does not satisfy inequalities!
+    \ELSIF{$a > 0$}
+     \STATE $M \gets M \cap [(-b-\sqrt{b^2-4ac})/2a, (-b+\sqrt{b^2-4ac})/2a]$;
+     \ELSIF{$a < 0$}
+     \STATE $L \gets \min(L,(-b-\sqrt{b^2-4ac})/2a)$,
+     \STATE $U \gets \max(U,(-b+\sqrt{b^2-4ac})/2a).$;
+    \ENDIF
+    \ELSE
+    \IF{$b > 0$}
+   \STATE $M \gets M \cap (-\infty, -c/b]$;
+   \ELSIF{$b < 0$}
+   \STATE $M \gets M \cap [-c/b,\infty)$;
+   \ELSIF{$c > 0$}
+   \STATE Stop: $y$ does not satisfy inequalities!
+   \ENDIF
+   \ENDIF
+   \ENDFOR
+   \RETURN $(M \cap (L,U)^c) + \eta^Ty.$
+ \end{algorithmic}
+\end{algorithm}
+
+
 In turn, this allows to derive a test statistic to test the hypothesis
 $H_{0,s}:X_s^T\mu=0$ conditional on $s$ being selected.
 \begin{lemma}
@@ -791,12 +831,19 @@ $$
 Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{k(s)}$. Finally, observe that 
 the scale of the $\chi$ above is given by $\theta_s$. \qed
 
-Lemma \ref{eq:test:dbn} gives an explicit characterization of our p-value
-that can also be used to calculate it in practice. An implementation only needs to compute the intersection of all the intervals implied by each quadratic constraint \eqref{eq:quadslice} and then evaluate the $\chi$ distribution truncated to the intersection of these intervals at the observed value.
-For an alternative
-derivation including a detailed algorithm description for the implementation used throughout this paper see Appendix~\ref{app:algo}.
+\subsubsection{The $T\chi$ test statistic}
 
-After adding the first group in forward stepwise and computing its p-value, we orthogonalize the response $y$ and all remaining groups. This imposes some constraints on $y$ that in principle should be used when computing p-values at subsequent steps. For now we ignore these constraints and iterate the global null test, but work on incorporating all the known constraints is ongoing. We believe that the effect of not tracking all constraints is what causes the nominal p-value to be increasingly stochastically larger than uniform further down the forward stepwise path, and only truly uniform at the first step where all remaining variables are noise.
+This leads us to what we call the {\em  $T\chi$ test statistic} which is determined by
+a degrees of freedom parameter $r$ as well as a truncation set
+$M \subset \real$, a scale parameter $\theta$ and an observed value $t$.
+The test statistic is just the survival function of a $\chi_r$ random variable
+truncated to the set $M$ evaluated at our observed 
+norm $\|X_g^Ty\|_2$ (after scaling by the appropriate scale $\theta$).
+\begin{equation}
+\label{eq:tchi}
+T\chi(t, r, \theta,  M) = \frac{\int_{M /\theta \cap [t/\theta,\infty)} F_{\chi_r}(dz)}{\int_{M / \theta} F_{\chi_r}(dz)}.
+\end{equation}
+
 
 %$\sigma \|X_s\eta_s\|_2$.
 
@@ -1380,9 +1427,9 @@ by transforming to trigonometric coordinates and using calculus.
        \ENDIF
      \ENDIF
    \ENDFOR
-   \STATE $v^- \gets \min_h v_h^-$
-   \STATE $v^+ \gets \max_h v_h^+$
-   \RETURN $(v^-, v^+)$
+   \STATE $v_- \gets \max_h v_h^-$
+   \STATE $v_+ \gets \min_h v_h^+$
+   \RETURN $(v_-, v_+)$
  \end{algorithmic}
 \end{algorithm}
 

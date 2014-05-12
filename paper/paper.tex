@@ -688,6 +688,11 @@ and $\eta$ is typically
 $$
 \eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
 $$
+Note that for each fixed $g$ and $\eta \in \real^g$ with $\|\eta\|_2=1$, the event 
+$$
+\left\{y:\frac{X_g^Ty}{\|X_g^Ty\|_2} = \eta \right\} = \left\{y: \|X_g^Ty\|^2_2 \leq (X_g\eta)^Ty \right\},
+$$
+is defined by another quadratic inequality that can be appended to $I(s)$.
 
 Having fixed $\eta$, we proceed to study this contrast by slicing through the selection event along a ray with direction $\eta$ that passes through $y$. 
 That is, we need to find
@@ -724,6 +729,8 @@ two disjoint infinite intervals. The intersection over all $I(s)$ is therefore a
 In the picture \ref{fig:curved}, for every $\eta$, the slice \eqref{eq:slice} is a function
 of $P_{\eta}^{\perp}y$. This amounts to a proof of the following lemma.
 
+
+
 \begin{lemma}
 Suppose $S$ is a selection procedure, i.e. a map $S:\real^n \mapsto {\cal S}$
 such that for each $s \in S$ \eqref{eq:selection} holds 
@@ -748,6 +755,41 @@ E_+(s, \eta_s, P_s^{\perp}y, (P_s - X_s \eta_s(X_s\eta_s)^T)y) } \\
  & \qquad = \left\{y + t \cdot \eta_s: S(y+t \cdot \eta)=s, \frac{X_s^Ty}{\|X_s^Ty\|_2}=\eta_s \right\} \\
 \end{aligned}
 $$
+
+We now present an explicit algorithm for computing this slice in quadratic selection procedures.
+
+\begin{algorithm}
+ \caption{Truncation interval for quadratic decisions}
+ \label{algo:quadratic}
+ \begin{algorithmic}
+   \REQUIRE Response $y$, state $s$ list of quadratic inequalities $\{Q_i, a_i, b_i: i \in I(s)\}$, direction
+   of interest $\eta$ with $\|\eta\|_2=1$.
+   \ENSURE The set $\{t: (y+t \cdot \eta)^TQ_i(y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i  \ \forall i \in I(s) \}$.
+      \STATE Initialize  interval: $M= (-\infty,\infty)$, $U=-\infty, L=\infty$
+    \FOR{$i$ in $I(s)$}
+    \STATE{$a=\eta^TQ_i\eta, b=2y^TQ_i\eta + a_i^T\eta, c=y^TQ_iy + a_i^Ty - b_i$}
+    \IF{$a \neq 0$}
+    \IF{$b^2-4ac > 0$}
+    \STATE Stop: $y$ does not satisfy inequalities!
+    \ELSIF{$a > 0$}
+     \STATE $M \gets M \cap [(-b-\sqrt{b^2-4ac})/2a, (-b+\sqrt{b^2-4ac})/2a]$;
+     \ELSIF{$a < 0$}
+     \STATE $L \gets \min(L,(-b-\sqrt{b^2-4ac})/2a)$,
+     \STATE $U \gets \max(U,(-b+\sqrt{b^2-4ac})/2a).$;
+    \ENDIF
+    \ELSE
+    \IF{$b > 0$}
+   \STATE $M \gets M \cap (-\infty, -c/b]$;
+   \ELSIF{$b < 0$}
+   \STATE $M \gets M \cap [-c/b,\infty)$;
+   \ELSIF{$c > 0$}
+   \STATE Stop: $y$ does not satisfy inequalities!
+   \ENDIF
+   \ENDIF
+   \ENDFOR
+   \RETURN $M \cap (L,U)^c.$
+ \end{algorithmic}
+\end{algorithm}
 
 
 In turn, this allows to derive a test statistic to test the hypothesis
@@ -783,6 +825,21 @@ $$
 $$
 Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{k(s)}$. Finally, observe that 
 the scale of the $\chi$ above is given by $\theta_s$. \qed
+
+\subsubsection{The $T\chi$ test statistic}
+
+This leads us to what we call the {\em  $T\chi$ test statistic} which is determined by
+a degrees of freedom parameter $r$ as well as a truncation set
+$M \subset \real$, a scale parameter $\theta$ and an observed value $t$.
+The test statistic is just the survival function of a $\chi_r$ random variable
+truncated to the set $M$ evaluated at our observed 
+norm $\|X_g^Ty\|_2$ (after scaling by the appropriate scale $\theta$).
+\begin{equation}
+\label{eq:tchi}
+T\chi(t, r, \theta,  M) = \frac{\int_{M /\theta \cap [t/\theta,\infty)} F_{\chi_r}(dz)}{\int_{M / \theta} F_{\chi_r}(dz)}.
+\end{equation}
+
+
 %$\sigma \|X_s\eta_s\|_2$.
 
 %\subsection{Relation to covariance test}
@@ -819,37 +876,17 @@ the scale of the $\chi$ above is given by $\theta_s$. \qed
 
 \subsection{Computation of p-value}
 
-\begin{algorithm}
- \caption{Computing p-value}
- \label{algo:pval}
- \begin{algorithmic}
-   \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
-   \ENSURE Our p-value for the group $g$ entering the model.
-   \STATE Compute $H_g$ and $\sigma^2_g$
-   \IF{$p_g = 1$}
-   \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
-   \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
-   \ELSE
-   \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
-   \STATE $H_g \gets (I - P_g)\Sigma$
-   \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
-   \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
-   \ENDIF
-   \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
-   \STATE \COMMENT{Compute the following two $p$-vectors}
-   \STATE $a \gets X^T(y - \lambda \tilde X_g)$
-   \STATE $b \gets X^T \tilde X_g$
-   \STATE Compute solution $(v_-, v_+)$ of \textsc{LinearFractional}(a,b) optimization subproblem
-   \STATE $r \gets \text{rank}(X_g)$
-   \STATE $u \gets [F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(\lambda^2/\sigma_g^2)]/[F_{\chi^2_r}(v^2_-/\sigma_g^2) - F_{\chi^2_r}(v^2_+/\sigma_g^2)]$
-   \RETURN $u$
- \end{algorithmic}
-\end{algorithm}
+Lemma \ref{eq:test:dbn} and Algorithm \ref{algo:quadratic} give an explicit characterization of our p-value
+that can also be used to calculate it in practice. It can also be applied to different
+quadratic selection procedures besides the variant of forward
+stepwise we consider here. For our purposes,
+this truncation interval 
+section was derived as a special case of the
+Kac-Rice test  defined in \cite{tests:adaptive} applied to the first step of the group LASSO path.
 
-Lemma \ref{eq:test:dbn} gives an explicit characterization of our p-value
-that can also be used to calculate it in practice. However, in this
-section we describe an alternative derivation following the discussion of
-group LASSO in \cite{tests:adaptive}. The implementation described here
+
+
+The implementation described in Algorithm \ref{algo:pval}
 was used in all simulations.
 For the rest of this section let $g = \gstar$ be the index of
 the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
@@ -870,6 +907,33 @@ quantity), then the
 space is trivial and the desired orthogonal projection is the identity.
 Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
 generally has dimension $p_g-1$.
+
+
+\begin{algorithm}
+ \caption{Computing p-value}
+ \label{algo:pval}
+ \begin{algorithmic}
+   \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
+   \ENSURE Our p-value for the group $g$ entering the model.
+   \STATE Compute $H_g$ and $\sigma^2_g$
+   \IF{$p_g = 1$}
+   \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
+   \STATE $\tilde X_g \gets X_g / w_g \cdot \text{sign}(X_g^Ty)$
+   \ELSE
+   \STATE $P_g \gets \Sigma XV_g (V_g^T X^T \Sigma X V_g)^\dagger V_g^TX^T$
+   \STATE $H_g \gets (I - P_g)\Sigma$
+   \STATE $\sigma^2_g \gets y^TX_gX_g^T H_g X_gX_g^Ty / (w_g^2 \norm{X_g^Ty}_2^2)$
+   \STATE $\tilde X_g \gets H_g X_g X_g^T y /(\norm{X_g^Ty}_2 w_g)$
+   \ENDIF
+   \STATE $\lambda \gets \norm{X_g^Ty}_2/w_g$
+   \STATE \COMMENT{Compute the following two $p$-vectors}
+   \STATE $a \gets X^T(y - \lambda \tilde X_g)$
+   \STATE $b \gets X^T \tilde X_g$
+   \STATE Compute solution $(v_+, v_-)$ of \textsc{LinearFractional}(a,b) optimization subproblem
+   \STATE $r \gets \text{rank}(X_g)$
+   \RETURN $T\chi(\|X_g^Ty\|_2, r, \sigma_g,  (v_-,v_+)).$
+ \end{algorithmic}
+\end{algorithm}
 
 %We proceed by forming the $n \times p_g$ matrix
 %$X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
@@ -1372,9 +1436,9 @@ by transforming to trigonometric coordinates and using calculus.
        \ENDIF
      \ENDIF
    \ENDFOR
-   \STATE $v^- \gets \min_h v_h^-$
-   \STATE $v^+ \gets \max_h v_h^+$
-   \RETURN $(v^-, v^+)$
+   \STATE $v_- \gets \max_h v_h^-$
+   \STATE $v_+ \gets \min_h v_h^+$
+   \RETURN $(v_-, v_+)$
  \end{algorithmic}
 \end{algorithm}
 

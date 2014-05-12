@@ -10,7 +10,7 @@ estimation = FALSE
 n = 100
 groups = sort(rep(1:40, 2))
 
-k = 5
+k = 10
 upper = 4
 lower = 2
 max.steps = 15
@@ -65,6 +65,7 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## dev.off()
 
 groups = sort(c(rep(1:20, 4), rep(21:40, 8)))
+k = 5
 max.steps = 10
 
 output.g = run_simulation(

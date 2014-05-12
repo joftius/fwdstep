@@ -1,5 +1,5 @@
-#type = 'glint'
-type = 'gamsel'
+type = 'glint'
+#type = 'gamsel'
 
 
 source('simulation.R')

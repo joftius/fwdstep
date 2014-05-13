@@ -100,17 +100,23 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 \begin{abstract}
   We apply the methods developed by \cite{significance:lasso} and
   \cite{tests:adaptive} on significance tests for penalized
-  regression to forward stepwise model selection. We introduce a new
-  test statistic for settings with grouped variables, allowing us to
-  handle categorical variables and factor models. This
-  statistic has a truncated $\chi$ distribution under the global null,
-  and we apply it in forward stepwise iteratively on the residual after
+  regression to forward stepwise model selection. A general framework
+  for selection procedures described by quadratic inequalities includes
+  a variant of forward stepwise with grouped variables, allowing us to
+  handle categorical variables and factor models. We provide an algorithm
+  to compute a new statistic with an exact null distribution conditional
+  on the outcome of the model selection procedure. This new
+  statistic, which we denote $T\chi$,
+  has a truncated $\chi$ distribution under the global null.
+  We apply this test in forward stepwise iteratively on the residual after
   each step. The resulting method
   has the computational strengths of stepwise selection and addresses
   the problem of invalid test statistics due to model selection.
   We illustrate the flexibility of this method by applying it to
   several specialized applications of forward stepwise including a
-  hierarchical interactions model and regression with polynomial splines.
+  hierarchical interactions model and a recently described additive model
+  that adaptively chooses between linear and nonlinear effects for
+  each variable. 
 \end{abstract}
 
 %%%
@@ -189,12 +195,13 @@ if observation $i$ has covariates $X_{1,i} = j, X_{9,i} = k$ then
 $X_1$ has three levels with $\beta_1 = (1, .5, -1)$, $X_9$
 has two levels with $\beta_9 = (.5, -.5)$. We generated a random
 categorical design matrix $X$ and created an instance of this example
-with $n = 40$ observations. Running forward stepwise, we calculated
-both our p-value and the usual $\chi^2$ p-value at each step. In
+with $n = 40$ observations. Running forward stepwise for eight steps,
+we calculated both the new $T\chi$ $p$-value and the usual
+$\chi^2$ $p$-value at each step. In
 Table~\ref{tab:example} we see that forward stepwise chooses the
-truly nonzero variables first and both p-values for these are small.
+truly nonzero variables first and both $p$-values for these are small.
 However, once forward stepwise begins adding noise variables, the
-$\chi^2$ p-value remains relatively small, potentially leading to 
+$\chi^2$ $p$-value remains relatively small, potentially leading to 
 incorrect inferences.
 
 
@@ -230,7 +237,7 @@ of individual drug responses to treat HIV.
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/pubmed.pdf}
-\caption{\small \it Forward stepwise enjoys widespread use among
+\caption{\small \em Forward stepwise enjoys widespread use among
 practitioners}
 \label{fig:pubmed}
 \end{center}
@@ -423,7 +430,7 @@ statistics have also been used, so it is natural to consider using
 the new test statistics of \cite{significance:lasso} or
 \cite{tests:adaptive}
 to choose a model. \cite{sequential:fdr} examined some stopping rules
-using the asymptotic p-values of \cite{significance:lasso} and showed
+using the asymptotic $p$-values of \cite{significance:lasso} and showed
 their stopping rules control false discovery rate--the expected
 proportion of noise variables among variables declared significant
 \citep{fdr}. We explore this further in Section~\ref{sec:simulations}.
@@ -450,9 +457,12 @@ Simulations show empirically that forward stepwise can work well even when it is
 \includegraphics[width=0.5\textwidth]{../figs/tpr_default_categorical_nsim100_n100_p400_g200_sizes2-2_k24_lower2_upper4.pdf}}
 \hspace{-15pt}
 \subfigure[Gaussian designs]{
-\label{fig:fsgausscorr}
+\label{fig:fsgauss}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_default_gaussian_nsim200_n100_p200_g200_k25_lower1pt5_upper2.pdf}}
-\caption{\small \it The left panel shows the results of the simulation
+\caption{\small \em
+  For various sparsity levels $k$, the True Positive Proportion of the
+  model selected by forward stepwise at $k$ steps.
+  The left panel shows the results of the simulation
   using a categorical design consisting of 200 binary factors.
   The right panel shows the results with design matrices of Gaussian
   entries. Plotted in green are the TPP (dashed line) and median model
@@ -480,7 +490,7 @@ likely in the range of 10 to 100 times $\gamma$. These simulations are far
 from the stringent conditions required by theory to guarantee perfect
 recovery, but the performance, while not perfect, may still be good
 enough for some purposes. Finally, to serve as a comparison with existing
-commonly used model selection procedures, in Figure~\ref{fig:fwdstepsim}(b)
+commonly used model selection procedures, in Figure~\ref{fig:fsgauss}
 we show in green the TPP and median model sizes for models chosen by
 the \textit{step} function in \textit{R} using the BIC criterion, and
 the same for RIC are plotted in purple.
@@ -492,6 +502,7 @@ the same for RIC are plotted in purple.
 \section{Significance testing with model selection}
 \label{sec:testing}
 
+\subsection{Background}
 In the ordinary least squares setting, a significance test for a
 single variable can be conducted by comparing the drop in residual
 sums of squares (RSS) to a $\chi^2_1$ distribution. Similarly, when
@@ -552,7 +563,7 @@ global null.
 In \cite{tests:adaptive} it is pointed out 
 \begin{equation}
 \label{test:exact}
-\exp\left(- \frac{\lambda_1(\lambda_1-\lambda_2)}{\sigma^2} \right) \approx \frac{1 - \Phi(\lambda_1/\sigma)}{1 - \Phi(\lambda_2 / \sigma)} \overset{D}{=} \text{Unif}(0,1).
+\exp\left(- \frac{\lambda_1(\lambda_1-\lambda_2)}{\sigma^2} \right) \approx \frac{1 - \Phi(\lambda_1/\sigma)}{1 - \Phi(\lambda_2 / \sigma)} \overset{D}{=} \text{Unif}([0,1]).
 \end{equation}
 The right hand side has an exact, finite sample null distribution.
 Further, this new statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
@@ -563,8 +574,8 @@ be interpreted as
 recursively applying $T_1$ to the variables that had not previously been selected by LARS. In forward stepwise with groups of size 1, we recursively apply the right hand side test statistic in the same manner. With larger groups, we use an analogous test statistic to the right hand side of \eqref{test:exact}. The test statistic is presented as an example in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
 
-The \emph{group LASSO estimator}, a generalization of the LASSO,
- is a solution to the following penalized
+The \emph{group LASSO estimator} \citep{grouplasso,bakin:grouplasso},
+a generalization of the LASSO, is a solution to the following penalized
 least-squares convex problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{equation}
@@ -621,7 +632,7 @@ hence it can be expressed as
 where $g^*$ is the group that achieves the maximum and 
 $\eta_{g^*} = X_{g^*}^Ty / \|X_{g^*}^Ty\|_2$ is the unit vector that achieves the norm $\|X_{g^*}^Ty\|_2$. One of the key conceptual points about our
 test is that it conditions on both the maximizer $g^*$ and on the unit
-vector $\eta_{g^*}$. Most of the p-value computations will be done in
+vector $\eta_{g^*}$. Most of the $p$-value computations will be done in
 terms of these quantities.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -640,11 +651,12 @@ terms of these quantities.
 % can be written as a set of affine constraints.
 % \end{figure}
 
-\subsection{Quadratic selection events}
+\subsection{Quadratic framework for derivation of test statistic}
 
-Before giving the full description of the p-value, we turn to another
-previous work and describe how to extend the framework there to the
-setting with groups.
+In this section we derive the new $p$-value and describe how to compute it.
+First we give a brief summary of what follows; readers not interested in the full derivation can skip the rest of this section after they understand the summary. The event $E_g$ that forward stepwise Algorithm~\ref{algo:fs} selects a given group $g$ is equivalent to a set of quadratic inequalities involving $y$ (see \eqref{eq:first:quadratic} below). To derive a statistic related to the group $g$ being included, we choose a direction vector $\eta(g)$ in the relevant direction and study the distribution of $\eta(g)^Ty$ restricted to the event $E_g$. In Figure~\ref{fig:curved} below the event $E_g$ is the shaded region, and the direction $\eta$ determines a slice through this event. Finally, we solve for the amounts $t$ by which $y$ can be translated in the directions $\pm \eta$ and still satisfy the constraints imposed by $E_g$. These are the points where the slice intersects the boundary of $E_g$. Let $M \subset \mathbb R$ be the set of $t$ such that $y + t\cdot\eta \in E_g$. With all of these quantities and a little more work we find that the observed norm $\| X_g^Ty \|_2$ has a $\chi$ distribution truncated to the set $M$, and with a computable scale parameter. Applying the appropriate CDF transform \eqref{eq:tchi} with these quantities yields our $p$-value.
+
+We now give the full derivation of the $p$-value, beginning with a previous work and then extending the framework there to the setting with groups.
 The approach to post-selection inference in \cite{lasso:fixed}
 describes the selection event for the LASSO as a convex polytope
 satisfying a list of affine constraints.
@@ -661,9 +673,10 @@ y \sim N(\mu, \sigma^2 I) \bigl| Ay \leq b.
 \end{equation}
 See \cite{lasso:fixed,exact:lars} for further details on this approach.
 
-With non-trivial groups, however, the event that $g^*(y)$, the first
-group chosen, is equal to some fixed group $g$ is generally not given by
-a set of affine constraints. Rather, considering line 3 of Algorithm~\ref{algo:fs}, we see
+However, with group sizes larger than 1, the event that the first group
+chosen $g^*(y)$ is equal to some fixed group $g$ is no longer given by
+a set of affine constraints. Rather, considering line 3 of
+Algorithm~\ref{algo:fs}, we see
 \begin{equation}
 \label{eq:first:quadratic}
 \begin{aligned}
@@ -675,7 +688,7 @@ Hence, our selection event can be expressed as
 the intersection of a list of quadratic inequalities. This non-affine selection event is stylized in Figure
 \ref{fig:curved}.
 In the rest of this section, we consider an arbitrary selection procedure
-$S$ that returns one of a set of possible outcomes $s \in {\cal S}$ by a set of quadratic inequalities.
+$S$ that returns one of a set of possible outcomes $s \in {\cal S}$ determined by a set of quadratic inequalities.
 That is, for all possible outcomes $s \in {\cal S}$ there is a set of indices
 $I(s)$ such that
 \begin{equation}
@@ -687,13 +700,14 @@ $I(s)$ such that
 The quadratic forms are not assumed non-negative definite, but we can, without loss of generality
 assume they are symmetric.
 As in \cite{lasso:fixed} we will be interested in some randomly chosen contrast
-$\eta(S(y))^T\mu$.
+$\eta(s)^T\mu$.
 In our grouped selection procedure, the selection rule is $S(y)=g^*(y)$
-and $\eta$ is typically 
+and the value of $\eta$ on $\{ g^* = g \}$ is
 $$
-\eta(S(y)) = \eta(g^*(y)) = \frac{X_{g^*(y)}^Ty}{\|X_{g^*(y)}^Ty\|_2}.
+\eta(s) = \eta(g) = \frac{X_{g}^Ty}{\|X_{g}^Ty\|_2}.
 $$
-Note that for each fixed $g$ and $\eta \in \real^g$ with $\|\eta\|_2=1$, the event 
+This choice of $\eta$ reflects our goal of calculating a $p$-value for inclusion of the variable $g^*$ chosen by forward stepwise.
+Note that for each fixed $g$ and any $\eta \in \real^g$ with $\|\eta\|_2=1$, the event 
 $$
 \left\{y:\frac{X_g^Ty}{\|X_g^Ty\|_2} = \eta \right\} = \left\{y: \|X_g^Ty\|^2_2 \leq (X_g\eta)^Ty \right\},
 $$
@@ -713,8 +727,11 @@ $$
 \resizebox{!}{3in}{\input{../figs/curved.pdf_edit_tex}}
 \end{center}
 \caption{ \em
-A generic selection event, given by the intersection of a list
-of quadratic inequalities. Note that the event need not be simply connected.
+A quadratic selection event, given by the intersection of a list
+of quadratic inequalities. The selection event and chosen contrast
+$\eta$ determine a slice through the event with computable limits
+where the boundary of the event is reached.
+Note that the event need not be simply connected.
 }
 \label{fig:curved}
 \end{figure}
@@ -796,22 +813,24 @@ We now present an explicit algorithm for computing this slice in quadratic selec
  \end{algorithmic}
 \end{algorithm}
 
-
-In turn, this allows to derive a test statistic to test the hypothesis
+In turn, this allows us to derive a test statistic to test the hypothesis
 $H_{0,s}:X_s^T\mu=0$ conditional on $s$ being selected.
 \begin{lemma}
 \label{eq:test:dbn}
-Conditional on $H_{0,s} \cap E_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y)$
+For $y \sim N(0, \sigma^2 I)$,
+conditional on the {\em event}
+\[
+H_{0,s} \cap E_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y)
+\]
 we have the following truncated $\chi$ distributional result
 \begin{equation}
 \label{eq:chi:truncated}
 (X_s\eta_s)^Ty \overset{D}{=} \theta_s \chi_{k(s)} | (X_s\eta_s)^TE_+(s, \eta_s, P_s^{\perp}y, (P_s - \eta_s\eta_s^T)y) 
 \end{equation}
-where the scale 
+where the vertical bar $|$ here denotes restriction to an interval, and the scale is given by
 $$
 \theta_s = \sigma \frac{y^TP_sy}{y^TX_sX_s^Ty}.
 $$
-and the vertical bar $|$ here denotes restriction to an interval.
 \end{lemma}
 
 {\bf Proof:}
@@ -831,63 +850,31 @@ $$
 Conditioning on $U$ shows that $R=\|X_s^Ty\|_2|U$ has distribution proportional to a $\chi_{k(s)}$. Finally, observe that 
 the scale of the $\chi$ above is given by $\theta_s$. \qed
 
-\subsubsection{The $T\chi$ test statistic}
+\subsection{The $T\chi$ test statistic}
 
-This leads us to what we call the {\em  $T\chi$ test statistic} which is determined by
-a degrees of freedom parameter $r$ as well as a truncation set
-$M \subset \real$, a scale parameter $\theta$ and an observed value $t$.
-The test statistic is just the survival function of a $\chi_r$ random variable
-truncated to the set $M$ evaluated at our observed 
-norm $\|X_g^Ty\|_2$ (after scaling by the appropriate scale $\theta$).
+With Lemma \ref{eq:test:dbn} and Algorithm \ref{algo:quadratic} we are finally ready to define our test statistic, which we term the {\em truncated $\chi$ test statistic}, denoted $T\chi$. This statistic is determined by a degrees of freedom parameter $r$ as well as a truncation set $M \subset \real$, a scale parameter $\theta$ and an observed value $t$. The test statistic is given by the survival function of a $\chi_r$ random variable truncated to the set $M$ evaluated at our observed norm $\|X_g^Ty\|_2$ (after scaling by the appropriate scale $\theta$).
 \begin{equation}
 \label{eq:tchi}
 T\chi(t, r, \theta,  M) = \frac{\int_{M /\theta \cap [t/\theta,\infty)} F_{\chi_r}(dz)}{\int_{M / \theta} F_{\chi_r}(dz)}.
 \end{equation}
+For simplicity we always use this distributional transform rather than reporting the observed values of $(t,r,\theta,M)$. Hence, $T\chi$ itself is our $p$-value, with
+\[
+T\chi \sim \text{Unif}([0,1])
+\]
+under the global null.
 
+After adding the first group in forward stepwise and computing the $T\chi$ $p$-value, we orthogonalize the response $y$ and all remaining groups with respect to the group just added. This imposes further constraints that in principle should be used when computing $p$-values at subsequent steps. For now we ignore these constraints and iterate the global null test, but work on incorporating all known constraints is ongoing. We believe that the effect of not tracking all constraints is what causes the nominal $p$-value to be increasingly stochastically larger than uniform further down the forward stepwise path (as can be seen in Figure~\ref{fig:pval1}), and only truly uniform at the first step where all remaining variables are noise.
 
-%$\sigma \|X_s\eta_s\|_2$.
-
-%\subsection{Relation to covariance test}
-%
-%Consider the simple case for the first covariate to enter the model.
-%In this case the covariance test statistic is $T = \lambda_1(\lambda_1 - M)$.
-%\todo Does $M = \lambda_2$? Check proof, now that statistic has changed
-%
-%This is Lemma 5 from \cite{significance:lasso}.
-%
-%\begin{itemize}
-%
-%  \item As in LTTT, $T = \lambda_1 (\lambda_1 - M)$ and $M = \lambda_2$
-%  \item Convergence to the limiting Exp(1) distribution is too slow
-%    \[
-%      \frac{P(\chi_k / w_g \geq m + t/m)}{P(\chi_k / w_g \geq m)} \to e^{-t} \text{ as } m \to \infty
-%    \]
-%    (when the group achieving $\lambda_1$ is group $g$ and has rank $k$)
-%  \item The limiting distribution only depends on $T$, but we also observe $M$
-%  \item Let's just try the ratio (conditional $\chi_k$ tail probability) evaluated at $T$ and $M$ (it works better)
-%  \item Going one step further, instead of using the approximation (see LTTT Proof of Lemma 5)
-%    \[
-%      \frac{M + \sqrt{M^2+4t}}{2} \approx M + \frac{t}{M}
-%    \]
-%    we can just use the left hand side
-%  \item For $T = \lambda_1(\lambda_1 - M)$ the left hand side simplifies to $\lambda_1$
-%  \item Now our p-value is
-%    \[
-%      \frac{P(\chi_k / w_g \geq \lambda_1)}{P(\chi_k / w_g \geq \lambda_2)}
-%    \]   
-%\end{itemize}
-%
-%
-
-
+For an alternate derivation that follows more closely \cite{tests:adaptive}, and an algorithm that includes weights and an arbitrary (known) covariance matrix $\Sigma$ see Appendix~\ref{app:algo}.
 
 \section{Simulations}
 \label{sec:simulations}
 
+To study the behavior of the $T\chi$ test after taking steps in the forward stepwise path and to understand its power to detect various departures from the global null we conduct simulations in a wide variety of settings including both $p > n$ and $p < n$ problems.
 We performed simulations with several classes of random design matrices
 including Gaussian and categorical, and with fixed categorical designs
 from the HIV data set of Section~\ref{sec:hiv}. Gaussian
-design matrices are generated either independently or with some global
+design matrices were generated either independently or with some global
 correlation $\rho > 0$ between all pairs of columns. Categorical matrices
 were generated by first choosing a vector of probabilities for a given
 variable from a Dirichlet prior, and then sampling category levels with
@@ -900,11 +887,11 @@ nonzero coefficients on the scale of $\gamma := \sqrt{2 \log(G)/n}$,
 where recall $G$ is the number of groups.
 Coefficients within a
 nonzero group have roughly the same magnitude and are normalized
-so that $\| \beta_g \|_2$ has the same scale independent of $p_g$.
+so that $\| \beta_g \|_2$ has scale $\gamma$ independently of $p_g$.
 The magnitudes for different
 nonzero groups range from a lower limit times $\gamma$ to an upper
 limit times $\gamma$. In text above each plot, the limits are listed
-next to ``beta:'' and the numbers in parentheses are the largest
+next to ``beta'' and the numbers in parentheses are the largest
 and smallest 2-norms of nonzero coefficient groups respectively.
 Each plot also displays the
 number of observations or rows, $n$, the number of columns, $p$, the
@@ -925,10 +912,20 @@ where recall $k$ is the number of truly nonzero groups.
 \subfigure[Gaussian with groups]{
 \label{fig:gaussgroups}
 \includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g35_sizes5-10_k5_lower2_upper3.pdf}}
-\caption{\small \it The left panel shows results for Gaussian design
+\caption{\small \em
+Forward stepwise with $T\chi$ simulation results.
+Dashed line is the local True Positive Rate at each step averaged over
+400 simulation realizations.
+Vertical lines
+are boxplots of $p$-values marginally at each step, with red computed
+using $T\chi$ on a null model, blue using $T\chi$ on a sparse alternative
+model, and green using $\chi^2$ on the same. The shaded region indicates
+the sparsity of the alternative.
+Left panel shows results for Gaussian design
 matrices with equicorrelation $\rho=0.2$ and equicorrelated noise with
-correlation 0.1. The right panel shows results for an independent
+correlation 0.1. Right panel shows results for an independent
 Gaussian design with groups of sizes 5 and 10.}
+\label{fig:pval1}
 \end{center}
 \end{figure}
 
@@ -938,13 +935,13 @@ a fixed sparsity level and contain the following information. The
 horizontal axis is the step index for forward stepwise. The dashed
 line shows the proportion of iterations where a truly nonzero variable
 was added to the model at that step. Solid verticle lines are essentially
-narrow boxplots, showing the middle 50\% of p-values calculated at that
+narrow boxplots, showing the middle 50\% of $p$-values calculated at that
 step with circular points in these lines as the average and triangles
 showing the 95\% and 5\% quantiles. Different color verticle lines
-represent the following: red are calculated using our p-value on a null
-model with no nonzero groups, blue are calculated on the non-null
-model, and green calculated on the non-null model using the usual
-$\chi^2$ significance test.
+represent the following: red are calculated using the $T\chi$ $p$-value
+on a null model with no nonzero groups, blue are calculated using the
+$T\chi$ $p$-value on the non-null model, and green calculated on the
+non-null model using the usual $\chi^2$ significance test.
 
 \begin{figure}[h]
 \begin{center}
@@ -955,9 +952,12 @@ $\chi^2$ significance test.
 \subfigure[Simulated categorical design]{
 \label{fig:gausscat}
 \includegraphics[width=0.5\textwidth]{../figs/default_categorical_nsim500_n100_p80_g40_sizes2-2_k10_lower2_upper4.pdf}}
-\caption{\small \it The left panel shows results for a categorical design
+\caption{\small \em
+As in Figure \ref{fig:pval1}.
+The left panel shows results for a categorical design
 taken from a real data set.
-The right panel shows results for categorical matrices with all categories having 5 levels.}
+The right panel shows results for categorical matrices with all categories having 5 levels. The null cases being larger than uniform are likely the result of numerical error as these problems are poorly conditioned.
+}
 \end{center}
 \end{figure}
 
@@ -965,14 +965,14 @@ The performance of forward stepwise in these plots is characterized by how
 close the dashed line is to a step function. If forward stepwise finds all
 truly nonzero variables first this line will be close to 1 until the step
 index reaches $k$ and then it will be close to 0. When this is the case,
-our p-value tends to be small while forward stepwise is selecting truly
+the $T\chi$ $p$-value tends to be small while forward stepwise is selecting truly
 nonzero variables, uniform on the step where the dashed line goes to 0,
 and then progressively larger afterward. A reasonable stopping rule based
 on this behavior is to pick the model including all variables up to and
-including the last one with a significant p-value. We call this the
+including the last one with a significant $p$-value. We call this the
 \textit{last} stopping rule, and it selects the first $\hat k_\textit{last}$
 variables in the forward stepwise path where, if
-$p_j$ denotes our p-value calculated at the $j$-th step, then
+$p_j$ denotes the $T\chi$ $p$-value calculated at the $j$-th step, then
 \begin{equation}
   \label{eq:klast}
   \begin{aligned}
@@ -982,7 +982,7 @@ $p_j$ denotes our p-value calculated at the $j$-th step, then
 To test this stopping rule we compare it with several others which we now
 describe. The \textit{oracle} stopping rule assumes knowledge of the
 sparsity $k$ and always picks the first $k$ variables. The \textit{first}
-rule stops immediately before the first variable to yield a p-value
+rule stops immediately before the first variable to yield a $p$-value
 larger than $\alpha$, and since this requires rejection of the global 
 null in order to include the first variable
 it controls the family-wise error rate. However it does not seem to have
@@ -1021,7 +1021,7 @@ example.
 \label{fig:spline:fwd}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim100_n100_p200_g200_k18_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[P-value with spline groups]{
+\subfigure[$p$-value with spline groups]{
 \label{fig:spline:pval}
 \includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim200_n200_p50_g50_k6_k02_lower5_upper10.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
@@ -1029,10 +1029,10 @@ in this setting for various sparsity levels, with the dashed line
 showing a liberal definition of power that allows mistakes when
 choosing between a non-zero spline group and its corresponding linear
 term.
-The right panel shows our p-value marginally
+The right panel shows the $T\chi$ $p$-value marginally
 over each step, with red indicating the global null case, blue
 indicating a signal with $k=6$ nonzero groups, and green showing
-the nominal $\chi^2$ p-values also computed on the non-null case.}
+the nominal $\chi^2$ $p$-values also computed on the non-null case.}
 \label{fig:spline}
 \end{center}
 \end{figure}
@@ -1047,7 +1047,7 @@ First we consider a simple extension of the usual linear regression setting. Giv
 with $\tilde G = 2G$ groups. For simplicity we assume the original groups are all size 1, and use the B-spline basis. In our simulations we generate original covariates uniformly in the interval [-1,1] and use cubic splines with boundary knots
 \begin{equation}
   \begin{aligned}
-    X_g &\sim \text{Unif}[-1,1], \quad
+    X_g &\sim \text{Unif}([-1,1]), \quad
     X_g^s = \text{CubicSplineBasis}(X_g).
   \end{aligned}
 \end{equation}
@@ -1155,17 +1155,17 @@ after the $k$-TPP (top right).
 \label{fig:glint:fwd}
 \includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim100_n100_p72_g36_sizes2-2_k15_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[P-value with \textsc{glinternet}]{
+\subfigure[$p$-value with \textsc{glinternet}]{
 \label{fig:glint:pval}
 \includegraphics[width=0.5\textwidth]{../figs/glint_gaussian_nsim200_n100_p30_g30_k6_k02_lower5_upper10.pdf}}
 \caption{\small \it The left panel shows the power of forward stepwise
 on the \textsc{glinternet} problem
 for various sparsity levels. The dashed line shows a more forgiving
 definition of power described in the section.
-The right panel shows our p-value marginally
+The right panel shows the $T\chi$ $p$-value marginally
 over each step, with red indicating the global null case, blue
 indicating a signal with $k=6$ nonzero groups, and green showing
-the nominal $\chi^2$ p-values.}
+the nominal $\chi^2$ $p$-values.}
 \label{fig:glint}
 \end{center}
 \end{figure}
@@ -1179,7 +1179,7 @@ the nominal $\chi^2$ p-values.}
 drugs in treating HIV. Quantitative measurements of drug
 response/resistance were regressed on categorical covariates encoding
 the presence and type of certain genetic mutations. We attempt a similar
-analysis using forward stepwise, and report our P-value at each step.
+analysis using forward stepwise, and report the $T\chi$ $p$-value at each step.
 Categorical covariates are encoded as groups of dummy variables using
 the full encoding, and weights are set to the square-root of the
 number of levels for that covariate. We perform forward stepwise once
@@ -1207,7 +1207,7 @@ Figure~\ref{fig:HIVNRTI}. The PI data contains protease inhibitor
 resistance mutations, and the NRTI data contains nucleoside RT inhibitor
 resistance mutations.
 Each panel shows results for a different drug,
-with p-values plotted by step in forward stepwise. 
+with $p$-values plotted by step in forward stepwise. 
 The \textit{last} stopping rule \eqref{eq:klast} is applied and the region of the plot
 corresponding to the chosen model is unshaded, with the remainder shaded.
 The chosen variables are shown in Tables~\ref{tab:hivPI} and
@@ -1262,19 +1262,19 @@ setting. However, by orthogonalizing both the response and the remaining
 predictors with respect to the included variable, it is reasonable to
 iterate the global null test. While not fully theoretically justified,
 this method seems to work well in all our simulations. By this we mean that
-the p-value tends to be small on the step when including the last truly
+the $T\chi$ $p$-value tends to be small on the step when including the last truly
 nonzero predictor, uniform on the following step, and subsequently
-stochastically larger than uniform. This is in contrast to p-values
+stochastically larger than uniform. This is in contrast to $p$-values
 calculated from traditional variable-inclusion tests like the $\chi^2$
 test, which tend to be smaller than uniform long after the last truly
 nonzero predictor has been included.
 
 When adding the next variable in forward stepwise, our hypothesis test
 roughly depends on the improvement gained by this variable compared to
-the next best variable. Thus, the p-value is small when there is a large
+the next best variable. Thus, the $T\chi$ $p$-value is small when there is a large
 gap between the variable to be included and all the remaining variables.
 If multiple predictors have truly nonzero coefficients that are close
-in magnitude, the p-value may be large until forward stepwise reaches
+in magnitude, the $p$-value may be large until forward stepwise reaches
 the last one. This motivated us to consider the \textit{last} stopping
 rule for model selection \eqref{eq:klast}. In simulations we
 found this stopping rule to have good performance in terms of power
@@ -1284,9 +1284,9 @@ unless the truly nonzero coefficients are large enough to guarantee
 forward stepwise picks the corresponding variables before picking too
 many noise variables.
 
-The present work calculates p-values at each step ignoring the constraints
+The present work calculates $p$-values at each step ignoring the constraints
 imposed by previous steps. Future work adjusting for all previous steps
-is in progress, and may be able to give exact p-values at a step chosen
+is in progress, and may be able to give exact $p$-values at a step chosen
 stochastically by procedures like BIC and RIC. The authors will
 release an R package implementing these methods.
 
@@ -1300,15 +1300,15 @@ release an R package implementing these methods.
 \newpage
 
 \appendix
-\section{P-value algorithm}
+\section{Alternate derivation and algorithm for $T\chi$ test}
 \label{app:algo}
 
 \begin{algorithm}
- \caption{Computing p-value}
+ \caption{Computing the $T\chi$ $p$-value}
  \label{algo:pval}
  \begin{algorithmic}
    \REQUIRE Response $y$, grouped design matrix $X$ with weights, inactive set $A^c$, index $g$ of last group to enter active set $A$.
-   \ENSURE Our p-value for the group $g$ entering the model.
+   \ENSURE $T\chi$ $p$-value for the group $g$ entering the model.
    \STATE Compute $H_g$ and $\sigma^2_g$
    \IF{$p_g = 1$}
    \STATE $\sigma_g^2 \gets X_g^T\Sigma X_g/w_g^2$
@@ -1433,8 +1433,6 @@ by transforming to trigonometric coordinates and using calculus.
  \end{algorithmic}
 \end{algorithm}
 
-
-
 % \todo Clean this section \\
 % \todo Make $M=\lambda_2$ a special case corollary \\
 
@@ -1545,12 +1543,12 @@ Although we have shown through simulations in a variety of settings that
 our test has power, here we give a theoretical result in one specific case
 where it is easy to prove something. Namely, consider the case where all
 groups have size 1, and the design matrix is orthonormal. By a
-transformation we can reduce the identity design matrix case
+transformation we can reduce to the identity design case where $n=p$,
+$X=I$, so
 \[
-y_i = \mu_i + \epsilon_i, \qquad \epsilon_i \sim N(0,1)
+y_i = \mu_i + \epsilon_i, \qquad \epsilon_i \sim N(0,1).
 \]
-without loss of generality. In this simple case our p-value can be
-calculated as
+In this simple case the $T\chi$ $p$-value can be calculated as
 \[
 \frac{\tilde \Phi(\lambda_1)}{\tilde \Phi(\lambda_2)}
 \]

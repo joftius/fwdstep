@@ -30,6 +30,7 @@
 \usepackage{algorithmic,amssymb}
 \usepackage{graphicx,xcolor}
 \usepackage{subfigure}
+%\usepackage{placeins}
 %\usepackage[boxed]{algorithm2e}
 
 
@@ -68,9 +69,6 @@
 \newcommand{\vecsp}{\mathcal{L}}
 \newcommand{\gstar}{g^*}
 
-\newcommand{\jonathan}[1]{{\color{blue}  #1}}
-\newcommand{\josh}[1]{{\color{green} #1}}
-
 \begin{document}
 
 \begin{frontmatter}
@@ -83,9 +81,9 @@
 %%%
 
 % indicate corresponding author with \corref{}
-%\author{\fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}
-%\and \fnms{Joshua} \snm{Loftus}}
-%\thankstext{t1}{Supported in part by NSF grant DMS 1208857 and AFOSR grant 113039.}
+\author{\fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}
+\and \fnms{Joshua} \snm{Loftus}}
+\thankstext{t1}{Supported in part by NSF grant DMS 1208857 and AFOSR grant 113039.}
 
 \affiliation{Stanford University}
 
@@ -117,6 +115,11 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
   hierarchical interactions model and a recently described additive model
   that adaptively chooses between linear and nonlinear effects for
   each variable. 
+\end{abstract}
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+The authors would like to thank Robert Tibshirani and Trevor Hastie for many helpful comments.
 \end{abstract}
 
 %%%
@@ -183,7 +186,7 @@ be more statistically efficient than validation on held-out data, and
 more computationally efficient than penalized methods with
 regularization parameters chosen by cross-validation.
 
-As a small illustrative example of what we gain from this method,
+As an illustrative example of what we gain from this method,
 consider a response $Y$ with ten
 categorical predictors $X_g$ having between 2 and 4 levels. The true 
 relationship is that $Y$ only depends on $X_1$ and $X_9$. Specifically,
@@ -196,16 +199,26 @@ $X_1$ has three levels with $\beta_1 = (1, .5, -1)$, $X_9$
 has two levels with $\beta_9 = (.5, -.5)$. We generated a random
 categorical design matrix $X$ and created an instance of this example
 with $n = 40$ observations. Running forward stepwise for eight steps,
-we calculated both the new $T\chi$ $p$-value and the usual
-$\chi^2$ $p$-value at each step. In
-Table~\ref{tab:example} we see that forward stepwise chooses the
-truly nonzero variables first and both $p$-values for these are small.
-However, once forward stepwise begins adding noise variables, the
-$\chi^2$ $p$-value remains relatively small, potentially leading to 
-incorrect inferences.
-
+we calculated the new $T\chi$ $p$-value, the usual
+$\chi^2$ $p$-value based on drop in RSS at each step,
+and an estimate of an exact $p$-value based on comparing the norm
+achieved by the variable being added to the model, $\| X_{g^*}^T y \|_2$,
+to quantiles of the Monte Carlo sample
+\[
+\max_{g \in A^c} \| X_g^T z_m \|_2, \quad z_m \sim N(0, I) \quad \text{for } m = 1,\ldots,M
+\]
+with $A^c$ being the set of variables not yet included
+(updated \textit{after} computing this estimate, so that $g^* \in A^c$).
 
 \input{../tables/small.tex}
+
+In Table~\ref{tab:example} we see that forward stepwise chooses the
+truly nonzero variables first and both $p$-values for these are small.
+However, once forward stepwise begins adding noise variables, the
+$\chi^2$ $p$-value remains small, potentially leading to 
+incorrect inferences. The $T\chi$ and MC-estimated exact $p$-values
+do not suffer from this selection effect.
+%However, the MC-estimate takes substantially more computational time to evaluate than the $T\chi$ statistic.
 
 In the next section we establish general notation and describe the
 forward stepwise algorithm used throughout the paper.
@@ -223,7 +236,7 @@ Section~\ref{sec:applications} we apply
 the method to several variants of forward
 stepwise tailored to models with interactions and generalized additive
 models, as well as to a real data example involving genomic prediction
-of individual drug responses to treat HIV.
+of individual drug responses and resistances for various mutations of HIV.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -237,8 +250,7 @@ of individual drug responses to treat HIV.
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.9\textwidth]{../figs/pubmed.pdf}
-\caption{\small \em Forward stepwise enjoys widespread use among
-practitioners}
+\caption{\small \em PubMed search results show continued widespread usage of forward stepwise}
 \label{fig:pubmed}
 \end{center}
 \end{figure}
@@ -454,11 +466,11 @@ Simulations show empirically that forward stepwise can work well even when it is
 \begin{center}
 \subfigure[Categorical designs]{
 \label{fig:fscat}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_default_categorical_nsim100_n100_p400_g200_sizes2-2_k24_lower2_upper4.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/tpr_default_categorical_nsim100_n100_p400_g200_sizes2-2_k24_lower2_upper4.pdf}}
 \hspace{-15pt}
 \subfigure[Gaussian designs]{
 \label{fig:fsgauss}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_default_gaussian_nsim200_n100_p200_g200_k25_lower1pt5_upper2.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/tpr_default_gaussian_nsim200_n100_p200_g200_k25_lower1pt5_upper2.pdf}}
 \caption{\small \em
   For various sparsity levels $k$, the True Positive Proportion of the
   model selected by forward stepwise at $k$ steps.
@@ -651,7 +663,7 @@ terms of these quantities.
 % can be written as a set of affine constraints.
 % \end{figure}
 
-\subsection{Quadratic framework for derivation of test statistic}
+\subsection{Quadratic framework and derivation of test statistic}
 
 In this section we derive the new $p$-value and describe how to compute it.
 First we give a brief summary of what follows; readers not interested in the full derivation can skip the rest of this section after they understand the summary. The event $E_g$ that forward stepwise Algorithm~\ref{algo:fs} selects a given group $g$ is equivalent to a set of quadratic inequalities involving $y$ (see \eqref{eq:first:quadratic} below). To derive a statistic related to the group $g$ being included, we choose a direction vector $\eta(g)$ in the relevant direction and study the distribution of $\eta(g)^Ty$ restricted to the event $E_g$. In Figure~\ref{fig:curved} below the event $E_g$ is the shaded region, and the direction $\eta$ determines a slice through this event. Finally, we solve for the amounts $t$ by which $y$ can be translated in the directions $\pm \eta$ and still satisfy the constraints imposed by $E_g$. These are the points where the slice intersects the boundary of $E_g$. Let $M \subset \mathbb R$ be the set of $t$ such that $y + t\cdot\eta \in E_g$. With all of these quantities and a little more work we find that the observed norm $\| X_g^Ty \|_2$ has a $\chi$ distribution truncated to the set $M$, and with a computable scale parameter. Applying the appropriate CDF transform \eqref{eq:tchi} with these quantities yields our $p$-value.
@@ -722,7 +734,7 @@ $$
  & \qquad = \cap_{i \in I(s)} \left\{t \in \mathbb R : (y+t \cdot \eta)^T Q_i (y+t \cdot \eta) + a_i^T(y+t \cdot \eta) \leq b_i\right\}. \\
 \end{aligned}
 $$
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
 \resizebox{!}{3in}{\input{../figs/curved.pdf_edit_tex}}
 \end{center}
@@ -903,15 +915,15 @@ The proportion of truly
 nonzero groups recovered in the first $k$ steps is denoted $k$-TPP,
 where recall $k$ is the number of truly nonzero groups. 
 
-\begin{figure}[h]
+\begin{figure}[!htp]
 \begin{center}
 \subfigure[Gaussian with correlations]{
 \label{fig:gausscorr}
-\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g200_k10_lower1pt5_upper2_corr0pt2_noisecorr0pt1.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g200_k10_lower1pt5_upper2_corr0pt2_noisecorr0pt1.pdf}}
 \hspace{-15pt}
 \subfigure[Gaussian with groups]{
 \label{fig:gaussgroups}
-\includegraphics[width=0.5\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g35_sizes5-10_k5_lower2_upper3.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/default_gaussian_nsim400_n100_p200_g35_sizes5-10_k5_lower2_upper3.pdf}}
 \caption{\small \em
 Forward stepwise with $T\chi$ simulation results.
 Dashed line is the local True Positive Rate at each step averaged over
@@ -943,15 +955,15 @@ on a null model with no nonzero groups, blue are calculated using the
 $T\chi$ $p$-value on the non-null model, and green calculated on the
 non-null model using the usual $\chi^2$ significance test.
 
-\begin{figure}[h]
+\begin{figure}[!htp]
 \begin{center}
 \subfigure[Real data categorical design]{
 \label{fig:hivnrti}
-\includegraphics[width=0.5\textwidth]{../figs/default_fixed_nsim400_n848_p537_g82_sizes2-24_k5_lower4_upper8.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/default_fixed_nsim400_n848_p537_g82_sizes2-24_k5_lower4_upper8.pdf}}
 \hspace{-15pt}
 \subfigure[Simulated categorical design]{
 \label{fig:gausscat}
-\includegraphics[width=0.5\textwidth]{../figs/default_categorical_nsim500_n100_p80_g40_sizes2-2_k10_lower2_upper4.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/default_categorical_nsim500_n100_p80_g40_sizes2-2_k10_lower2_upper4.pdf}}
 \caption{\small \em
 As in Figure \ref{fig:pval1}.
 The left panel shows results for a categorical design
@@ -1015,21 +1027,21 @@ example.
 
 \subsection{Nonlinear regression with splines}
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\subfigure[Power of forward stepwise with splines]{
+\subfigure[Power of forward stepwise with spline groups]{
 \label{fig:spline:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_gamsel_uniform_nsim100_n100_p200_g200_k18_k01_lower5_upper10.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/tpr_gamsel_uniform_nsim100_n100_p200_g200_k18_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[$p$-value with spline groups]{
+\subfigure[$T\chi$ $p$-values with spline groups]{
 \label{fig:spline:pval}
-\includegraphics[width=0.5\textwidth]{../figs/gamsel_uniform_nsim200_n200_p50_g50_k6_k02_lower5_upper10.pdf}}
-\caption{\small \it The left panel shows the power of forward stepwise
+\includegraphics[width=0.6\textwidth]{../figs/gamsel_uniform_nsim200_n200_p50_g50_k6_k02_lower5_upper10.pdf}}
+\caption{\small \it The first panel shows the power of forward stepwise
 in this setting for various sparsity levels, with the dashed line
 showing a liberal definition of power that allows mistakes when
 choosing between a non-zero spline group and its corresponding linear
 term.
-The right panel shows the $T\chi$ $p$-value marginally
+The second panel shows the $T\chi$ $p$-value marginally
 over each step, with red indicating the global null case, blue
 indicating a signal with $k=6$ nonzero groups, and green showing
 the nominal $\chi^2$ $p$-values also computed on the non-null case.}
@@ -1037,21 +1049,22 @@ the nominal $\chi^2$ $p$-values also computed on the non-null case.}
 \end{center}
 \end{figure}
 
-First we consider a simple extension of the usual linear regression setting. Given a design matrix $X$, we can augment this by adding additional columns given by nonlinear functions of the original covariates. Specifically, for each original covariate $X_g$ we compute a submatrix of spline basis vectors $X_g^s$. Adding these groups of spline basis vectors to the original design matrix yields a new design matrix
+First we consider a simple extension of the usual linear regression setting to include nonlinear effects. Given a design matrix $X$, we augment this by adding additional columns given by nonlinear functions of the original covariates. Specifically, for each original covariate $X_g$ we compute a submatrix of spline basis vectors $X_g^s$. Adding these groups of spline basis vectors to the original design matrix yields a new design matrix
 \begin{equation}
 \label{eq:splinemat}
   \begin{aligned}
     \tilde X &=  \begin{pmatrix} X_1 & \cdots & X_G & X^s_1 & \cdots & X^s_G  \end{pmatrix}\\
   \end{aligned}
 \end{equation}
-with $\tilde G = 2G$ groups. For simplicity we assume the original groups are all size 1, and use the B-spline basis. In our simulations we generate original covariates uniformly in the interval [-1,1] and use cubic splines with boundary knots
+with $\tilde G = 2G$ groups. Thus, at each step the procedure chooses between including a linear effect for each covariate or including a full spline basis if the true relationship is nonlinear.
+For simplicity we assume the original groups are all size 1, and use the B-spline basis. In our simulations we generate original covariates uniformly in the interval [-1,1] and use cubic splines with boundary knots
 \begin{equation}
   \begin{aligned}
     X_g &\sim \text{Unif}([-1,1]), \quad
     X_g^s = \text{CubicSplineBasis}(X_g).
   \end{aligned}
 \end{equation}
-Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline}(b) the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-TPP (top right).
+Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline:pval} the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-TPP (top right).
 
 
 \subsection{Glinternet for hierarchical interactions}
@@ -1082,7 +1095,8 @@ $\tilde G = G + \binom{G}{2} = O(G^2)$ groups. We refer to the first
 $G$ of these as main effect groups and the remaining
 as interaction groups. Finally, instead of fitting a
 model by group LASSO, we use forward stepwise on the expanded design
-matrix. The overlapping groups still guarantee that our fitted model
+matrix and call the resulting procedure FS-\textsc{glinternet}.
+The overlapping groups still guarantee that our fitted model
 satisfies the strong hierarchy condition. 
 
 %However, we must first modify our implementation of forward stepwise to prevent the possibility of including main effect groups after the main effects are already included in the model as part of an interaction group. To do this we compute the residual using the whole model in each step, rather than by subtracting the effect of the current group being included. For a set of group indices $A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the design matrix containing all the groups in $A$.
@@ -1149,20 +1163,20 @@ true interaction group. The proportion of nonzero interaction groups
 that were discovered in the first $k$-steps is shown in parentheses
 after the $k$-TPP (top right).
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\subfigure[Power of forward stepwise with interactions]{
+\subfigure[Power of FS-\textsc{glinternet} procedure]{
 \label{fig:glint:fwd}
-\includegraphics[width=0.5\textwidth]{../figs/tpr_glint_categorical_nsim100_n100_p72_g36_sizes2-2_k15_k01_lower5_upper10.pdf}}
+\includegraphics[width=0.6\textwidth]{../figs/tpr_glint_categorical_nsim100_n100_p72_g36_sizes2-2_k15_k01_lower5_upper10.pdf}}
 \hspace{-15pt}
-\subfigure[$p$-value with \textsc{glinternet}]{
+\subfigure[$T\chi$ $p$-values with FS-\textsc{glinternet}]{
 \label{fig:glint:pval}
-\includegraphics[width=0.5\textwidth]{../figs/glint_gaussian_nsim200_n100_p30_g30_k6_k02_lower5_upper10.pdf}}
-\caption{\small \it The left panel shows the power of forward stepwise
+\includegraphics[width=0.6\textwidth]{../figs/glint_gaussian_nsim200_n100_p30_g30_k6_k02_lower5_upper10.pdf}}
+\caption{\small \it The first panel shows the power of forward stepwise
 on the \textsc{glinternet} problem
 for various sparsity levels. The dashed line shows a more forgiving
 definition of power described in the section.
-The right panel shows the $T\chi$ $p$-value marginally
+The second panel shows the $T\chi$ $p$-value marginally
 over each step, with red indicating the global null case, blue
 indicating a signal with $k=6$ nonzero groups, and green showing
 the nominal $\chi^2$ $p$-values.}
@@ -1171,32 +1185,32 @@ the nominal $\chi^2$ $p$-values.}
 \end{figure}
 
 
-
 \subsection{HIVdb data example}
 \label{sec:hiv}
 
 \cite{HIV} use genomic information to predict efficacy of antiretroviral
 drugs in treating HIV. Quantitative measurements of drug
 response/resistance were regressed on categorical covariates encoding
-the presence and type of certain genetic mutations. We attempt a similar
+the presence and type of genetic mutations in certain regions of the HIV
+genome. We attempt a similar
 analysis using forward stepwise, and report the $T\chi$ $p$-value at each step.
 Categorical covariates are encoded as groups of dummy variables using
-the full encoding, and weights are set to the square-root of the
-number of levels for that covariate. We perform forward stepwise once
+the full encoding, and these groups are normalized by their Frobenius
+norm. We perform forward stepwise once
 for each drug response, restricting to the subset of the data with
 no missing values.
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{../figs/HIV_PI.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_PI.pdf}
 \caption{\small \it Forward stepwise results from PI dataset}
 \label{fig:HIVPI}
 \end{center}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI.pdf}
 \caption{\small \it Forward stepwise results from NRTI dataset}
 \label{fig:HIVNRTI}
 \end{center}
@@ -1204,13 +1218,12 @@ no missing values.
 
 Results from two data sets are displayed in Figure~\ref{fig:HIVPI} and
 Figure~\ref{fig:HIVNRTI}. The PI data contains protease inhibitor
-resistance mutations, and the NRTI data contains nucleoside RT inhibitor
-resistance mutations.
+mutations, and the NRTI data contains nucleoside RT inhibitor mutations.
 Each panel shows results for a different drug,
 with $p$-values plotted by step in forward stepwise. 
 The \textit{last} stopping rule \eqref{eq:klast} is applied and the region of the plot
 corresponding to the chosen model is unshaded, with the remainder shaded.
-The chosen variables are shown in Tables~\ref{tab:hivPI} and
+The first several chosen variables are shown in Tables~\ref{tab:hivPI} and
 \ref{tab:hivNRTI}.
 
 %\begin{figure}
@@ -1229,22 +1242,21 @@ The chosen variables are shown in Tables~\ref{tab:hivPI} and
 
 We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions. Results from this are shown in Figures~\ref{fig:HIVPI:glint} and \ref{fig:HIVNRTI:glint} and Tables~\ref{tab:glintPI} and \ref{tab:glintNRTI}.
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{../figs/HIV_PI_glint.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_PI_glint.pdf}
 \caption{\small \it \textsc{Glinternet} results from PI dataset}
 \label{fig:HIVPI:glint}
 \end{center}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{../figs/HIV_NRTI_glint.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI_glint.pdf}
 \caption{\small \it \textsc{Glinternet} results from NRTI dataset}
 \label{fig:HIVNRTI:glint}
 \end{center}
 \end{figure}
-
 
 \input{../tables/HIV_PI_glint.tex}
 
@@ -1291,13 +1303,9 @@ stochastically by procedures like BIC and RIC. The authors will
 release an R package implementing these methods.
 
 
-\newpage
-
 \bibliographystyle{ims}
 %\bibliographystyle{acmtrans-ims}
 \bibliography{paper}
-
-\newpage
 
 \appendix
 \section{Alternate derivation and algorithm for $T\chi$ test}
@@ -1576,6 +1584,15 @@ For any $r > 1$ the upper bound goes to 0 as $p \to \infty$, so
 in this case the test has asymptotic full power at the same threshold
 as Bonferroni. This is the best possible threshold for asymptotic power
 against the 1-sparse alternative.
+
+\section{A note on parallel computation}
+\label{app:computation}
+
+One strength of forward stepwise is that it can be computed in parallel, hence can handle situations with many groups of predictor variables. We now describe, at very a high level, how to accomplish this. Suppose $m > 1$ machines are available for use. Partition the set of predictor variable groups, along with their respective weights, into $m$ disjoint blocks and store each block on its own machine. Now at each step of Algorithm~\ref{algo:fs}, the residual $r_{s-1}$ is broadcast to all machines, and each machine computes $\| X_g^T r_{s-1} \|_2/w_g$ for all the groups $g$ stored on that machine. Each machine reports its own maximum and maximizer $g^*$, and the global maximizer is found. The projector matrix $P_{g^*}$ is computed and broadcast to all machines which in turn use it to project all their predictors.
+
+We can also verify that Algorithms \ref{algo:pval} and \ref{algo:linfrac} only require block matrix operations with blocks given by individual groups
+or subproblems computable separately for each group. Hence, the $T\chi$ $p$-value can also be computed in parallel this way.
+
 
 \end{document}
 

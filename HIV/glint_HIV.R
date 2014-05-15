@@ -1,5 +1,5 @@
-#db = "PI"
-db = "NRTI"
+db = "PI"
+#db = "NRTI"
 
 binary.encoding = TRUE
 
@@ -172,7 +172,7 @@ for (i in 1:nresps) {
     
     xvals = 1:length(yvals)
     plot(xvals, yvals, ylim=c(0,1), xlab="Step", ylab="P-values", main=names(A.sets)[i])
-    rect(k+.5, -.05, max.steps+.8, 1.05, col = "gray94", border = NA)
+    rect(k+.5, 0, max.steps+.8, 1, col = "gray94", border = NA)
     points(xvals, yvals)
     
     if (length(nonsignif) > 0) {

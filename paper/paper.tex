@@ -30,8 +30,6 @@
 \usepackage{algorithmic,amssymb}
 \usepackage{graphicx,xcolor}
 \usepackage{subfigure}
-%\usepackage{placeins}
-%\usepackage[boxed]{algorithm2e}
 
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
@@ -73,16 +71,13 @@
 
 \begin{frontmatter}
 
-% "Title of the paper"
 \title{A significance test for forward stepwise model selection}
 
-%%%
 %%% \runtitle{} - I don't know what this is
-%%%
 
 % indicate corresponding author with \corref{}
-\author{\fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}
-\and \fnms{Joshua} \snm{Loftus}}
+\author{\fnms{Joshua} \snm{Loftus}
+\and \fnms{Jonathan} \snm{Taylor}\corref{Jonathan E. Taylor}\ead[label=e1]{jonathan.taylor@stanford.edu}\thanksref{t1}}
 \thankstext{t1}{Supported in part by NSF grant DMS 1208857 and AFOSR grant 113039.}
 
 \affiliation{Stanford University}
@@ -91,9 +86,7 @@
 Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 %\printead{e1}}
 
-%%%
 %%% \runauthor{Taylor} - I don't know what this is
-%%%
 
 \begin{abstract}
   We apply the methods developed by \cite{significance:lasso} and
@@ -122,9 +115,7 @@ Hall \\390 Serra Mall\\ Stanford, CA 94305, U.S.A.\\ }
 The authors would like to thank Robert Tibshirani and Trevor Hastie for many helpful comments.
 \end{abstract}
 
-%%%
-%%% - Gotta change these??????????
-%%%
+%%% - Check these
 \begin{keyword}[class=AMS]
 \kwd[Primary ]{62M40}
 %\kwd{}
@@ -218,7 +209,7 @@ However, once forward stepwise begins adding noise variables, the
 $\chi^2$ $p$-value remains small, potentially leading to 
 incorrect inferences. The $T\chi$ and MC-estimated exact $p$-values
 do not suffer from this selection effect.
-%However, the MC-estimate takes substantially more computational time to evaluate than the $T\chi$ statistic.
+However, the MC-estimate takes substantially more computational time to evaluate than the $T\chi$ statistic.
 
 In the next section we establish general notation and describe the
 forward stepwise algorithm used throughout the paper.
@@ -255,7 +246,6 @@ of individual drug responses and resistances for various mutations of HIV.
 \end{center}
 \end{figure}
 
-
 As a classical method dating back about half a century
 (see \cite{classical:selection} for a review),
 forward stepwise regression has not received much attention in
@@ -290,17 +280,12 @@ To emphasize this we use $g, h$ as covariate indices rather than the usual
 $i, j$ throughout. Since single variables can be considered groups of
 size 1, this includes non-grouped situations as a special
 case.
-%Our variant of forward stepwise uses a different method than
-%usual for choosing which group to add because we are using the
-%same objective in the forward stepwise procedure that was used to
-%derive the test statistics in penalized regression settings.
 
 Let $y \in \real^n$ be $n$ i.i.d. measurements of the outcome variable.
 Let an integer $G \geq 2$ be the number of groups of explanatory variables.
 For each $1 \leq g \leq G$ the design matrix encoding the
 $g$th group is the $n \times p_g$ matrix denoted $X_g$, where $p_g$ is
 the number of individual variables or columns in group $g$.
-% Do we need to assume $p_g \ll n$ or $\text{rank}(X_g) = p_g$?
 When a group encodes a categorical variable as indicators for the
 levels of that variable, by default we use the full encoding with a
 column for every level. Although this introduces collinearity, our method
@@ -353,7 +338,6 @@ we are now ready to describe our procedure concretely.
 
 First, the user must specify the maximum number of steps allowed,
 which we denote \textit{steps}.
-%(consistent with the \textit{R} function for stepwise).
 To enable our test statistic computations,
 \textit{steps} should be at most $\min (n, G) - 1$, but it is
 computationally desirable to set it as low as possible while
@@ -507,7 +491,6 @@ we show in green the TPP and median model sizes for models chosen by
 the \textit{step} function in \textit{R} using the BIC criterion, and
 the same for RIC are plotted in purple.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -581,7 +564,6 @@ The right hand side has an exact, finite sample null distribution.
 Further, this new statistic can be understood as the survival function of $\lambda_1 = \|X^Ty\|_{\infty}$
 {\em conditional} on which variable achieves $\lambda_1$ as well as its sign.
 The limiting results about later steps in \cite{significance:lasso} can
-%(formally)
 be interpreted as
 recursively applying $T_1$ to the variables that had not previously been selected by LARS. In forward stepwise with groups of size 1, we recursively apply the right hand side test statistic in the same manner. With larger groups, we use an analogous test statistic to the right hand side of \eqref{test:exact}. The test statistic is presented as an example in \cite{tests:adaptive} though we re-derive it here in simpler form. The test draws inspiration
 from the group LASSO.
@@ -647,22 +629,6 @@ test is that it conditions on both the maximizer $g^*$ and on the unit
 vector $\eta_{g^*}$. Most of the $p$-value computations will be done in
 terms of these quantities.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%% Related works %%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-% \begin{figure}
-% \label{fig:polytope}
-% \begin{center}
-% \resizebox{!}{3in}{\input{../figs/polytope.pdf_tex}}
-% \end{center}
-% A polytope selection event. Solving the LASSO \eqref{eq:lasso} for a fixed value
-% of $\lambda$ yields both an active set $\hat{E}(y)$ and a collection of signs of 
-% active variables $z_{\hat{E}(y)}$. The event $\{y: (\hat{E}(y), z_{\hat{E}(y)}) = (E, z_E)\}$
-% can be written as a set of affine constraints.
-% \end{figure}
-
 \subsection{Quadratic framework and derivation of test statistic}
 
 In this section we derive the new $p$-value and describe how to compute it.
@@ -672,12 +638,10 @@ We now give the full derivation of the $p$-value, beginning with a previous work
 The approach to post-selection inference in \cite{lasso:fixed}
 describes the selection event for the LASSO as a convex polytope
 satisfying a list of affine constraints.
-%stylized in Figure \ref{fig:polytope}.
 If all groups are of size 1, then
 the event that we observe a given set of variables
 in the forward stepwise path (with their signs as they enter) would similarly
 be given by a set of affine inequalities.
-%This is described in more detail in \cite{exact:lars}.
 After selection, exact inference for a (randomly) chosen contrast $\eta(y)^T\mu$ of the mean vector
 $\mu$ could then be accomplished by analyzing the conditional distribution
 \begin{equation}
@@ -1013,11 +977,9 @@ and \textit{last} is comparable to \textit{RIC},
 with perhaps more power in the higher dimensional setting
 (and a correspondingly larger FDR when the signal is also weak).
 
-
 \input{../tables/stop_comparison_easy.tex}
 
 \input{../tables/stop_comparison_hard.tex}
-
 
 \section{Applications}
 \label{sec:applications}
@@ -1066,7 +1028,6 @@ For simplicity we assume the original groups are all size 1, and use the B-splin
 \end{equation}
 Nonzero coefficients are split between original covariates and spline groups. Simulation results are shown in Figure~\ref{fig:spline}. Note that the varying group sizes present some difficulty to forward stepwise, which tends to first try linear approximations to nonzero spline groups before adding the true spline group. In Figure~\ref{fig:spline:pval} the average proportion of truly nonzero spline groups included in the first $k$ steps appears in parentheses next to the $k$-TPP (top right).
 
-
 \subsection{Glinternet for hierarchical interactions}
 \label{sec:glint}
 In regression settings with many variables, choosing among models with pairwise interactions can drastically increase model complexity. \cite{glint} propose a method called \textsc{glinternet} to reduce the statistical complexity of this problem. The method imposes a strong hierarchical constraint on interactions (similar to that in \cite{bien:hierarchical}) where an interaction term can only be included if both its main effects are also included. They accomplish this by creating a design matrix with both main effects alone and also with groups including main effects with their first order interactions. Then they fit a group LASSO model with the expanded design matrix. Because interaction terms only appear in groups along with their respective main effects, the hierarchy condition holds for the fitted model. We now consider a related procedure as an example problem, but first modify their method to simplify some parts. Let the expanded design matrix be given by
@@ -1099,53 +1060,10 @@ matrix and call the resulting procedure FS-\textsc{glinternet}.
 The overlapping groups still guarantee that our fitted model
 satisfies the strong hierarchy condition. 
 
-%However, we must first modify our implementation of forward stepwise to prevent the possibility of including main effect groups after the main effects are already included in the model as part of an interaction group. To do this we compute the residual using the whole model in each step, rather than by subtracting the effect of the current group being included. For a set of group indices $A \subseteq \{ 1, \ldots G \}$ we write $X_A$ for the submatrix of the design matrix containing all the groups in $A$.
-% \begin{algorithm}
-% \DontPrintSemicolon
-% \caption{\small \it Modification to compute residual from full model}
-% \BlankLine
-% \CommentSty{\# Everything the same as before, additionally:}\;
-% %  $P_A \gets I - X_AX_A^\dagger$\;
-% %  $r_s \gets P_A r_{s-1}$\;
-% \If{$g^*$ is an interaction group}{
-%   $g_1, g_2 \gets$ main effects groups of $g^*$\;
-%   A^c \gets A^c \slash \{ g_1, g_2 \}\;
-% }%\;
-% %$r_s \gets y - \text{lsfit}(X_A, y)$\;
-% \BlankLine
-% \label{algo:fs:full}
-% \end{algorithm}
-% \begin{algorithm}
-% \DontPrintSemicolon
-% \KwData{An $n$ vector $y$ and $n \times p$ matrix $X$ of $G$ groups of variables}
-% \KwResult{Active set $A$ of variable groups included in the model}
-% \SetKwFunction{lsfitResidual}{lsfitResidual}
-% \caption{\small \it Forward stepwise for glinternet}
-% \BlankLine
-% Compute design matrix~(\ref{eq:glintmat}) and expanded grouping $\tilde G$\;
-% $A \gets \emptyset$\;
-% $A^c \gets \{ 1, \ldots, G \}$\;
-% $r_0 \gets y$\;
-% \For{$s \gets 1$ \KwTo $steps$}{
-%   $g^* \gets \argmax_{g \in A^c} \{ \norm{X_g^T r_{s-1}}_2 / w_g \}$\;
-%   $P \gets I - X_{g^*}X_{g^*}^\dagger$\;
-%   $A \gets A \cup \{ g^* \}$\;
-%   $A^c \gets A^c \backslash \{ g^* \}$\;
-%   \For{$g \in A^c$}{
-%     $X_g \gets P X_g$\;
-%   }
-%   $r_s \gets P r_{s-1}$\;
-% }
-% \KwRet{$A$}
-% \label{algo:fsgl}
-% \end{algorithm}
-
 To demonstrate this method by simulation, we constructed signals which have
 the first $k/3$ main effects nonzero but with no interactions, and the
 remaining $2k/3$ nonzero main effects are matched to each other to form
 interactions.
-%This way each nonzero main effect with any nonzero interactions has
-%exactly one nonzero interaction. 
 We also inflate each nonzero interaction
 coefficient to be larger than the corresponding main
 effect coefficients. This special case is favorable for our algorithm,
@@ -1184,7 +1102,6 @@ the nominal $\chi^2$ $p$-values.}
 \end{center}
 \end{figure}
 
-
 \subsection{HIVdb data example}
 \label{sec:hiv}
 
@@ -1202,7 +1119,7 @@ no missing values.
 
 \begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.95\textwidth]{../figs/HIV_PI.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_PI_plot.pdf}
 \caption{\small \it Forward stepwise results from PI dataset}
 \label{fig:HIVPI}
 \end{center}
@@ -1210,7 +1127,7 @@ no missing values.
 
 \begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI_plot.pdf}
 \caption{\small \it Forward stepwise results from NRTI dataset}
 \label{fig:HIVNRTI}
 \end{center}
@@ -1226,25 +1143,15 @@ corresponding to the chosen model is unshaded, with the remainder shaded.
 The first several chosen variables are shown in Tables~\ref{tab:hivPI} and
 \ref{tab:hivNRTI}.
 
-%\begin{figure}
-%\begin{center}
 \input{../tables/HIV_PI.tex}
-%\label{tab:HIVPI}
-%\end{center}
-%\end{figure}
 
-%\begin{figure}
-%\begin{center}
 \input{../tables/HIV_NRTI.tex}
-%\label{tab:HIVNRTI}
-%\end{center}
-%\end{figure}
 
 We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:glint} to fit a model with pairwise interactions. Results from this are shown in Figures~\ref{fig:HIVPI:glint} and \ref{fig:HIVNRTI:glint} and Tables~\ref{tab:glintPI} and \ref{tab:glintNRTI}.
 
 \begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.95\textwidth]{../figs/HIV_PI_glint.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_PI_glint_plot.pdf}
 \caption{\small \it \textsc{Glinternet} results from PI dataset}
 \label{fig:HIVPI:glint}
 \end{center}
@@ -1252,7 +1159,7 @@ We can also use the \textsc{Glinternet} procedure described in Section~\ref{sec:
 
 \begin{figure}[!htp]
 \begin{center}
-\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI_glint.pdf}
+\includegraphics[width=0.95\textwidth]{../figs/HIV_NRTI_glint_plot.pdf}
 \caption{\small \it \textsc{Glinternet} results from NRTI dataset}
 \label{fig:HIVNRTI:glint}
 \end{center}
@@ -1302,7 +1209,6 @@ is in progress, and may be able to give exact $p$-values at a step chosen
 stochastically by procedures like BIC and RIC. The authors will
 release an R package implementing these methods.
 
-
 \bibliographystyle{ims}
 %\bibliographystyle{acmtrans-ims}
 \bibliography{paper}
@@ -1343,8 +1249,6 @@ discussion of group LASSO in \cite{tests:adaptive}. The implementation
 described here was used in all simulations.
 For the rest of this section let $g = \gstar$ be the index of
 the group attaining the maximum on line 3 of Algorithm~\ref{algo:fs}.
-%$\lambda = \norm{X_g^Ty}_2/w_g$ be the value of the maximum, and
-%$r = \text{rank}(X_g)$ be the rank of the maximizing group.
 For a vector $u \in \real^p$, let $u_h$ denote the coordinates
 of $u$ corresponding to the columns of group $h$ in the design matrix $X$.
 We can rearrange the columns of $X$ to group these adjacently, so that
@@ -1361,10 +1265,6 @@ space is trivial and the desired orthogonal projection is the identity.
 Otherwise, if $X_g$ has $p_g > 1$ columns the space $\vecsp_g$
 generally has dimension $p_g-1$.
 
-%We proceed by forming the $n \times p_g$ matrix
-%$X_g - X_g X_g^T y y^T X_g/\norm{X_g^Ty}_2^2$ and performing Gram-Schmidt
-%on the first $r-1$ columns. For precise theorems showing that this will
-%generally work, see \cite{outerp:indep}.
 We compute an orthonormal basis by Gram-Schmidt and form a
 $p_g \times p_g$ matrix, which we denote $V_g$, by appending
 0's in the coordinates corresponding to all groups $h \neq g$ and
@@ -1441,109 +1341,6 @@ by transforming to trigonometric coordinates and using calculus.
  \end{algorithmic}
 \end{algorithm}
 
-% \todo Clean this section \\
-% \todo Make $M=\lambda_2$ a special case corollary \\
-
-% For the sake of completeness this appendix provides full derivations
-% of closed forms for the quantities required to compute our
-% statistic. We require two facts from \cite{tests:adaptive}
-
-% A point $\eta \in \K$ maximizes $f_\eta$ over a convex
-% set $\K$ if and only if the following conditions hold: 
-% \begin{equation}
-% \label{eq:maxcond}
-% \grad f_{|T_{\eta}\K} = 0, \quad
-% \tf^{\eta}_{\eta} \geq \V^+_{\eta}, \quad
-% \tf^{\eta}_{\eta} \leq \V^-_{\eta}, \quad \text{and} \quad
-% \V^0_{\eta} \leq 0.
-% \end{equation}
-% The same equivalence holds true even when $\K$ is only locally
-% convex. 
-
-% Write $M^{\pm}_{\eta, h}$ and $M^0_{\eta, h}$ as the corresponding suprema and infima over the restricted parameter set $S_h$. Note that the characterization of the global maximizer (Lemma 1, general paper) implies $M^0_{\eta, h} \leq 0$ and $M^+_{\eta, h} \leq M^-_{\eta, h}$ for all $h \neq g$. This will be used below to eliminate some degenerate cases of the optimization sub-problem on each $S_h$.
-
-% Now fix $h$, let $P_g = X_gX_g^T$ and define
-% \begin{align*}
-% a_h &= w_h^{-1} X_h^T (I-P_g) y \\
-% b_h &= w_g w_h^{-1} X_h^T P_g y / \norm{X_g^T y} \\
-% c_h &= a_h^T b_h / (\norm{a_h} \norm{b_h}) \\
-% K_h   &= \{ x : \norm{x} = 1, b_h^Tx > w \}
-% \end{align*}
-% Note that $K_h = \emptyset$ if and only if $\norm{b_h} < w$. We consider two cases. First, suppose $\norm{b_h} > w$. In this case we must rule out one sub-case, when $a_h$ is not in the polar cone of $K_h$. If this occurs, then on at least one side of the boundary of $K_h$ we have $a_h^Tx > 0$ there, so that the infimum inside $K$ is $-\infty$ but the supremum outside $K$ is $+\infty$. This violates the characterization of the global maximizer of the original process as described above, so this case cannot occur.
-
-% Now, if $a_h$ is in the polar cone of $K_h$ (and ruling out the probability zero case where $a_h^Tx = 0$ on the boundary of $K_h$), then the numerator $a_h^Tx < 0$ on $K_h$ so there is a finite positive infimum in the interior $K_h$. Similarly there is a finite positive supremum on the interior of $K_h^c$ (the numerator is negative near the boundary of $K_h$ by continuity).
-
-% To attain the infimum on $K_h$ requires making $x$ close to $b_h$ and simultaneously making the numerator closer to zero, so $x$ should be on the side of $b_h$ that is closer to $a_h$. To attain the supremum on $K_h^c$ requires making $x$ simultaneously close to $a_h$ (so that $a_h^Tx > 0$) and $b_h$ (to make the denominator small). In summary, both the infimum and supremum are attained with $x$ between $a_h$ and $b_h$, when the angle $\theta$ between $a_h$ and $b_h$ is larger than both the angle $\psi$ between $a_h$ and $x$ and the angle $\phi$ between $x$ and $b_h$. This allows the simplification $\phi = \theta - \psi$. This is easier to verify for the case when $\norm{b_h} < w$.
-
-% We have verified that solving both cases requires finding the maxima of the trigonometric form $\norm{a_h} \cos (\psi) / (w - \norm{b_h} \cos(\theta - \psi))$ of the linear fraction on the interiors of $K_h$ (if it is nonempty) and $K_h^c$. The derivative is proportional to
-% \[
-% \frac{\norm{b_h} \sin(\theta) - w \sin(\psi)}{w - \norm{b_h} \cos(\theta - \psi)}
-% \]
-% Since we have ruled out the boundary of $K_h$, we can ignore the denominator and focus on critical points corresponding to the angles $\psi^{\pm}$ (symmetric about $\pi/2$) where $\sin(\psi^{\pm}) = (\norm{b_h} / w) \sin (\theta)$. That is,
-% \[
-% \psi^{\pm} \in \arcsin \frac{\norm{b_h}}{w} \sqrt{1-c_h^2}
-% \]
-% Note that these critical points only exist if $\sin(\theta) < w/\norm{b_h}$, and since we have argued that the infimum and supremum are attained it follows that this condition is met in our case. Let $\psi^+$ denote the smaller of the two angles. If $K_h$ is nonempty, then $\psi^-$ gives the infimum in $K_h$ and $\psi^+$ the supremum on $K_h^c$. This is necessary since if $x$ is in $K_h$ then its angle from $a_h$ is larger than $\pi/2$ because $a_h$ is in the polar cone of $K_h$. If $K_h$ is empty, then the supremum is still attained at $\psi^+$ since the numerator is negative at $\psi^- > \pi/2$ and the denominator is always positive.
-
-% Finally we calculate the values of the linear fraction at $\psi^{\pm}$. Let us first record some facts:
-% \begin{align*}
-% 0 < \psi^+ < \pi/2, \quad \psi^- = \pi - \psi^+ \\
-% \cos(\theta) = c_h, \quad \sin(\theta) = \sqrt{1-c_h^2} \\
-% \sin(\psi^+) = \sin(\psi^-) = \frac{\norm{b_h}}{w} \sin(\theta) \\
-% \cos(\psi^+) = -\cos(\psi^-) = \sqrt{1 - (\norm{b_h}/w)^2(1-c_h^2)}
-% \end{align*}
-% Using the angle difference formula,
-% \begin{align*}
-% \cos(\theta - \psi^+) & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+) \\
-% & = \frac{\norm{b_h}}{w} (1-c_h^2) +  c_h \cos(\psi^+)
-% \end{align*}
-% Hence
-% \begin{align*}
-% M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) - \norm{b_h} c_h \cos(\psi^+) } \\
-% % & = 
-% % & = \frac{ w \norm{a} a_h^Tb_h / \norm{b_h} }{ w^2 - \norm{a}\norm{b}^2 + (a^Tb)/\norm{a} - a^Tb \cos \psi^+ }
-% \end{align*}
-% And $M^-_{\eta, h}$ is $\infty$ when $\norm{b_h} < w$ and otherwise given by
-% \begin{align*}
-% M^+_{\eta, h} & = \frac{ \norm{a_h} c_h }{ w - (\norm{b_h}^2/w) (1-c_h^2) + \norm{b_h} c_h \cos(\psi^+) } \\
-% \end{align*}
-
-% I haven't been able to algebraically simplify these yet to a form that allows my $\lambda_2$ proof below to go through. The version below just assumes $\norm{b_h} < w = 1$.
-
-% \hrule
-% \hrule
-% We can rewrite this by rationalizing the denominator:
-% \[
-% M =
-% \frac
-% { a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
-% { 1-b_h^Tb_h }
-% \]
-% Leaving $M$ in this form we now consider $\lambda_2$. The KKT conditions for the group LASSO problem give (directly from Yuan and Lin)
-% \begin{align*}
-% \norm{ X_g^T(y - X \beta) } & \leq \lambda w_g \quad \forall \beta_g \neq 0 \\
-% \beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{S_g} } \right)_+ S_g
-% \end{align*}
-% where $S_g = X_g^T(y - X \beta_{-g})$. These expressions simplify for $\lambda_2 \leq \lambda < \lambda_1$. Letting $g$ be the index of the first group to enter we now have $S_g = X_g^Ty$ 
-% \begin{align*}
-% \beta_g & = \left( 1 - \frac{ \lambda w_g }{ \norm{X_g^Ty} } \right) X_g^Ty \\
-% \lambda w_h & \geq \norm{ X_h^Ty - X_h^T P_g y (1-\lambda w_g / \norm{X_g^Ty})  } \quad \forall h \neq g
-% \end{align*}
-% Now let $\lambda = \lambda_2$, so the inequality above is strict for all other groups and equality is attained for the second group to enter. Hence $\lambda_2$ satisfies
-% \begin{align*}
-% \lambda_2 & = \max_{h \neq g} 
-% \norm{ X_h^T(I - P_g) y - \lambda_2 ( w_g X_h^T P_g y / \norm{X_g^Ty} )  } / w_h\\
-% & = \max_{h \neq g} \norm{ a_h - \lambda_2 b_h } 
-% \end{align*}
-
-% Write $\lambda_{2,h}$ as the positive root of the quadratic equation obtained by squaring the norm, so $\lambda_{2,h}^2 = \norm{ a_h - \lambda_2 b_h }^2$. Then $\lambda_2 = \max_{h \neq g} \lambda_{2,h}$. Solving this (note that $b_h^Tb_h < 1$), we find
-% \[
-% \lambda_{2,h} = \frac
-% { a_h^T b_h +  \sqrt{ a_h^T a_h (1-b_h^Tb_h) + (a_h^T b_h)^2 }  }
-% { 1-b_h^Tb_h }
-% \]
-% Hence when $h$ is the index of the second group to enter, we have $\lambda_2 = \lambda_{2,h} = M$.
-
 \section{A note on power}
 \label{app:power}
 
@@ -1592,7 +1389,6 @@ One strength of forward stepwise is that it can be computed in parallel, hence c
 
 We can also verify that Algorithms \ref{algo:pval} and \ref{algo:linfrac} only require block matrix operations with blocks given by individual groups
 or subproblems computable separately for each group. Hence, the $T\chi$ $p$-value can also be computed in parallel this way.
-
 
 \end{document}
 

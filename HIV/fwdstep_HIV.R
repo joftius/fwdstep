@@ -1,5 +1,5 @@
-db = "NRTI"
-#db = "PI"
+#db = "NRTI"
+db = "PI"
 
 binary.encoding = FALSE
 
@@ -122,7 +122,7 @@ for (respind in 1:nresps) {
 print(A.sets)
 print(sapply(A.sets, length))
 
-filename = paste0("figs/HIV_", db, ".pdf")
+filename = paste0("figs/HIV_", db, "_plot.pdf")
 pdf(filename)
 par(mfrow=c(2,3))
 for (i in 1:nresps) {
@@ -152,7 +152,7 @@ for (i in 1:nresps) {
     
     xvals = 1:length(yvals)
     plot(xvals, yvals, ylim=c(0,1), xlab="Step", ylab="P-values", main=names(A.sets)[i])
-    rect(k+.5, -.05, max.steps+.8, 1.05, col = "gray94", border = NA)
+    rect(k+.5, 0, max.steps+.8, 1, col = "gray94", border = NA)
     points(xvals, yvals)
     
     if (length(nonsignif) > 0) {

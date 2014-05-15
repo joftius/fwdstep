@@ -50,6 +50,6 @@
   \makeatother%
   \begin{picture}(1,1.02)%
     \put(0,0){\includegraphics[width=\unitlength]{../figs/curved.pdf}}%
-    \put(0.14066225,0.13805743){\color[rgb]{0,0,0}\makebox(0,0)[lb]{{\Huge$\{S^*(y)=s\}$}}}%
+    \put(0.14066225,0.13805743){\color[rgb]{0,0,0}\makebox(0,0)[lb]{{\Huge$\{S(y)=s\}$}}}%
   \end{picture}%
 \endgroup%

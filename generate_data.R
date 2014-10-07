@@ -231,10 +231,6 @@ orthogonal_design = function(n, groups) {
   return(X)
 }
 
-
-cat_level_test = function(cat.levels) {
-
-}
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
 categorical_design = function(n, groups, col.normalize = FALSE) {
@@ -270,16 +266,5 @@ categorical_design = function(n, groups, col.normalize = FALSE) {
   }
   #return(list(X=X, X.cat=X.cat))
   return(X)
-}
-
-# Input: inds of main effects
-# Output: a permutation of those inds with no fixed points (derangement)
-derangement = function(inds) {
-  fixed = 1
-  while (fixed > 0) {
-    perm = sample(inds)
-    fixed = sum(perm == inds)
-  }
-  return(perm)
 }
 

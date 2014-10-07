@@ -1,27 +1,26 @@
-source('simulation.R')
-source('tpr_simulation.R')
+source('simulations.R')
 source('tex_table.R')
 source('plots.R')
 
-nsim = 400
-type = 'default'
+nsim = 100
 design = 'gaussian'
 estimation = FALSE #TRUE
 n = 100
 #groups = 1:500
 #groups = 1:400
 groups = 1:200
+#groups <- sort(rep(1:100, 2))
 #groups = 1:100
 #groups = 1:50
 
-k = 10
-upper = 3
+k = 5
+upper = 4
 lower = 2
 
-max.steps = 15
+max.steps = 10
 #max.steps = min(n/2, max(groups)-1) #floor(max(groups)/3)
-corr = 0.2 # nonzero only supported for gaussian design
-noisecorr = 0.1
+corr = 0 # nonzero only supported for gaussian design
+noisecorr = 0
 
 if ((corr != 0) & (design != 'gaussian')) {
     stop("Feature correlation only supported for gaussian design")
@@ -29,18 +28,21 @@ if ((corr != 0) & (design != 'gaussian')) {
 
 output = run_simulation(
     nsim = nsim,
-    type = type,
     design = design,
     n = n, groups = groups, k = k,
     upper = upper, lower = lower,
     max.steps = max.steps,
     corr = corr,
     noisecorr = noisecorr,
-    estimation = estimation, verbose = TRUE)
+    estimation = estimation)
 
-output$main.append = paste0(", RIC: (", round(output$ric.tpp, 2), "/", output$ric.size, ")")
+#output$main.append = paste0(", RIC: (", round(output$ric.tpp, 2), "/", output$ric.size, ")")
 
-with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename, main.append))
+with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, max.steps, upper, lower, max.beta, min.beta, fwd.power, design, filename)) #, main.append))
+
+warnings()
+
+stop('only one')
 
 ## ps.fname = paste0('figs/bysignal/', design, '_size1_n', n, '_p', p, '_g', p, '_k', k, '_lower', lower, '_upper', upper)
 ## if (corr != 0) {
@@ -77,13 +79,16 @@ with(output, step_plot(TrueStep, null.p, signal.p, chi.p, k, n, p, g, ugsizes, m
 ## abline(v = 1, col = "gray")
 ## dev.off()
 
-groups = sort(c(rep(1:30, 5), rep(31:35, 10)))
+#groups = sort(c(rep(1:30, 5), rep(31:35, )))
 #groups = sort(c(rep(1:10, 3), rep(11:20, 2)))
 #groups = 1:200
+groups = sort(rep(1:50, 4))
 corr = 0
 noisecorr = 0
-max.steps = 10
+max.steps = 15
 k = 5
+upper = 2.5
+lower = 2
 
 output.g = run_simulation(
     nsim = nsim,
@@ -94,7 +99,7 @@ output.g = run_simulation(
     max.steps = max.steps,
     corr = corr,
     noisecorr = noisecorr,
-    estimation = estimation, verbose = TRUE)
+    estimation = estimation)
 
 #output.g$main.append = paste0(", RIC: (", round(output.g$ric.tpp, 2), "/", output.g$ric.size, ")")
 

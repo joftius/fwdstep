@@ -177,11 +177,11 @@ run_simulation = function(
         # Frobenius normalized, do not need weights
         weights = rep(1, G)
             
-        if (length(cat.groups) > 0) {
-          Xscaled = frob_normalize(X, all.groups)
-        } else {
+        ## if (length(cat.groups) > 0) {
+        ##   Xscaled = frob_normalize(X, all.groups)
+        ## } else {
           Xscaled = groupwise_center_scale(X, all.groups)
-        }
+        ## }
 
         if (estimation) {
             Xscaled.test = frob_normalize(X.test, all.groups)
@@ -225,12 +225,15 @@ run_simulation = function(
         }
         
         # Null results
-        results = forward_group(Xscaled, centered.noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
-        P.mat[i, ] = results$p.vals
-        AS.mat[i, ] = results$active.set
+        ## results = forward_group(Xscaled, centered.noise, groups=all.groups, weights=weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+        ## P.mat[i, ] = results$p.vals
+        ## AS.mat[i, ] = results$active.set
 
         # Non-null results
         results.b = forward_group(Xscaled, Y.beta, groups=all.groups, weights, Sigma, max.steps = max.steps, cat.groups = cat.groups)
+
+        print(rbind(true.active, results.b$active.set))
+        print("-------------------")
 
         # Comparison with BIC/RIC
         if (type == "default") {

@@ -36,12 +36,16 @@ ave_pow= function(num.nonzero, active, as) {
 
 groupwise_center_scale = function(X, groups) {
   # Center by group
-  gmeans = sapply(unique(groups), function(x) mean(X[,groups == x]))
-  gmeans = gmeans[groups]
-  X = sweep(X, 2, gmeans, FUN="-")
+  ldata <- lapply(unique(groups), function(g) {
+    inds <- which(groups == g)
+    submat <- X[, inds]
+    submat <- submat - mean(submat)
+    return(submat)
+  })
+  X.out <- do.call(cbind, ldata)
   # Scale by group
-  X = frob_normalize(X, groups)
-  return(X)
+  X.out = frob_normalize(X.out, groups)
+  return(X.out)
 }
 
 # For coefficients of categorical variables,
@@ -58,7 +62,8 @@ center_rescale = function(v) {
     }
     return(v)
 }
-constrain_beta = function(beta, nz.groups, cat.groups) {
+
+constrain_beta = function(beta, groups, nz.groups, cat.groups) {
     group.labels = intersect(unique(nz.groups), cat.groups)
     for (g in group.labels) {
         gind = g == groups
@@ -78,8 +83,10 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   # rand.sign: if TRUE, randomly changes the signs of each coefficient
   # permute: if TRUE, permute indices of signal groups
   # perturb: if TRUE, adds small noise to all coefficients (making them nonconstant across group)
-  g = max(groups)
+  labels <- unique(groups)
+  g = length(labels)
   p = length(groups)
+
   beta = sort(seq(from=lower, to=upper, length=num.nonzero), decreasing=TRUE)
 
   if (rand.within) {
@@ -94,8 +101,9 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   if (permute) {
     beta = sample(beta)
   }
-  
-  nz.groups = which(beta != 0)
+
+  nz.groups = labels[which(beta != 0)]
+  # Expand
   beta = beta[groups]
   nz.inds = beta != 0
 
@@ -122,7 +130,7 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
   # Ensure coefs for categorical variables sum to 0
   # Maybe I don't need to do this
   if (length(cat.groups) > 0) {
-      beta = constrain_beta(beta, nz.groups, cat.groups)
+      beta = constrain_beta(beta, groups, nz.groups, cat.groups)
   }
 
   if (!staircase) {
@@ -131,7 +139,9 @@ beta_staircase = function(groups, num.nonzero, upper, lower, rand.within=FALSE, 
     beta[nz.inds] = sample(c(-1, 1), nnz, replace = TRUE)
     beta = beta/sqrt(nnz)
   }
-  return(list(beta=beta, true.active=nz.groups, all.active=nz.groups))
+
+  nz.labels <- labels[nz.groups]
+  return(list(beta=beta, true.active=nz.labels, all.active=nz.labels))
 }
 
 # Normalize columns by 2-norm
@@ -153,6 +163,7 @@ frob_normalize = function(X, groups) {
     for (g in unique(groups)) {
         inds = groups == g
         frob.norm = sqrt(sum(X[,inds]^2))
+        if (is.na(frob.norm)) stop(paste("Matrix contains NA, check group", g))
         if (frob.norm > 0)
             X.out[,inds] = X.out[,inds]/frob.norm
     }
@@ -222,7 +233,7 @@ orthogonal_design = function(n, groups) {
 
 
 cat_level_test = function(cat.levels) {
-  
+
 }
 # Fixed group sizes, categorical design
 # Important: binary requires two indices in groups, e.g. c(1,1,...)
@@ -241,11 +252,7 @@ categorical_design = function(n, groups, col.normalize = FALSE) {
     cat.levels = rep(0, n)
     dir.prior = rep(0, group.size)
     # Sample from dirichlet prior
-    # Resample to prevent very small probabilities (leading to empty levels)
-    while (min(dir.prior) < group.size/n) {
-      dir.prior = rdirichlet(1, rep(1, group.size))
-      dir.prior = (dir.prior + rep(1/group.size, group.size))/2
-    }
+    dir.prior = rdirichlet(1, rep(group.size, group.size))
     # Resample until no levels are empty
     while ((min(table(cat.levels)) < 5) | (length(unique(cat.levels)) < group.size)) {
       cat.levels = sample(1:group.size, n,  replace=TRUE, prob = dir.prior)

@@ -1,12 +1,13 @@
-db = "NRTI"
-#db = "PI"
+#db = "NRTI"
+db = "PI"
 
-binary.encoding = FALSE
+binary.encoding = TRUE
 
 setwd('..')
-source('fwd_step.R')
+library(devtools)
+load_all("package/fstep")
 source('generate_data.R')
-source('simulation.R')
+source('simulations.R')
 source('tex_table.R')
 source('plots.R')
 library(plyr)
@@ -19,17 +20,17 @@ if (db == "NRTI") {
   resps = 4:10
 }
 
-nsim = 400
+nsim = 200
 type = "default"
 design = "fixed"
-fn.append = '' #'Pg'
+fn.append = ''
 corr = 0 # nonzero only supported for gaussian design
 noisecorr = 0
-num.nonzero = 5
+num.nonzero = 3
 k = num.nonzero
 max.steps = 10
-upper = 8
-lower = 4
+upper = 20
+lower = 15
 
 # Clean data, restrict to cleaned subset
 nresps = length(resps)
@@ -83,11 +84,11 @@ p = length(groups)
 
 output.l = run_simulation(
   nsim = nsim,
-  type = type, design = design,
+  design = design,
   n = n, groups = groups, k = k,
   upper = upper, lower = lower,
-  max.steps = max.steps,
   cat.groups = cat.groups,
+  max.steps = max.steps,
   fixed.data = fixed.data,
   estimation = FALSE, verbose = TRUE)
 

@@ -6,41 +6,47 @@ library(Matrix)
 library(MASS)
 
 trignometric_form = function(num, den, weight, tol=1.e-10) {
-  
+
   a = num
   b = den
   w = weight
   norma = sqrt(sum(a^2))
   normb = sqrt(sum(b^2))
+  print(normb)
 
-  if (normb == 0) {
+  if (length(a) > 1) {
+    if (normb == 0) {
 #    stop("Something is wrong, norm(b) shouldn't be zero!")
-    return(c(0, Inf))
+      return(c(0, Inf))
+    }
+    if ((norma / normb) < tol) {
+      return(c(0, Inf))
+    }
+
+    Ctheta = sum(a*b) / (norma*normb)
+    # R might believe 1 > 1 and return NaN in sqrt() below
+    # so we truncate to the interval first
+    Ctheta = min(max(Ctheta, -1), 1)
+    Stheta = sqrt(1-Ctheta^2)
+    theta = acos(Ctheta)
+    Sphi = normb * Stheta / w
+
+    if (Sphi > 1) {
+      # infeasible
+      return(c(0, Inf))
+    }
+
+    phi1 = asin(Sphi)
+    phi2 = pi - phi1
+
+  } else {
+    phi1 = pi
+    phi2 = -pi
   }
-  
-  if ((norma / normb) < tol) {
-    return(c(0, Inf))
-  }
-  
-  Ctheta = sum(a*b) / (norma*normb)
-  # R might believe 1 > 1 and return NaN in sqrt() below
-  # so we truncate to the interval first
-  Ctheta = min(max(Ctheta, -1), 1)
-  Stheta = sqrt(1-Ctheta^2)
-  theta = acos(Ctheta)
-  Sphi = normb * Stheta / w
-  
-  if (Sphi > 1) {
-    # infeasible
-    return(c(0, Inf))
-  }
-  
-  phi1 = asin(Sphi)
-  phi2 = pi - phi1
-  
+
   V1 = norma * cos(phi1) / (w - normb * cos(theta-phi1))
   V2 = norma * cos(phi2) / (w - normb * cos(theta-phi2))
-  
+
   if (normb < w) {
     # encode this infeasibility as Inf
     return(c(max(c(V1,V2)), Inf))
@@ -66,7 +72,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
   if (L <= 0) {
     stop("Lambda should not be zero")
   }
-    
+
   wmax = weights[imax]
   which = groups == imax
   Uwhich = U[which]
@@ -116,13 +122,15 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     conditional_variance = sum(Xeta^2)
   }
   # use formula above display (42) in tests:adaptive
-  
+
+  if (conditional_variance <= 0) stop(paste("Conditional variance negative:", conditional_variance))
+
   Xeta = Xeta / conditional_variance
   C_X = t(X) %*% Xeta
 
   a = U - C_X * L
   b = C_X
-  
+
   V_lower = c()
   V_upper = c()
   nm.a = c()
@@ -138,7 +146,7 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     V_upper = c(V_upper, tf[2])
   }
 #  print(rbind(nm.labels, nm.a, nm.b))
-  
+
   if (length(V_lower) >= 1) {
     V_lower = V_lower[!is.nan(V_lower)]
     V_upper = V_upper[!is.nan(V_upper)]
@@ -149,8 +157,8 @@ group_lasso_knot <- function(X, Y, groups, weights, Sigma, active.set=0) {
     upper_bound = Inf
   }
 
-  values = list(L=L, lower_bound=lower_bound, upper_bound=upper_bound, var=conditional_variance, k=kmaxrank, i=imax)  
-  
+  values = list(L=L, lower_bound=lower_bound, upper_bound=upper_bound, var=conditional_variance, k=kmaxrank, i=imax)
+
   return(values)
 }
 
@@ -182,17 +190,17 @@ q_0 <- function(M, upper_bound, k, nsim=100) {
   if (k > 1) {
     exponent = exponent + (k-1)*log(Z+M)
   }
-  
+
   C = max(exponent)
-  
+
   return(list(E=mean(exp(exponent - C)) * proportion, C=C))
 }
 
 Q_0 = function(L, lower_bound, upper_bound, H, nsim=100) {
-  
+
   result1 = q_0(L, upper_bound, H, nsim=nsim)
   result2 = q_0(lower_bound, upper_bound, H, nsim=nsim)
-  
+
   return(exp(result1$C-result2$C) * result1$E / result2$E)
 }
 

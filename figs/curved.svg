@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="curved.pdf">
+   sodipodi:docname="curved.svg">
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -24,15 +24,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.76779658"
-     inkscape:cx="34.562835"
+     inkscape:cx="-195.96698"
      inkscape:cy="309.89677"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="false"
      inkscape:window-width="1280"
      inkscape:window-height="752"
-     inkscape:window-x="1234"
-     inkscape:window-y="119"
+     inkscape:window-x="147"
+     inkscape:window-y="0"
      inkscape:window-maximized="0" />
   <defs
      id="defs4">
@@ -333,7 +333,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -342,7 +342,7 @@
      id="layer2"
      inkscape:label="Layer">
     <path
-       style="fill:#ffff00;fill-opacity:0.47058824;stroke:#000000;stroke-width:2.03031135;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:#dae6e6;fill-opacity:0.47058824;stroke:#000000;stroke-width:2.03031134999999985;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        inkscape:transform-center-x="-2.2664002"
        inkscape:transform-center-y="-11.131179"
        d="M 450.44164,325.238 C 372.53051,478.55425 409.44107,416.70784 264.91952,337.89042 120.39798,259.07298 149.14378,443.47382 83.073668,276.09031 17.003552,108.70683 61.6363,162.07482 91.639103,135.45299 226.03852,16.198818 127.681,-3.4490317 283.32152,38.126968 c 155.64052,41.57597 45.46882,-0.96886 113.90412,140.784052 68.43532,141.75292 131.12714,-6.98931 53.216,146.32698 z"

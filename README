@@ -1,19 +1,23 @@
-NOTE: A good place to start examining code is sim_small, which calls fwd_step_sim which in turn calls fwd_step (which calls group_lasso) and generate_data and so on
+This repository contains files related to the paper
+"A significance test for forward stepwise model selection"
+by Joshua R. Loftus (joftius@stanford.edu) and Jonathan E. Taylor.
 
-These files contain code related to the significance testing and forward stepwise methods for group lasso discussed in the paper (insert citation)
+Required packages: devtools, ggplot2, gridExtra
+R package: https://github.com/joftius/fstep-tchi
 
 Files:
-* group_lasso.R: computing trigonometric form, first knot, pvalues
-* fwd_step.R: adding a (group of) variable(s), residualizing, continuing until max.steps
-* fwd_step_sim.R: main simulation function
-* stop_rules.R: compute stopping index from lists of p-values
-* pred_and_estim.R: compute prediction/estimation error statistics from simulation
-* selection.R: compute model selection statistics from simulation 
-* sim_small.R: perform small simulation and plot results
-* sim_large.R: perform larger simulation and plot/compute results
-* sim_fwdstep.R: simulation to analyze performance of forward stepwise
-* suff_conds.R: functions for computing parameters related to conditions for forward stepwise to perform well (e.g. coherence)
-* generate_data.R: produce random design matrices, signal vectors
+* generate_data.R: Mostly used for function beta_staircase which generates model coefficients for non-null simulations.
 
-*.tex and figs/: output generated from simulations to include in paper
-* paper/: LaTeX files for paper
+* plots.R: Functions for producing QQ-plots to show simulation results.
+
+* selection.R: Compute model selection statistics from simulation 
+
+* sim_data.R: Non-null simulation using eyedata from package 'flare'.
+
+* sim_nncat.R: Non-null simulation using beta-binomial for binary categorical designs.
+
+* sim_null.R: Simulation using gaussian designs and various kinds of errors.
+
+* sim_selection.R: Simulation showing behavior of forward stepwise with various stopping criteria.
+
+* biostatistics/: LaTeX, figures, and other files for paper.

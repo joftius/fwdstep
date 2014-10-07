@@ -13,7 +13,7 @@
 
 
 @article{olshen:flevel,
-	title = {The Conditional Level of the F-Test},
+	title = {The Conditional Level of the {$F$}-Test},
 	volume = {68},
 	copyright = {Copyright © 1973 American Statistical Association},
 	url = {http://www.jstor.org/stable/2284800},
@@ -98,19 +98,17 @@ archivePrefix = "arXiv",
 },
 
 
-
 @article{significance:lasso,
-	title = {A significance test for the lasso},
-	url = {http://arxiv.org/abs/1301.7161},
+  title={A significance test for the lasso},
+  author={Lockhart, Richard and Taylor, Jonathan and Tibshirani, Ryan J and Tibshirani, Robert and others},
+  journal={The Annals of Statistics},
+  volume={42},
+  number={2},
+  pages={413--468},
+  year={2014},
+  publisher={Institute of Mathematical Statistics}
 	abstract = {In the sparse linear regression setting, we consider testing the significance of the predictor variable that enters the current lasso model, in the sequence of models visited along the lasso solution path. We propose a simple test statistic based on lasso fitted values, called the \{{\textbackslash}it covariance test statistic\}, and show that when the true model is linear, this statistic has an \${\textbackslash}Exp(1)\$ asymptotic distribution under the null hypothesis (the null being that all truly active variables are contained in the current lasso model). Our proof of this result assumes some (reasonable) regularity conditions on the predictor matrix {\$X\$}, and covers the important high-dimensional case \$p{\textgreater}n\$. Of course, for testing the significance of an additional variable between two nested linear models, one may use the usual chi-squared test, comparing the drop in residual sum of squares ({RSS)} to a \${\textbackslash}chi{\textasciicircum}2\_1\$ distribution. But when this additional variable is not fixed, but has been chosen adaptively or greedily, this test is no longer appropriate: adaptivity makes the drop in {RSS} stochastically much larger than \${\textbackslash}chi{\textasciicircum}2\_1\$ under the null hypothesis. Our analysis explicitly accounts for adaptivity, as it must, since the lasso builds an adaptive sequence of linear models as the tuning parameter \${\textbackslash}lambda\$ decreases. In this analysis, shrinkage plays a key role: though additional variables are chosen adaptively, the coefficients of lasso active variables are shrunken due to the \${\textbackslash}ell\_1\$ penalty. Therefore the test statistic (which is based on lasso fitted values) is in a sense balanced by these two opposing properties---adaptivity and shrinkage---and its null distribution is tractable and asymptotically \${\textbackslash}Exp(1)\$.},
-	urldate = {2013-01-31},
-	journal = {{arXiv:1301.7161}},
-	author = {Lockhart, Richard and Taylor, Jonathan and Tibshirani, Ryan and Tibshirani, Robert},
-	month = jan,
-	year = {2013},
-	keywords = {{62J07}, {62F03}, Mathematics - Statistics Theory, Statistics - Methodology},
-        note = {Submitted to Annals of Statistics}
-},
+}
 
 
 @article{tests:adaptive,
@@ -164,6 +162,12 @@ archivePrefix = "arXiv",
 	pages = {49-–67}
 },
 
+@article{bakin:grouplasso,
+  title={Adaptive regression and model selection in data mining problems},
+  author={Bakin, Sergey and others},
+  year={1999},
+  publisher={The Australian National University}
+}
 
 @ARTICLE{sequential:fdr,
    author = {{Grazier G'Sell}, M. and {Wager}, S. and {Chouldechova}, A. and {Tibshirani}, R.},
@@ -306,7 +310,7 @@ archivePrefix = "arXiv",
 
 @article{mc:ftoenter,
      jstor_articletype = {research-article},
-     title = {Tests of Significance in Forward Selection Regression with an F-to-Enter Stopping Rule},
+     title = {Tests of Significance in Forward Selection Regression with an {$F$}-to-Enter Stopping Rule},
      author = {Leland Wilkinson and Dallal, Gerard E.},
      journal = {Technometrics},
      jstor_issuetitle = {},
@@ -493,4 +497,30 @@ abstract ={Understanding the genetic basis of HIV-1 drug resistance is essential
 URL = {http://www.pnas.org/content/103/46/17355.abstract}, 
 eprint = {http://www.pnas.org/content/103/46/17355.full.pdf+html}, 
 journal = {Proceedings of the National Academy of Sciences} 
+}
+
+@article{buja_discussion,
+  ajournal = "Ann. Statist.",
+  author = "Buja, A. and Brown, L.",
+  doi = "10.1214/14-AOS1175F",
+  journal = "The Annals of Statistics",
+  month = "04",
+  number = "2",
+  pages = "509--517",
+  publisher = "The Institute of Mathematical Statistics",
+  title = "Discussion: “A significance test for the lasso”",
+  url = "http://dx.doi.org/10.1214/14-AOS1175F",
+  volume = "42",
+  year = "2014"
+}
+
+@article{eyedata,
+  title={Regulation of gene expression in the mammalian eye and its relevance to eye disease},
+  author={Scheetz, Todd E and Kim, Kwang-Youn A and Swiderski, Ruth E and Philp, Alisdair R and Braun, Terry A and Knudtson, Kevin L and Dorrance, Anne M and DiBona, Gerald F and Huang, Jian and Casavant, Thomas L and others},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={103},
+  number={39},
+  pages={14429--14434},
+  year={2006},
+  publisher={National Acad Sciences}
 }

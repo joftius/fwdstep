@@ -146,7 +146,8 @@ Algorithms~\ref{algo:pval}--\ref{algo:linfrac}.
 The main result in \cite{tests:adaptive} shows that
 $T\chi \sim \text{Unif}([0,1])$ under the global null. In forward stepwise
 we iterate this test on the residual after each step, and show in simulations
-that it performs well.
+that it performs well. As a simple example, and for comparison to other methods using the same data, we apply our method on the diabetes dataset described in \cite{lars}. The outcome is a measurement of disease progression, and we regress this on baseline measurements of various health indicators. Table~\ref{tab:diabetes} shows a comparison between the $T\chi$ $p$-values and standard $\chi^2$ $p$-values.
+
 
 \section{Forward stepwise model selection}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -569,6 +570,23 @@ The authors would like to thank Robert Tibshirani and Trevor Hastie for many hel
 
 \bibliographystyle{biorefs}
 \bibliography{refs}
+
+% latex table generated in R 3.1.0 by xtable 1.7-3 package
+% Tue Oct  7 22:25:31 2014
+\begin{table}[ht]
+\centering
+\begin{tabular}{r|rrrrrrrrr}
+  \hline
+Variable & bmi & ltg & map & hdl & sex & ldl & glu & tc & tch \\ 
+  \hline
+T$\chi$ $p$-value & 0.000 & 0.000 & 0.008 & 0.729 & 0.002 & 0.622 & 0.353 & 0.652 & 0.420 \\ 
+$\chi^2$ $p$-value & 0.000 & 0.000 & 0.000 & 0.001 & 0.000 & 0.073 & 0.277 & 0.101 & 0.266 \\ 
+   \hline
+\end{tabular}
+\caption{Forward stepwise results on diabetes dataset. Chi-squared $p$-values are computed using the drop in residual sum of squares. Variables are listed in the order of inclusion by forward stepwise.} 
+\label{tab:diabetes}
+\end{table}
+
 
 \begin{figure}
 \begin{center}
